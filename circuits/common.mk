@@ -1,21 +1,23 @@
-CC := verilator
-CFLAGS := -Wno-fatal -O2
+CC      := verilator
+CFLAGS  := -Wno-fatal -O2
 OBJ_DIR := model
 
-sim: $(DUT)
-	./$(OBJ_DIR)/Vaes_128 $(INPUT)
+all: $(OBJ_DIR)/V$(DUT)
+	./$^ $(INPUT) $(DUT).vcd
 
-$(DUT): V$(DUT).mk
+$(OBJ_DIR)/V$(DUT): V$(DUT).mk
 	make -C $(OBJ_DIR) -f $^
 
 V$(DUT).mk: $(SRCS) $(TB)
 	verilator $(CFLAGS) -LDFLAGS $(LIBS) \
 		--top-module $(DUT) \
 		--Mdir $(OBJ_DIR) \
+		--trace \
 		--cc $(SRCS) \
-		--exe $(TB);
+		--exe $(TB)
 
-.PHONY: sim clean
+.PHONY: all clean
 
 clean:
-	@rm -rf $(OBJ_DIR)
+	rm -rf $(OBJ_DIR)
+	rm -rf logs

@@ -6,7 +6,7 @@
 
 // If "verilator --trace" is used, include the tracing class
 #if VM_TRACE
-# include <verilated_vcd_c.h>
+    #include <verilated_vcd_c.h>
 #endif
 
 // Standard includes
@@ -120,6 +120,18 @@ bool check_aes_128_encryption(\
 }
 
 int main(int argc, char** argv, char** env) {
+    // Test Bench Inputs
+    fstream in_file;
+    uint32_t test_num = 0;
+    uint32_t check_num = 0;
+    list<string> keys;
+    list<string> states;
+    string in_file_name = "";
+    string vcd_file_name = "logs/";
+    string input_data = "";
+    uint8_t one_byte = 0;
+    uint8_t out_bytes [STATE_SIZE] = {};
+
     // Set debug level, 0 is off, 9 is highest presently used
     // May be overridden by commandArgs
     Verilated::debug(0);
@@ -136,32 +148,6 @@ int main(int argc, char** argv, char** env) {
     // generated from Verilating "aes_128.v"
     Vaes_128* top = new Vaes_128();  // instantiate top module
 
-#if VM_TRACE
-    // If verilator was invoked with --trace argument,
-    // and if at run time passed the +trace argument, turn on tracing
-    VerilatedVcdC* tfp = NULL;
-    const char* flag = Verilated::commandArgsPlusMatch("trace");
-    if (flag && 0 ==strcmp(flag, "+trace")) {
-        Verilated::traceEverOn(true);  // Verilator must compute traced signals
-        VL_PRINTF("Enabling waves into logs/vlt_dump.vcd...\n");
-        tfp = new VerilatedVcdC;
-        top->trace(tfp, 99);  // Trace 99 levels of hierarchy
-        Verilated::mkdir("logs");
-        tfp->open("logs/vlt_dump.vcd");  // Open the dump file
-    }
-#endif
-
-    // Test Bench Inputs
-    fstream in_file;
-    uint32_t test_num = 0;
-    uint32_t check_num = 0;
-    list<string> keys;
-    list<string> states;
-    string in_file_name = "";
-    string input_data = "";
-    uint8_t one_byte = 0;
-    uint8_t out_bytes [STATE_SIZE] = {};
-
     // Initialize AES inputs
     top->clk = 0;
     top->state[0] = 0;
@@ -173,12 +159,30 @@ int main(int argc, char** argv, char** env) {
     top->key[2] = 0;
     top->key[3] = 0;
 
-    // Get input file name
-    if (argc == 2) {
+    // Get input and VCD file names
+    if (argc == 3) {
         in_file_name = argv[1];
-        printf("Input file specified: %s\n", in_file_name);
-        cout << in_file_name << endl;
+        vcd_file_name += argv[2];
+        cout << "Input file: " << in_file_name << endl;
+        cout << "VCD file: " << in_file_name << endl;
+    } else {
+        cerr << "Usage: " << argv[0];
+        cerr << " <input file name> <vcd file name>" << endl;
+        exit(1);
     }
+
+#if VM_TRACE
+    // If verilator was invoked with --trace argument enable VCD tracing
+    VerilatedVcdC* tfp = NULL;
+    const char* flag = Verilated::commandArgsPlusMatch("trace");
+    cout << "Tracing enabled." << endl;
+    Verilated::traceEverOn(true);  // Verilator must compute traced signals
+    VL_PRINTF("Enabling waves into logs/vlt_dump.vcd...\n");
+    tfp = new VerilatedVcdC;
+    top->trace(tfp, 99);  // Trace 99 levels of hierarchy
+    Verilated::mkdir("logs");
+    tfp->open(vcd_file_name.c_str());  // Open the dump file
+#endif
 
     // Open input file with values to encrypt
     in_file.open(in_file_name);
@@ -254,7 +258,9 @@ int main(int argc, char** argv, char** env) {
 
 #if VM_TRACE
         // Dump trace data for this cycle
-        if (tfp) tfp->dump(main_time);
+        if (tfp) {
+            tfp->dump(main_time);
+        }
 #endif
     }
 
@@ -264,7 +270,10 @@ int main(int argc, char** argv, char** env) {
 
     // Close trace if opened
 #if VM_TRACE
-    if (tfp) { tfp->close(); tfp = NULL; }
+    if (tfp) {
+        tfp->close();
+        tfp = NULL;
+    }
 #endif
 
     //  Coverage analysis (since test passed)
