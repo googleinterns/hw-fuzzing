@@ -1,0 +1,16 @@
+# Testbench Inputs
+*.tf
+
+# Compiler Ouputs
+*.o
+*.pyc
+
+# Verilator Ouputs
+*model/
+
+# Simulation Files
+*.vcd
+*.dat
+
+# MacOS Dir Files
+*.DS_Store

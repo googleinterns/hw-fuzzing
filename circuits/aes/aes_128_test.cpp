@@ -128,7 +128,8 @@ int main(int argc, char** argv, char** env) {
     list<string> states;
     string in_file_name = "";
     string vcd_file_name = "logs/";
-    string input_data = "";
+    string input_key = "";
+    string input_state = "";
     uint8_t one_byte = 0;
     uint8_t out_bytes [STATE_SIZE] = {};
 
@@ -226,27 +227,31 @@ int main(int argc, char** argv, char** env) {
                 states.pop_front();
             }
 
+            // Load next key and state
+            in_file >> input_key;
+            in_file >> input_state;
+
             if (in_file) {
                 // Increment test number
                 test_num++;
                 printf("Loading key and state for test %d...\n", test_num);
 
-                // load next aes key
-                in_file >> input_data;
-                keys.push_back(input_data);
+                // load next aes key into DUT
+                cout << "key: " << input_key << endl;
+                keys.push_back(input_key);
                 for (int i = 3; i >= 0; i--) {
                     for (uint8_t j = 0; j < 4; j++) {
-                        one_byte = input_data[((3 - i) * 4) + j];
+                        one_byte = input_key[((3 - i) * 4) + j];
                         top->key[i] = (top->key[i] << 8) | one_byte;
                     }
                 }
 
-                // load next aes state
-                in_file >> input_data;
-                states.push_back(input_data);
+                // load next aes state into DUT
+                cout << "state: " << input_state << endl;
+                states.push_back(input_state);
                 for (int i = 3; i >= 0; i--) {
                     for (uint8_t j = 0; j < 4; j++) {
-                        one_byte = input_data[((3 - i) * 4) + j];
+                        one_byte = input_state[((3 - i) * 4) + j];
                         top->state[i] = (top->state[i] << 8) | one_byte;
                     }
                 }

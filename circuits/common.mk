@@ -1,6 +1,6 @@
-CC      := verilator
-CFLAGS  := -Wno-fatal -O2
-OBJ_DIR := model
+CC          := verilator
+CFLAGS      := -Wno-fatal -O2
+OBJ_DIR     := model
 
 all: $(OBJ_DIR)/V$(DUT)
 	./$^ $(INPUT) $(DUT).vcd
@@ -13,10 +13,11 @@ V$(DUT).mk: $(SRCS) $(TB)
 		--top-module $(DUT) \
 		--Mdir $(OBJ_DIR) \
 		--trace \
+		$(COVERAGE) \
 		--cc $(SRCS) \
 		--exe $(TB)
 
-.PHONY: all clean
+.PHONY: all clean seed
 
 clean:
 	rm -rf $(OBJ_DIR)
