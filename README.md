@@ -1,7 +1,7 @@
-#Hardware Fuzzing
+# Hardware Fuzzing
 
-**Author**: Timothy Trippel
-**Email**: ttrippel@google.com
+**Author**: Timothy Trippel <br>
+**Email**: ttrippel@google.com <br>
 
-##Description
+## Description
 Project details coming soon...
