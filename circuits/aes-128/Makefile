@@ -1,10 +1,11 @@
-SRCS  := aes_128.v round.v table.v
+SCRIPTS_DIR := ../../scripts
+SRCS_DIR    := ../../third_party/aes-128
+
+SRCS  := $(wildcard $(SRCS_DIR)/*.v)
 TB    := aes_128_test.cpp
 DUT   := aes_128
 LIBS  := -lcryptopp
 INPUT := afl_in/seed.tf
-
-SCRIPTS_DIR := ../../scripts
 
 # Default number of seed tests (encryptions)
 ifndef

@@ -1,6 +1,6 @@
-CC          := verilator
-CFLAGS      := -Wno-fatal -O2
-OBJ_DIR     := model
+CC      := verilator
+CFLAGS  := -Wno-fatal -O2
+OBJ_DIR := model
 
 ifndef COVERAGE
 	VFLAGS := --top-module $(DUT) --Mdir $(OBJ_DIR) --trace --cc
