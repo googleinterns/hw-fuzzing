@@ -8,19 +8,19 @@ else
 	VFLAGS := --top-module $(DUT) --Mdir $(OBJ_DIR) --trace $(COVERAGE) --cc
 endif
 
-all: $(OBJ_DIR)/V$(DUT)
-	./$^ $(INPUT) $(DUT).vcd
-
 $(OBJ_DIR)/V$(DUT): V$(DUT).mk
 	make -C $(OBJ_DIR) -f $^
 
 V$(DUT).mk: $(SRCS) $(TB)
 	verilator $(CFLAGS) -LDFLAGS $(LIBS) $(VFLAGS) $(SRCS) --exe $(TB)
 
-.PHONY: all clean seed coverage
+.PHONY: all clean coverage seed sim
 
 coverage:
 	verilator_coverage --annotate logs/annotated logs/coverage.dat
+
+sim: $(OBJ_DIR)/V$(DUT)
+	./$^ $(INPUT) $(DUT).vcd
 
 clean:
 	rm -rf $(OBJ_DIR)
