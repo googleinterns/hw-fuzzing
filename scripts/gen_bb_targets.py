@@ -15,8 +15,14 @@
 
 import sys
 
+def write_target(src_file, line_num, targets_f):
+    targets_f.write("%s:%d\n" % (src_file, line_num))
+
 def main(args):
     print("Defining AFLGo BB targets...")
+    bb_targets_filename = args[0]
+    with open(bb_targets_filename, "w") as targets_f:
+        write_target("Vaes_128.cpp", 250, targets_f)
     print("Done!")
 
 if __name__ == "__main__":
