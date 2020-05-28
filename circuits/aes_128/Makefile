@@ -20,3 +20,7 @@ seed: afl_in_dir
 afl_in_dir:
 	@echo "Creating dir for AFL input files..."; \
 	mkdir -p afl_in;
+
+afl_out_dir:
+	@echo "Creating dir for AFL output files..."; \
+	mkdir -p afl_out;
