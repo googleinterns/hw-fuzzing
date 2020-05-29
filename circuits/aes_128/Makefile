@@ -14,7 +14,7 @@ endif
 
 include ../common.mk
 
-seed: afl_in_dir
+seed: afl_in_dir afl_out_dir
 	python3 $(SCRIPTS_DIR)/gen_aes_seed_tf.py $(INPUT) $(NUM_TESTS)
 
 afl_in_dir:

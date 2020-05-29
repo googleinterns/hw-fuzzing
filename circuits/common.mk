@@ -1,4 +1,4 @@
-CC      := verilator
+#CC      := verilator
 CFLAGS  := -Wno-fatal -O2
 OBJ_DIR := model
 
@@ -16,8 +16,8 @@ V$(DUT).mk: $(SRCS) $(TB)
 coverage:
 	verilator_coverage --annotate logs/annotated logs/coverage.dat
 
-sim: $(OBJ_DIR)/V$(DUT)
-	./$^ $(INPUT) $(DUT).vcd
+sim: exe
+	./$(OBJ_DIR)/V$(DUT) $(INPUT) $(DUT).vcd
 
 exe: V$(DUT).mk
 	make -C $(OBJ_DIR) -f $^
