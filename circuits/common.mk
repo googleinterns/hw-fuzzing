@@ -7,14 +7,14 @@ else
 endif
 
 V$(DUT).mk: $(SRCS) $(TB)
-	verilator $(VFLAGS) -CFLAGS -std=c++11 -LDFLAGS $(LIBS) $(VFLAGS) $(SRCS) --exe $(TB)
+	verilator $(VFLAGS) -CFLAGS -std=c++11 -LDFLAGS $(LIBS) $(SRCS) --exe $(TB)
 
 .PHONY: clean coverage exe seed sim
 
 coverage:
 	verilator_coverage --annotate logs/annotated logs/coverage.dat
 
-sim: exe
+sim:
 	./$(OBJ_DIR)/V$(DUT) $(INPUT) $(DUT).vcd
 
 exe: V$(DUT).mk
