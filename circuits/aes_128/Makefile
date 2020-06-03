@@ -12,21 +12,76 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-SCRIPTS_DIR := ../../scripts
-SRCS_DIR    := ../../third_party/aes_128
+################################################################################
+# Core specific configs
+################################################################################
+export DUT      := aes_128
+export LIBS     := -lcryptopp
+export CPPFLAGS += -std=c++11
 
-SRCS  := $(wildcard $(SRCS_DIR)/*.v)
-TB    := aes_128_test.cpp
-DUT   := aes_128
-LIBS  := -lcryptopp
-INPUT := afl_in/seed.tf
-
+################################################################################
 # Default number of seed tests (encryptions)
+################################################################################
 ifndef
 	NUM_TESTS := 5
 endif
 
-include ../common.mk
+################################################################################
+# Directories
+################################################################################
+SCRIPTS_DIR        := ../../scripts
+HDL_DIR            := ../../third_party/$(DUT)
+export TB_SRCS_DIR := src
+export TB_INC_DIR  := include
+export MODEL_DIR   := model
+
+################################################################################
+# Sources/Inputs
+################################################################################
+export TB := $(wildcard $(TB_SRCS_DIR)/*.cpp)
+HDL       := $(wildcard $(HDL_DIR)/*.v)
+INPUT     := afl_in/seed.tf
+
+################################################################################
+# Verilator module prefix
+################################################################################
+export VM_PREFIX := V$(DUT)
+
+################################################################################
+# Verilator flags
+################################################################################
+VFLAGS := \
+	-Wno-fatal \
+	--top-module $(DUT) \
+	--Mdir $(MODEL_DIR) \
+	--trace \
+	$(COVERAGE) \
+	--cc
+
+################################################################################
+# Compilation rules
+################################################################################
+verilate: $(HDL) $(TB)
+	$(VERILATOR_ROOT)/bin/verilator $(VFLAGS) $(HDL) --exe $(TB)
+
+$(VM_PREFIX):
+	make -f ../common.mk
+
+.PHONY: coverage sim exe seed afl_in_dir afl_out_dir
+
+coverage:
+	verilator_coverage --annotate logs/annotated logs/coverage.dat
+
+sim: $(VM_PREFIX)
+	@if [ ! -f $(INPUT) ]; then \
+		echo "ERROR: run \"make seed\" first."; \
+		exit 1; \
+	else \
+		./$(VM_PREFIX) $(INPUT) $(VM_PREFIX).vcd; \
+	fi;
+	#./$(VM_PREFIX) $(INPUT) $(VM_PREFIX).vcd
+
+exe: $(VM_PREFIX)
 
 seed: afl_in_dir afl_out_dir
 	python3 $(SCRIPTS_DIR)/gen_aes_seed_tf.py $(INPUT) $(NUM_TESTS)
@@ -38,3 +93,10 @@ afl_in_dir:
 afl_out_dir:
 	@echo "Creating dir for AFL output files..."; \
 	mkdir -p afl_out;
+
+clean:
+	rm -rf $(MODEL_DIR)
+	rm -rf logs
+	rm -f *.o *.d
+	rm -f $(TB_SRCS_DIR)/*.o $(TB_SRCS_DIR)/*.d
+	rm -f $(VM_PREFIX)

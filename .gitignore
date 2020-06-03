@@ -3,6 +3,8 @@
 
 # Compiler Ouputs
 *.o
+*.d
+*.a
 *.pyc
 
 # Verilator Ouputs
