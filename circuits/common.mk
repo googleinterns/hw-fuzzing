@@ -15,8 +15,8 @@
 ################################################################################
 # Compiler/Linker
 ################################################################################
-CXX = g++
-LINK = g++
+CXX  ?= g++
+LINK ?= $(CXX)
 
 ################################################################################
 # Switches
@@ -31,7 +31,6 @@ VM_SC = 0
 # such as -Wno-div-by-zero
 CFG_CXXFLAGS_NO_UNUSED = \
 	-faligned-new \
-	-fcf-protection=none \
 	-Wno-sign-compare \
 	-Wno-uninitialized \
 	-Wno-unused-parameter \
@@ -104,7 +103,7 @@ VK_ALL_OBJS = $(VK_USER_OBJS) $(VK_GLOBAL_OBJS) $(VK_FAST_OBJS) $(VK_SLOW_OBJS)
 # Linking rules
 ################################################################################
 $(VM_PREFIX): $(VK_ALL_OBJS)
-	$(LINK) $^ $(LIBS) -o $@
+	$(LINK) $(LDFLAGS) $^ $(LIBS) -o $@
 
 ################################################################################
 # Compilation rules

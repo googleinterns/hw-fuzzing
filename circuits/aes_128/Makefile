@@ -17,7 +17,7 @@
 ################################################################################
 export DUT      := aes_128
 export LIBS     := -lcryptopp
-export CPPFLAGS += -std=c++11
+export CPPFLAGS := -std=c++11
 
 ################################################################################
 # Default number of seed tests (encryptions)
