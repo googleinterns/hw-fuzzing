@@ -1,4 +1,3 @@
-#!/bin/bash
 # Copyright 2020 Google LLC
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -13,18 +12,13 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-# TODO: Set path to OSS-Fuzz in .bashrc
-#export OSS=/path/to/oss-fuzz
+# Docker image with head Clang version 4.0 installed.
 
-# Cleanup Docker containers
-docker rmi -f gcr.io/oss-fuzz/hw-fuzzing:latest
-docker ps -a -q | xargs -I {} docker rm {};
-docker images -q -f dangling=true | xargs -I {} docker rmi -f {};
-docker volume ls -qf dangling=true | xargs -I {} docker volume rm {};
+FROM hw-fuzzing/base-verilator
+MAINTAINER ttrippel@google.com
 
-# Cleanup output of OSS-Fuzz containers
-sudo rm -rf $OSS/build/out/hw-fuzzing
-sudo rm -rf $OSS/build/work/hw-fuzzing
-
-# Rebuild the hw-fuzzing OSS-Fuzz Docker image
-python $OSS/infra/helper.py build_image hw-fuzzing
+# Putting installation steps in a script reduces the number of intermediate
+# layers generated from the Dockerfile.
+COPY checkout_build_install_llvm.sh /root/
+RUN /root/checkout_build_install_llvm.sh
+RUN rm /root/checkout_build_install_llvm.sh

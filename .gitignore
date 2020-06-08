@@ -2,10 +2,11 @@
 *.tf
 
 # Compiler Ouputs
-*.o
-*.d
 *.a
+*.d
+*.o
 *.pyc
+*.txt
 
 # Verilator Ouputs
 *model/

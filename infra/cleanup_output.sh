@@ -13,18 +13,14 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-# TODO: Set path to OSS-Fuzz in .bashrc
-#export OSS=/path/to/oss-fuzz
+# TODO: Set path to hw-fuzzing in .bashrc
+#export HW_FUZZING=/path/to/hw-fuzzing
 
-# Cleanup Docker containers
-docker rmi -f gcr.io/oss-fuzz/hw-fuzzing:latest
-docker ps -a -q | xargs -I {} docker rm {};
-docker images -q -f dangling=true | xargs -I {} docker rmi -f {};
-docker volume ls -qf dangling=true | xargs -I {} docker volume rm {};
-
-# Cleanup output of OSS-Fuzz containers
-sudo rm -rf $OSS/build/out/hw-fuzzing
-sudo rm -rf $OSS/build/work/hw-fuzzing
-
-# Rebuild the hw-fuzzing OSS-Fuzz Docker image
-python $OSS/infra/helper.py build_image hw-fuzzing
+if [ -z "$HW_FUZZING" ]
+then
+    echo "ERROR: Set HW_FUZZING path and try again."
+else
+    # Cleanup output of Docker containers
+    sudo rm -rf $HW_FUZZING/out/*
+    sudo rm -rf $HW_FUZZING/work/*
+fi

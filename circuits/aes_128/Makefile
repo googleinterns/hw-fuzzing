@@ -17,7 +17,7 @@
 ################################################################################
 export DUT      := aes_128
 export LIBS     := -lcryptopp
-export CPPFLAGS := -std=c++11
+export CPPFLAGS :=
 
 ################################################################################
 # Default number of seed tests (encryptions)
@@ -29,7 +29,7 @@ endif
 ################################################################################
 # Directories
 ################################################################################
-SCRIPTS_DIR        := ../../scripts
+SCRIPTS            ?= ../../scripts
 HDL_DIR            := ../../third_party/$(DUT)
 export TB_SRCS_DIR := src
 export TB_INC_DIR  := include
@@ -65,7 +65,7 @@ verilate: $(HDL) $(TB)
 	$(VERILATOR_ROOT)/bin/verilator $(VFLAGS) $(HDL) --exe $(TB)
 
 $(VM_PREFIX):
-	make -f ../common.mk
+	make -f $(SCRIPTS)/common.mk
 
 .PHONY: coverage sim exe seed afl_in_dir afl_out_dir
 
@@ -79,12 +79,11 @@ sim: $(VM_PREFIX)
 	else \
 		./$(VM_PREFIX) $(INPUT) $(VM_PREFIX).vcd; \
 	fi;
-	#./$(VM_PREFIX) $(INPUT) $(VM_PREFIX).vcd
 
 exe: $(VM_PREFIX)
 
 seed: afl_in_dir afl_out_dir
-	python3 $(SCRIPTS_DIR)/gen_aes_seed_tf.py $(INPUT) $(NUM_TESTS)
+	python3 $(SCRIPTS)/gen_aes_seed_tf.py $(INPUT) $(NUM_TESTS)
 
 afl_in_dir:
 	@echo "Creating dir for AFL input files..."; \
@@ -97,6 +96,6 @@ afl_out_dir:
 clean:
 	rm -rf $(MODEL_DIR)
 	rm -rf logs
-	rm -f *.o *.d
+	rm -f *.o *.d *.bc *.txt
 	rm -f $(TB_SRCS_DIR)/*.o $(TB_SRCS_DIR)/*.d
 	rm -f $(VM_PREFIX)

@@ -13,22 +13,13 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-# TODO: Set path to oss-fuzz and hw-fuzzing in .bashrc
-#export OSS=/path/to/oss-fuzz
-#export HW_FUZZING=/path/to/hw-fuzzing
+# Remove all Docker images
+docker rmi -f hw-fuzzing/base-aflgo:latest
+docker rmi -f hw-fuzzing/base-clang:latest
+docker rmi -f hw-fuzzing/base-verilator:latest
+docker rmi -f hw-fuzzing/base-image:latest
 
-docker run \
-    -it \
-    --rm \
-    --cap-add SYS_PTRACE \
-    -e FUZZING_ENGINE=aflgo \
-    -e SANITIZER=address \
-    -e PROJECT=hw-fuzzing \
-    -e COMMIT=master \
-    -e FUZZER= \
-    --name master \
-    -v $(OSS)/build/out/hw-fuzzing/master:/out \
-    -v $(OSS)/build/work/hw-fuzzing/master:/work \
-    -v $(HW_FUZZING)/scripts:/scripts \
-    -t gcr.io/oss-fuzz/hw-fuzzing \
-    bash
+# Cleanup Docker containers
+docker ps -a -q | xargs -I {} docker rm {};
+docker images -q -f dangling=true | xargs -I {} docker rmi -f {};
+docker volume ls -qf dangling=true | xargs -I {} docker volume rm {};

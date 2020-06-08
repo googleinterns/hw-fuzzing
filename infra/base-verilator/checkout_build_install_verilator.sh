@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/bin/bash -eux
 # Copyright 2020 Google LLC
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -13,18 +13,22 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-# TODO: Set path to OSS-Fuzz in .bashrc
-#export OSS=/path/to/oss-fuzz
+# Install dependencies
+VLT_INSTALL_PACKAGES="\
+    git \
+    autoconf \
+    flex \
+    bison"
+apt-get install -y $VLT_INSTALL_PACKAGES
 
-# Cleanup Docker containers
-docker rmi -f gcr.io/oss-fuzz/hw-fuzzing:latest
-docker ps -a -q | xargs -I {} docker rm {};
-docker images -q -f dangling=true | xargs -I {} docker rmi -f {};
-docker volume ls -qf dangling=true | xargs -I {} docker volume rm {};
+# Build Verilator from source
+cd $SRC && git clone https://git.veripool.org/git/verilator
+cd verilator
+autoconf
+export VERILATOR_ROOT=`pwd`
+./configure
+make
 
-# Cleanup output of OSS-Fuzz containers
-sudo rm -rf $OSS/build/out/hw-fuzzing
-sudo rm -rf $OSS/build/work/hw-fuzzing
-
-# Rebuild the hw-fuzzing OSS-Fuzz Docker image
-python $OSS/infra/helper.py build_image hw-fuzzing
+# Remove installation dependencies to shrink image size
+apt-get remove --purge -y $VLT_INSTALL_PACKAGES
+apt-get autoremove -y

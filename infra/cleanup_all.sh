@@ -13,18 +13,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-# TODO: Set path to OSS-Fuzz in .bashrc
-#export OSS=/path/to/oss-fuzz
+# Cleanup all Docker images and containers
+./cleanup_infra.sh
 
-# Cleanup Docker containers
-docker rmi -f gcr.io/oss-fuzz/hw-fuzzing:latest
-docker ps -a -q | xargs -I {} docker rm {};
-docker images -q -f dangling=true | xargs -I {} docker rmi -f {};
-docker volume ls -qf dangling=true | xargs -I {} docker volume rm {};
-
-# Cleanup output of OSS-Fuzz containers
-sudo rm -rf $OSS/build/out/hw-fuzzing
-sudo rm -rf $OSS/build/work/hw-fuzzing
-
-# Rebuild the hw-fuzzing OSS-Fuzz Docker image
-python $OSS/infra/helper.py build_image hw-fuzzing
+# Cleanup output of compiling/fuzzing containers
+./cleanup_output.sh

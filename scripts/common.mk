@@ -29,8 +29,14 @@ VM_SC = 0
 ################################################################################
 # Compiler flags to use to turn off unused and generated code warnings,
 # such as -Wno-div-by-zero
+#CFG_CXXFLAGS_NO_UNUSED = \
+	#-faligned-new \
+	#-Wno-sign-compare \
+	#-Wno-uninitialized \
+	#-Wno-unused-parameter \
+	#-Wno-unused-variable \
+	#-Wno-shadow
 CFG_CXXFLAGS_NO_UNUSED = \
-	-faligned-new \
 	-Wno-sign-compare \
 	-Wno-uninitialized \
 	-Wno-unused-parameter \
