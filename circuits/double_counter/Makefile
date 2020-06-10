@@ -15,22 +15,22 @@
 ################################################################################
 # Core specific configs
 ################################################################################
-export DUT      := aes_128
-export LIBS     := -lcryptopp
+export DUT      := double_counter
+export LIBS     :=
 export CPPFLAGS :=
 
 ################################################################################
-# Default number of seed tests (encryptions)
+# Default number of seed tests (counter increments)
 ################################################################################
 ifndef
-	NUM_TESTS := 5
+	NUM_TESTS := 1000
 endif
 
 ################################################################################
 # Directories
 ################################################################################
 SCRIPTS            ?= ../../scripts
-HDL_DIR            := ../../third_party/$(DUT)
+HDL_DIR            := hdl
 export TB_SRCS_DIR := src
 export TB_INC_DIR  := include
 export MODEL_DIR   := model

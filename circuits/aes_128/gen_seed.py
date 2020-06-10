@@ -30,7 +30,7 @@ def generateRandomInput(key_size, state_size):
 
     return key + " " + state
 
-def genRandomTests(test_file_name='aes.tf', num_tests=5):
+def genRandomTests(test_file_name='aes_128.tf', num_tests=5):
 
     # Open Test File
     test_file = open(test_file_name, "w")

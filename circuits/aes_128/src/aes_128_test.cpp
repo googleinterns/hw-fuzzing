@@ -161,7 +161,7 @@ int main(int argc, char** argv, char** env) {
 
     // Construct the Verilated model, from Vaes_128.h
     // generated from Verilating "aes_128.v"
-    Vaes_128* top = new Vaes_128();  // instantiate top module
+    Vaes_128* top = new Vaes_128();
 
     // Initialize AES inputs
     top->clk = 0;
@@ -192,14 +192,13 @@ int main(int argc, char** argv, char** env) {
     const char* flag = Verilated::commandArgsPlusMatch("trace");
     cout << "Tracing enabled." << endl;
     Verilated::traceEverOn(true);  // Verilator must compute traced signals
-    VL_PRINTF("Enabling waves into logs/vlt_dump.vcd...\n");
     tfp = new VerilatedVcdC;
     top->trace(tfp, 99);  // Trace 99 levels of hierarchy
     Verilated::mkdir("logs");
     tfp->open(vcd_file_name.c_str());  // Open the dump file
 #endif
 
-    // Open input file with values to encrypt
+    // Open input file
     in_file.open(in_file_name);
     if (!in_file) {
         cerr << "ERROR: input file does not exist." << endl;

@@ -13,31 +13,69 @@
 # limitations under the License.
 
 ################################################################################
-# Core specific configs
+# Sources/Inputs
 ################################################################################
-export DUT      := aes_128
-export LIBS     := -lcryptopp
-export CPPFLAGS :=
+export TB := $(wildcard $(TB_SRCS_DIR)/*.cpp)
+HDL       := $(wildcard $(HDL_DIR)/*.v)
+INPUT     := afl_in/seed.tf
 
 ################################################################################
-# Default number of seed tests (encryptions)
+# Verilator module prefix
 ################################################################################
-ifndef
-	NUM_TESTS := 5
-endif
+export VM_PREFIX := V$(DUT)
 
 ################################################################################
-# Directories
+# Verilator flags
 ################################################################################
-SCRIPTS            ?= ../../scripts
-HDL_DIR            := ../../third_party/$(DUT)
-export TB_SRCS_DIR := src
-export TB_INC_DIR  := include
-export MODEL_DIR   := model
+VFLAGS := \
+	-Wno-fatal \
+	--top-module $(DUT) \
+	--Mdir $(MODEL_DIR) \
+	--trace \
+	$(COVERAGE) \
+	--cc
 
-########## DO NOT MODIFY BELOW ##########
+################################################################################
+# Compilation rules
+################################################################################
+verilate: $(HDL) $(TB)
+	$(VERILATOR_ROOT)/bin/verilator $(VFLAGS) $(HDL) --exe $(TB)
 
-################################################################################
-# Include common build targets
-################################################################################
-include ../common.mk
+$(VM_PREFIX):
+	make -f ../exe.mk
+
+.PHONY: clean cleanall coverage sim exe seed afl_in_dir afl_out_dir
+
+coverage:
+	verilator_coverage --annotate logs/annotated logs/coverage.dat
+
+sim: $(VM_PREFIX)
+	@if [ ! -f $(INPUT) ]; then \
+		echo "ERROR: run \"make seed\" first."; \
+		exit 1; \
+	else \
+		./$(VM_PREFIX) $(INPUT) $(VM_PREFIX).vcd; \
+	fi;
+
+exe: $(VM_PREFIX)
+
+seed: afl_in_dir afl_out_dir
+	python3 gen_seed.py $(INPUT) $(NUM_TESTS)
+
+afl_in_dir:
+	@echo "Creating dir for AFL input files..."; \
+	mkdir -p afl_in;
+
+afl_out_dir:
+	@echo "Creating dir for AFL output files..."; \
+	mkdir -p afl_out;
+
+clean:
+	rm -rf $(MODEL_DIR)
+	rm -rf logs
+	rm -f *.o *.d *.bc *.txt
+	rm -f $(TB_SRCS_DIR)/*.o $(TB_SRCS_DIR)/*.d
+	rm -f $(VM_PREFIX)
+
+cleanall: clean
+	rm -rf afl_*
