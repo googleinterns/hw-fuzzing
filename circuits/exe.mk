@@ -75,12 +75,14 @@ VPATH += $(VERILATOR_ROOT)/include/vltstd
 OPT_SLOW =
 # Optimization for performance critical/hot code. Most time is spent in these
 # routines. Optimizing by default for improved execution speed.
-OPT_FAST = -Os
+#OPT_FAST = -Os
+OPT_FAST =
 # Optimization applied to the common run-time library used by verilated models.
 # For compatibility this is called OPT_GLOBAL even though it only applies to
 # files in the run-time library. Normally there should be no need for the user
 # to change this as the library is small, but can have significant speed impact.
-OPT_GLOBAL = -Os
+#OPT_GLOBAL = -Os
+OPT_GLOBAL =
 
 ################################################################################
 # Verilator/Testbench classes
@@ -98,35 +100,30 @@ VM_GLOBAL += $(VM_GLOBAL_FAST) $(VM_GLOBAL_SLOW)
 ################################################################################
 # Object file lists...
 ################################################################################
-VK_FAST_OBJS   = $(addsuffix .o, $(VM_FAST))
-VK_SLOW_OBJS   = $(addsuffix .o, $(VM_SLOW))
-VK_GLOBAL_OBJS = $(addsuffix .o, $(VM_GLOBAL))
-VK_USER_OBJS   = $(TB:.cpp=.o)
+VK_FAST_OBJS   = $(addprefix $(BUILD_DIR)/, $(addsuffix .o, $(VM_FAST)))
+VK_SLOW_OBJS   = $(addprefix $(BUILD_DIR)/, $(addsuffix .o, $(VM_SLOW)))
+VK_GLOBAL_OBJS = $(addprefix $(BUILD_DIR)/, $(addsuffix .o, $(VM_GLOBAL)))
+VK_USER_OBJS   = $(TB:$(TB_SRCS_DIR)/%.cpp=$(BUILD_DIR)/%.o)
 
 VK_ALL_OBJS = $(VK_USER_OBJS) $(VK_GLOBAL_OBJS) $(VK_FAST_OBJS) $(VK_SLOW_OBJS)
 
 ################################################################################
 # Linking rules
 ################################################################################
-$(VM_PREFIX): $(VK_ALL_OBJS)
-	$(LINK) $(LDFLAGS) $^ $(LIBS) -o $@
+$(BIN_DIR)/$(VM_PREFIX): $(VK_ALL_OBJS)
+	$(LINK) $(LDFLAGS) $(LINKFLAGS) $^ $(LIBS) -o $@
 
 ################################################################################
 # Compilation rules
 ################################################################################
-# Anything not in $(VK_SLOW_OBJS) or $(VK_GLOBAL_OBJS), including verilated.o
-# and user files passed on the Verilator command line use this rule.
-%.o: %.cpp
+$(BUILD_DIR)/%.o: %.cpp
 	$(CXX) $(CXXFLAGS) $(CPPFLAGS) $(OPT_FAST) -c -o $@ $<
 
-$(VK_SLOW_OBJS): %.o: %.cpp
+$(VK_SLOW_OBJS): $(BUILD_DIR)/%.o: %.cpp
 	$(CXX) $(CXXFLAGS) $(CPPFLAGS) $(OPT_SLOW) -c -o $@ $<
 
-$(VK_GLOBAL_OBJS): %.o: %.cpp
+$(VK_GLOBAL_OBJS): $(BUILD_DIR)/%.o: %.cpp
 	$(CXX) $(CXXFLAGS) $(CPPFLAGS) $(OPT_GLOBAL) -c -o $@ $<
-
-$(VK_USER_OBJS): %.o: %.cpp
-	$(CXX) $(CXXFLAGS) $(CPPFLAGS) $(OPT_FAST) -c -o $@ $<
 
 .PHONY: debug-make
 

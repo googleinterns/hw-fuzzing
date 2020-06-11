@@ -22,11 +22,12 @@ then
 else
     echo "Launching container to compile $CORE for fuzzing ..."
     docker run \
-        -t \
+        -it \
         --rm \
         --cap-add SYS_PTRACE \
         --name $CORE-compile \
         -e "CORE=$CORE" \
+        -e "SANITIZER=address" \
         -v $HW_FUZZING/out/$CORE/:/out \
         -v $HW_FUZZING/work/$CORE/:/work \
         -v $HW_FUZZING/scripts/:/scripts \

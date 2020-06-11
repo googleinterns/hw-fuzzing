@@ -15,9 +15,10 @@
 ################################################################################
 # Core specific configs
 ################################################################################
-export DUT      := aes_128
-export LIBS     := -lcryptopp
-export CPPFLAGS :=
+export DUT       := aes_128
+export LIBS      := -lcryptopp
+export CPPFLAGS  := -std=c++11
+export LINKFLAGS := -std=c++11
 
 ################################################################################
 # Default number of seed tests (encryptions)
@@ -29,11 +30,7 @@ endif
 ################################################################################
 # Directories
 ################################################################################
-SCRIPTS            ?= ../../scripts
-HDL_DIR            := ../../third_party/$(DUT)
-export TB_SRCS_DIR := src
-export TB_INC_DIR  := include
-export MODEL_DIR   := model
+HDL_DIR := ../../third_party/$(DUT)# uncomment if third party IP block
 
 ########## DO NOT MODIFY BELOW ##########
 

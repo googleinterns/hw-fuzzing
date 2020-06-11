@@ -21,10 +21,10 @@ then
     echo "ERROR: Set HW_FUZZING path and try again."
 else
     # Build Docker infrastructure
-    docker build --pull -t hw-fuzzing/base-image $@ infra/base-image
-    docker build -t hw-fuzzing/base-verilator $@ infra/base-verilator
-    docker build -t hw-fuzzing/base-clang $@ infra/base-clang
-    docker build -t hw-fuzzing/base-aflgo $@ infra/base-aflgo
+    docker build --pull -t hw-fuzzing/base-image $@ $HW_FUZZING/infra/base-image
+    docker build -t hw-fuzzing/base-verilator $@ $HW_FUZZING/infra/base-verilator
+    docker build -t hw-fuzzing/base-clang $@ $HW_FUZZING/infra/base-clang
+    docker build -t hw-fuzzing/base-aflgo $@ $HW_FUZZING/infra/base-aflgo
 
     # Create directories for compiling/fuzzing outputs/work
     mkdir -p $HW_FUZZING/out

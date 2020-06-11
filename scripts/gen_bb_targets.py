@@ -19,11 +19,13 @@ def write_target(src_file, line_num, targets_f):
     targets_f.write("%s:%d\n" % (src_file, line_num))
 
 def main(args):
-    print("Defining AFLGo BB targets...")
     bb_targets_filename = args[0]
     with open(bb_targets_filename, "w") as targets_f:
-        write_target("Vaes_128.cpp", 250, targets_f)
-    print("Done!")
+        write_target("Vdouble_counter.cpp", 73, targets_f)
+        write_target("Vdouble_counter.cpp", 74, targets_f)
+        write_target("Vdouble_counter.cpp", 75, targets_f)
+        write_target("Vdouble_counter.cpp", 76, targets_f)
+        write_target("Vdouble_counter.cpp", 77, targets_f)
 
 if __name__ == "__main__":
     main(sys.argv[1:])
