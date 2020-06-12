@@ -18,31 +18,33 @@
 ## Set build flags
 ################################################################################
 ################################################################################
+echo "========================================================================="
+echo "Setting compiler/linker flags..."
+echo "-------------------------------------------------------------------------"
+
 # Default build flags for various sanitizers
-SANITIZER_FLAGS_address="-fsanitize=address"\
-    "-fsanitize-address-use-after-scope"
+SANITIZER_FLAGS_address="-fsanitize=address "\
+"-fsanitize-address-use-after-scope"
 SANITIZER_FLAGS_undefined="-fsanitize=bool,"\
-    "array-bounds,"\
-    "float-divide-by-zero,"\
-    "function,"\
-    "integer-divide-by-zero,"\
-    "return,"\
-    "shift,"\
-    "signed-integer-overflow,"\
-    "vla-bound,"\
-    "vptr "\
-    "-fno-sanitize-recover=undefined"
+"array-bounds,"\
+"float-divide-by-zero,"\
+"function,"\
+"integer-divide-by-zero,"\
+"return,"\
+"shift,"\
+"signed-integer-overflow,"\
+"vla-bound,"\
+"vptr "\
+"-fno-sanitize-recover=undefined"
 SANITIZER_FLAGS_memory="-fsanitize=memory "\
-    "-fsanitize-memory-track-origins"
+"-fsanitize-memory-track-origins"
 
 # Default build flags for coverage
-COVERAGE_FLAGS="-fsanitize-coverage=trace-pc-guard,trace-cmp"
+#COVERAGE_FLAGS="-fsanitize-coverage=trace-pc-guard,trace-cmp"
+COVERAGE_FLAGS="-fsanitize-coverage=trace-pc-guard"
 
 # Workaround ASAN false positive: https://github.com/google/sanitizers/issues/647
 ASAN_OPTIONS="detect_odr_violation=0"
-
-# Coverage flags for generating coverage reports
-#COVERAGE_FLAGS_coverage="-fsanitize-coverage=bb,no-prune,trace-pc-guard -O0"
 
 # Set sanitizer flags
 if [ -z "${SANITIZER_FLAGS-}" ]; then
@@ -50,17 +52,15 @@ if [ -z "${SANITIZER_FLAGS-}" ]; then
   export SANITIZER_FLAGS=${!FLAGS_VAR-}
 fi
 
-if [[ $SANITIZER_FLAGS = *sanitize=memory* ]]
-then
-  # Take all libraries from lib/msan
-  # export CXXFLAGS_EXTRA="-L/usr/msan/lib $CXXFLAGS_EXTRA"
-  cp -R /usr/msan/lib/* /usr/lib/
+# If using memory sanitizer, use the one installed with Clang 4.0.0
+if [[ $SANITIZER_FLAGS = *sanitize=memory* ]]; then
+    # Take all libraries from lib/msan
+    cp -R /usr/msan/lib/* /usr/lib/
 fi
 
 # Set coverage tracing flag overrides
 COVERAGE_FLAGS_VAR="COVERAGE_FLAGS_$SANITIZER"
-if [[ -n ${!COVERAGE_FLAGS_VAR-} ]]
-then
+if [[ -n ${!COVERAGE_FLAGS_VAR-} ]]; then
   export COVERAGE_FLAGS="${!COVERAGE_FLAGS_VAR}"
 fi
 
@@ -68,6 +68,16 @@ fi
 export CFLAGS="$CFLAGS $SANITIZER_FLAGS $COVERAGE_FLAGS"
 export CXXFLAGS="$CXXFLAGS $SANITIZER_FLAGS $COVERAGE_FLAGS"
 export LDFLAGS="$LDFLAGS $SANITIZER_FLAGS $COVERAGE_FLAGS"
+
+# Print Compiler/Linker Flags
+echo "Compiler/Linker Flags:"
+echo "CC=$CC"
+echo "CXX=$CXX"
+echo "CFLAGS=$CFLAGS"
+echo "CXXFLAGS=$CXXFLAGS"
+echo "LDFLAGS=$LDFLAGS"
+echo "-------------------------------------------------------------------------"
+echo "Done!"
 
 ################################################################################
 ################################################################################
@@ -172,6 +182,8 @@ else
     export LDFLAGS="$LDFLAGS $AFLGO_FLAGS"
 fi
 
+# Print Compiler/Linker Flags
+echo "Compiler/Linker Flags:"
 echo "CC=$CC"
 echo "CXX=$CXX"
 echo "CFLAGS=$CFLAGS"
@@ -193,6 +205,8 @@ else
 fi
 echo "-------------------------------------------------------------------------"
 BUILD_DIR=$TMP_DIR BIN_DIR=$OUT make exe
+echo "-------------------------------------------------------------------------"
+echo "Done!"
 
 ################################################################################
 ################################################################################
@@ -207,8 +221,10 @@ echo "-------------------------------------------------------------------------"
     # targets were found
     if [ $(grep -Ev "^$" $TMP_DIR/Ftargets.txt | wc -l) -eq 0 ]; then
         echo -e "\e[1;31mAborting ... No function targets found in model.\e[0m"
-        rm $OUT/*
-        rm -rf $TMP_DIR
+        if [ -z "${DEBUG-}" ]; then
+            rm $OUT/*
+            rm -rf $TMP_DIR
+        fi
         exit 1
     fi
 
@@ -225,6 +241,9 @@ echo "-------------------------------------------------------------------------"
     # Clean up
     rm $OUT/*
     cp $TMP_DIR/distance.cfg.txt $OUT
+    if [ -n "${DEBUG-}" ]; then
+        cp $TMP_DIR/*.txt $OUT
+    fi
     rm -rf $TMP_DIR/*
 
     # Restore compiler/linker flags
@@ -236,7 +255,20 @@ echo "-------------------------------------------------------------------------"
     echo "Compiling/Instrumenting the $CORE SW model ..."
     BUILD_DIR=$TMP_DIR BIN_DIR=$OUT make exe
 fi
+echo "-------------------------------------------------------------------------"
+echo "Done!"
 
+################################################################################
+################################################################################
+## Clean up object files and Verilator output
+################################################################################
+################################################################################
+echo "========================================================================="
+echo "Cleaning up ..."
+if [ -z "${DEBUG-}" ]; then
+    rm -rf $WORK/
+    make clean-vlt
+fi
 echo "-------------------------------------------------------------------------"
 echo -e "\e[1;32mBUILD & INSTRUMENTATION SUCCESSFUL -- Done!\e[0m"
 echo "========================================================================="

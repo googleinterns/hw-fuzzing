@@ -24,7 +24,7 @@ export LINKFLAGS := -std=c++11
 # Default number of seed tests (counter increments)
 ################################################################################
 ifndef
-	NUM_TESTS := 1000
+	NUM_TESTS := 1
 endif
 
 ################################################################################

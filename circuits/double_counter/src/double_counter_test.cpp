@@ -53,7 +53,6 @@ int main(int argc, char** argv, char** env) {
     uint32_t test_num = 0;
     uint32_t check_num = 0;
     string in_file_name = "";
-    string vcd_file_name = "logs/";
     string input_select = "";
     uint8_t select = 0;
     uint8_t count_1 = 0;
@@ -80,27 +79,39 @@ int main(int argc, char** argv, char** env) {
     top->n_reset = 0;
     top->select = 0;
 
-    // Get input and VCD file names
-    if (argc == 3) {
+    // Get input file name
+    if (argc == 2) {
         in_file_name = argv[1];
-        vcd_file_name += argv[2];
         cout << "Input file: " << in_file_name << endl;
-        cout << "VCD file: " << in_file_name << endl;
     } else {
         cerr << "Usage: " << argv[0];
-        cerr << " <input file name> <vcd file name>" << endl;
+        cerr << " <input file name>" << endl;
         exit(1);
     }
 
 #if VM_TRACE
     // If verilator was invoked with --trace argument enable VCD tracing
+    cout << "Tracing enabled." << endl;
     VerilatedVcdC* tfp = NULL;
     const char* flag = Verilated::commandArgsPlusMatch("trace");
-    cout << "Tracing enabled." << endl;
+    string vcd_file_name = "";
+    string base_in_file_name = "";
+
+    // Set VCD file name
+    if (in_file_name.find_last_of("\\/") != string::npos) {
+        // input file name was a full path --> strip off base file name
+        uint32_t start_of_file_name_str = in_file_name.find_last_of("\\/") + 1;
+        base_in_file_name = in_file_name.substr(start_of_file_name_str);
+        vcd_file_name = base_in_file_name + ".vcd";
+    } else {
+        vcd_file_name = in_file_name + ".vcd";
+    }
+    cout << "VCD file: " << vcd_file_name << endl;
+
+    // Turn on Verilator tracing
     Verilated::traceEverOn(true);  // Verilator must compute traced signals
     tfp = new VerilatedVcdC;
     top->trace(tfp, 99);  // Trace 99 levels of hierarchy
-    Verilated::mkdir("logs");
     tfp->open(vcd_file_name.c_str());  // Open the dump file
 #endif
 

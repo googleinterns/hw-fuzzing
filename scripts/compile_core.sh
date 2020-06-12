@@ -27,6 +27,7 @@ else
         --cap-add SYS_PTRACE \
         --name $CORE-compile \
         -e "CORE=$CORE" \
+        -e "DEBUG=$DEBUG" \
         -e "SANITIZER=address" \
         -v $HW_FUZZING/out/$CORE/:/out \
         -v $HW_FUZZING/work/$CORE/:/work \

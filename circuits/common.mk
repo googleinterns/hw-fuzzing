@@ -85,7 +85,7 @@ sim: $(BIN_DIR)/$(VM_PREFIX)
 		echo "ERROR: run \"make seed\" first."; \
 		exit 1; \
 	else \
-		./$(VM_PREFIX) $(INPUT) $(VM_PREFIX).vcd; \
+		./$(VM_PREFIX) $(INPUT); \
 	fi;
 
 exe: $(BIN_DIR)/$(VM_PREFIX)
@@ -103,6 +103,7 @@ afl_out_dir:
 
 clean-exe:
 	rm -rf logs
+	rm -rf *.vcd
 	rm -f $(BUILD_DIR)/*.o
 	rm -f $(BUILD_DIR)/*.d
 	rm -f $(BUILD_DIR)/*.bc
