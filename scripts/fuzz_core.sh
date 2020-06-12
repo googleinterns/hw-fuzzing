@@ -20,12 +20,12 @@ if [ -z "$CORE" ]
 then
     echo "ERROR: Set CORE to target before proceeding."
 else
-    echo "Launching container to COMPILE/INSTRUMENT $CORE for fuzzing ..."
+    echo "Launching container to FUZZ $CORE ..."
     docker run \
         -it \
         --rm \
         --cap-add SYS_PTRACE \
-        --name $CORE-compile \
+        --name $CORE-fuzz \
         -e "CORE=$CORE" \
         -e "DEBUG=$DEBUG" \
         -v $HW_FUZZING/out/$CORE/:/out \
@@ -34,5 +34,5 @@ else
         -v $HW_FUZZING/circuits/:/src/circuits \
         -v $HW_FUZZING/third_party:/src/third_party \
         -t hw-fuzzing/base-aflgo \
-        bash /scripts/gen_hw_model.sh
+        bash /scripts/gen_seed_and_run_aflgo.sh
 fi
