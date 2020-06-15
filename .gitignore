@@ -7,8 +7,9 @@
 *.o
 *.pyc
 *.txt
-out/*
-work/*
+*bin/
+*bin.*/
+*afl_out/
 
 # Verilator Ouputs
 *model/

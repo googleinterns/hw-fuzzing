@@ -21,4 +21,4 @@ $SRC/aflgo/afl-fuzz \
     -c 45m \
     -i $SRC/circuits/$CORE/afl_in \
     -o $SRC/circuits/$CORE/afl_out \
-    $OUT/V$CORE @@
+    $SRC/circuits/$CORE/$BIN_DIR/V$CORE @@

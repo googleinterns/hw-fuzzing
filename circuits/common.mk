@@ -20,8 +20,8 @@ HDL_DIR     ?= hdl
 TB_SRCS_DIR ?= src
 TB_INC_DIR  ?= include
 MODEL_DIR   ?= model
-BUILD_DIR   ?= .
-BIN_DIR     ?= .
+BUILD_DIR   ?= build
+BIN_DIR     ?= bin
 export TB_SRCS_DIR
 export TB_INC_DIR
 export MODEL_DIR
@@ -63,6 +63,8 @@ verilate: $(HDL)
 	$(VERILATOR_ROOT)/bin/verilator $(VFLAGS) $(HDL)
 
 $(BIN_DIR)/$(VM_PREFIX): $(MODEL) $(TB)
+	@mkdir -p $(BUILD_DIR); \
+	mkdir -p $(BIN_DIR); \
 	make -f ../exe.mk
 
 .PHONY: \
@@ -85,7 +87,7 @@ sim: $(BIN_DIR)/$(VM_PREFIX)
 		echo "ERROR: run \"make seed\" first."; \
 		exit 1; \
 	else \
-		./$(VM_PREFIX) $(INPUT); \
+		./$(BIN_DIR)/$(VM_PREFIX) $(INPUT); \
 	fi;
 
 exe: $(BIN_DIR)/$(VM_PREFIX)
@@ -103,12 +105,11 @@ afl_out_dir:
 
 clean-exe:
 	rm -rf logs
-	rm -rf *.vcd
-	rm -f $(BUILD_DIR)/*.o
-	rm -f $(BUILD_DIR)/*.d
-	rm -f $(BUILD_DIR)/*.bc
-	rm -f $(BUILD_DIR)/*.txt
-	rm -f $(VM_PREFIX)
+	rm -f *.vcd
+	rm -rf $(BIN_DIR)
+	rm -rf $(BIN_DIR).*
+	rm -rf $(BUILD_DIR)
+	rm -rf $(BUILD_DIR).*
 
 clean-vlt:
 	rm -rf $(MODEL_DIR)

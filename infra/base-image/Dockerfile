@@ -19,11 +19,8 @@ MAINTAINER ttrippel@google.com
 ENV DEBIAN_FRONTEND noninteractive
 RUN apt-get update && apt-get upgrade -y && apt-get autoremove -y
 
-ENV OUT=/out
 ENV SCRIPTS=/scripts
 ENV SRC=/src
-ENV WORK=/work
-ENV PATH="$PATH:/out"
 ENV PATH="$PATH:/scripts"
 
-RUN mkdir -p $OUT $SCRIPTS $SRC $WORK && chmod a+rwx $OUT $SCRIPTS $SRC $WORK
+RUN mkdir -p $SCRIPTS $SRC && chmod a+rwx $SCRIPTS $SRC

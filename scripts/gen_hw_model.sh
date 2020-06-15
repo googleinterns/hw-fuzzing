@@ -81,14 +81,23 @@ echo "Done!"
 
 ################################################################################
 ################################################################################
-## Switch to CORE directory and cleanup old build
+## Switch to CORE directory and create build directory
 ################################################################################
 ################################################################################
 echo "========================================================================="
-echo "Cleaning up old $CORE build ..."
+echo "Creating $CORE build directory ..."
 echo "-------------------------------------------------------------------------"
+# Move to target CORE dir
 cd $SRC/circuits/$CORE
-make clean
+
+# Make a bin directory to store EXEs and AFLGo outputs
+i=0
+BIN_DIR=$SRC/circuits/$CORE/bin
+while [ -d $BIN_DIR ]; do
+  BIN_DIR=$BIN_DIR.$i
+  i=$((i + 1))
+done
+mkdir $BIN_DIR
 echo "-------------------------------------------------------------------------"
 echo "Done!"
 
@@ -132,24 +141,24 @@ echo "Doing AFLGo preprocessing ..."
 echo "-------------------------------------------------------------------------"
 
 # Skip preprocessing if distance.cfg.txt exists already
-if [ -f $OUT/distance.cfg.txt ]; then
+if [ -f $BIN_DIR/distance.cfg.txt ]; then
     DO_POSTPROCESS=0
 
     echo "Setting compiler flags..."
-    export CFLAGS="$CFLAGS -distance=$OUT/distance.cfg.txt"
-    export CXXFLAGS="$CXXFLAGS -distance=$OUT/distance.cfg.txt"
-    export LDFLAGS="$LDFLAGS -distance=$OUT/distance.cfg.txt"
+    export CFLAGS="$CFLAGS -distance=$BIN_DIR/distance.cfg.txt"
+    export CXXFLAGS="$CXXFLAGS -distance=$BIN_DIR/distance.cfg.txt"
+    export LDFLAGS="$LDFLAGS -distance=$BIN_DIR/distance.cfg.txt"
 else
     DO_POSTPROCESS=1
 
-    # Make a temporary directory to store AFLGo compiler inputs/outputs
-    TMP_DIR=$WORK/tmp
+    # Make a build directory to store AFLGo compiler inputs/outputs
+    BUILD_DIR=$SRC/circuits/$CORE/build
     i=0
-    while [ -d $TMP_DIR ]; do
-      TMP_DIR=$WORK/tmp.$i
+    while [ -d $BUILD_DIR ]; do
+      BUILD_DIR=$BUILD_DIR.$i
       i=$((i + 1))
     done
-    mkdir $TMP_DIR
+    mkdir $BUILD_DIR
 
     # Make backup copy of base compiler/linker flags
     COPY_CFLAGS=$CFLAGS
@@ -158,23 +167,23 @@ else
 
     # Generate targets to fuzz
     echo "Generating targets to fuzz..."
-    python3 $SCRIPTS/gen_bb_targets.py $TMP_DIR/BBtargets.txt
-    AFLGO_BB_TARGETS=$TMP_DIR/BBtargets.txt
+    python3 $SCRIPTS/gen_bb_targets.py $BUILD_DIR/BBtargets.txt
+    AFLGO_BB_TARGETS=$BUILD_DIR/BBtargets.txt
 
     # Check if at least one fuzz target was generated
-    if [ $(cat $TMP_DIR/BBtargets.txt | wc -l) -eq 0 ]; then
+    if [ $(cat $BUILD_DIR/BBtargets.txt | wc -l) -eq 0 ]; then
         echo -e "\e[1;31mAborting ... No BB targets to fuzz for $CORE.\e[0m"
-        rm -rf $TMP_DIR
+        rm -rf $BUILD_DIR
         exit 1
     fi
 
     # Print generated fuzz targets
     echo "AFLGo Fuzz Targets:"
-    cat $TMP_DIR/BBtargets.txt
+    cat $BUILD_DIR/BBtargets.txt
 
     # Set AFLGo compiler flags
     echo "Setting compiler flags..."
-    AFLGO_TARGET_FLAGS="-targets=$AFLGO_BB_TARGETS -outdir=$TMP_DIR"
+    AFLGO_TARGET_FLAGS="-targets=$AFLGO_BB_TARGETS -outdir=$BUILD_DIR"
     AFLGO_LINKER_FLAGS="-flto -fuse-ld=gold -Wl,-plugin-opt=save-temps"
     AFLGO_FLAGS="$AFLGO_TARGET_FLAGS $AFLGO_LINKER_FLAGS"
     export CFLAGS="$CFLAGS $AFLGO_FLAGS"
@@ -204,7 +213,7 @@ else
     echo "Compiling/Instrumenting the $CORE SW model ..."
 fi
 echo "-------------------------------------------------------------------------"
-BUILD_DIR=$TMP_DIR BIN_DIR=$OUT make exe
+BUILD_DIR=$BUILD_DIR BIN_DIR=$BIN_DIR make exe
 echo "-------------------------------------------------------------------------"
 echo "Done!"
 
@@ -219,41 +228,42 @@ echo "Doing AFLGo postprocessing ..."
 echo "-------------------------------------------------------------------------"
     # Check if AFLGo control flow graph extraction was successfull and fuzz
     # targets were found
-    if [ $(grep -Ev "^$" $TMP_DIR/Ftargets.txt | wc -l) -eq 0 ]; then
+    if [ $(grep -Ev "^$" $BUILD_DIR/Ftargets.txt | wc -l) -eq 0 ]; then
         echo -e "\e[1;31mAborting ... No function targets found in model.\e[0m"
         if [ -z "${DEBUG-}" ]; then
-            rm $OUT/*
-            rm -rf $TMP_DIR
+            rm -rf $BIN_DIR
+            rm -rf $BUILD_DIR
         fi
         exit 1
     fi
 
     # Filter BBnames and Fnames
     sleep 0.5
-    cat $TMP_DIR/BBnames.txt | rev | cut -d: -f2- | rev | sort | uniq > \
-        $TMP_DIR/BBnames2.txt && mv $TMP_DIR/BBnames2.txt $TMP_DIR/BBnames.txt
-    cat $TMP_DIR/BBcalls.txt | sort | uniq > $TMP_DIR/BBcalls2.txt && \
-        mv $TMP_DIR/BBcalls2.txt $TMP_DIR/BBcalls.txt
+    cat $BUILD_DIR/BBnames.txt | rev | cut -d: -f2- | rev | sort | uniq > \
+        $BUILD_DIR/BBnames2.txt && \
+        mv $BUILD_DIR/BBnames2.txt $BUILD_DIR/BBnames.txt
+    cat $BUILD_DIR/BBcalls.txt | sort | uniq > $BUILD_DIR/BBcalls2.txt && \
+        mv $BUILD_DIR/BBcalls2.txt $BUILD_DIR/BBcalls.txt
 
     echo "Computing distances to fuzz targets..."
-    $SRC/aflgo/scripts/genDistance.sh $OUT $TMP_DIR
+    $SRC/aflgo/scripts/genDistance.sh $BIN_DIR $BUILD_DIR
 
     # Clean up
-    rm $OUT/*
-    cp $TMP_DIR/distance.cfg.txt $OUT
+    rm $BIN_DIR/*
+    cp $BUILD_DIR/distance.cfg.txt $BIN_DIR
     if [ -n "${DEBUG-}" ]; then
-        cp $TMP_DIR/*.txt $OUT
+        cp $BUILD_DIR/*.txt $BIN_DIR
     fi
-    rm -rf $TMP_DIR/*
+    rm -rf $BUILD_DIR/*
 
     # Restore compiler/linker flags
-    export CFLAGS="$COPY_CFLAGS -distance=$OUT/distance.cfg.txt"
-    export CXXFLAGS="$COPY_CXXFLAGS -distance=$OUT/distance.cfg.txt"
-    export LDFLAGS="$COPY_LDFLAGS -distance=$OUT/distance.cfg.txt"
+    export CFLAGS="$COPY_CFLAGS -distance=$BIN_DIR/distance.cfg.txt"
+    export CXXFLAGS="$COPY_CXXFLAGS -distance=$BIN_DIR/distance.cfg.txt"
+    export LDFLAGS="$COPY_LDFLAGS -distance=$BIN_DIR/distance.cfg.txt"
 
     # Second compiler pass (instrumentation happens here)
     echo "Compiling/Instrumenting the $CORE SW model ..."
-    BUILD_DIR=$TMP_DIR BIN_DIR=$OUT make exe
+    BUILD_DIR=$BUILD_DIR BIN_DIR=$BIN_DIR make exe
 fi
 echo "-------------------------------------------------------------------------"
 echo "Done!"
@@ -266,7 +276,7 @@ echo "Done!"
 echo "========================================================================="
 echo "Cleaning up ..."
 if [ -z "${DEBUG-}" ]; then
-    rm -rf $WORK/
+    rm -rf $BUILD_DIR
     make clean-vlt
 fi
 echo "-------------------------------------------------------------------------"

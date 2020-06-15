@@ -25,8 +25,4 @@ else
     docker build -t hw-fuzzing/base-verilator $@ $HW_FUZZING/infra/base-verilator
     docker build -t hw-fuzzing/base-clang $@ $HW_FUZZING/infra/base-clang
     docker build -t hw-fuzzing/base-aflgo $@ $HW_FUZZING/infra/base-aflgo
-
-    # Create directories for compiling/fuzzing outputs/work
-    mkdir -p $HW_FUZZING/out
-    mkdir -p $HW_FUZZING/work
 fi

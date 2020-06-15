@@ -16,8 +16,7 @@
 # TODO: Set path to hw-fuzzing in .bashrc
 #export HW_FUZZING=/path/to/hw-fuzzing
 
-if [ -z "$CORE" ]
-then
+if [ -z "$CORE" ]; then
     echo "ERROR: Set CORE to target before proceeding."
 else
     echo "Launching container to COMPILE/INSTRUMENT $CORE for fuzzing ..."
@@ -28,11 +27,10 @@ else
         --name $CORE-compile \
         -e "CORE=$CORE" \
         -e "DEBUG=$DEBUG" \
-        -v $HW_FUZZING/out/$CORE/:/out \
-        -v $HW_FUZZING/work/$CORE/:/work \
         -v $HW_FUZZING/scripts/:/scripts \
         -v $HW_FUZZING/circuits/:/src/circuits \
         -v $HW_FUZZING/third_party:/src/third_party \
+        -u $(id -u ${USER}):$(id -g ${USER}) \
         -t hw-fuzzing/base-aflgo \
         bash /scripts/gen_hw_model.sh
 fi

@@ -44,18 +44,18 @@ tar xf libcxxabi-4.0.0.src.tar.xz
 mv libcxxabi-4.0.0.src libcxxabi
 
 # Build & install
-mkdir -p $WORK/llvm
-cd $WORK/llvm
+mkdir -p /tmp/llvm
+cd /tmp/llvm
 cmake -G "Ninja" \
       -DLIBCXX_ENABLE_SHARED=OFF -DLIBCXX_ENABLE_STATIC_ABI_LIBRARY=ON \
       -DCMAKE_BUILD_TYPE=Release -DLLVM_TARGETS_TO_BUILD="X86" \
       -DLLVM_BINUTILS_INCDIR=/usr/include $SRC/llvm
 ninja
 ninja install
-rm -rf $WORK/llvm
+rm -rf /tmp/llvm
 
-mkdir -p $WORK/msan
-cd $WORK/msan
+mkdir -p /tmp/msan
+cd /tmp/msan
 cmake -G "Ninja" \
       -DCMAKE_C_COMPILER=clang -DCMAKE_CXX_COMPILER=clang++ \
       -DLLVM_USE_SANITIZER=Memory -DCMAKE_INSTALL_PREFIX=/usr/msan/ \
@@ -64,7 +64,7 @@ cmake -G "Ninja" \
       $SRC/llvm
 ninja cxx
 ninja install-cxx
-rm -rf $WORK/msan
+rm -rf /tmp/msan
 
 # Install LLVMgold into bfd-plugins
 mkdir /usr/lib/bfd-plugins
