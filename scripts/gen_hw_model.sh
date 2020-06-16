@@ -46,6 +46,7 @@ echo "CC=$CC"
 echo "CXX=$CXX"
 echo "CFLAGS=$CFLAGS"
 echo "CXXFLAGS=$CXXFLAGS"
+echo "VLT_CXXFLAGS=$VLT_CXXFLAGS"
 echo "LDFLAGS=$LDFLAGS"
 echo "-------------------------------------------------------------------------"
 echo "Done!"
@@ -253,3 +254,4 @@ fi
 echo "-------------------------------------------------------------------------"
 echo -e "\e[1;32mBUILD & INSTRUMENTATION SUCCESSFUL -- Done!\e[0m"
 echo "========================================================================="
+exit 0
