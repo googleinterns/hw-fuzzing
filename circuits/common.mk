@@ -34,7 +34,7 @@ export BIN_DIR
 TB    = $(wildcard $(TB_SRCS_DIR)/*.cpp)
 HDL   = $(wildcard $(HDL_DIR)/*.v)
 MODEL = $(wildcard $(MODEL_DIR)/*.cpp)
-INPUT = afl_in/seed.tf
+INPUT = afl_in/seed
 export TB
 
 ################################################################################
@@ -50,9 +50,13 @@ VFLAGS := \
 	-Wno-fatal \
 	--top-module $(DUT) \
 	--Mdir $(MODEL_DIR) \
-	--trace \
-	$(COVERAGE) \
 	--cc
+
+ifdef DISABLE_VCD_TRACING
+	VLT_VCD_TRACING :=
+else
+	VLT_VCD_TRACING := --trace
+endif
 
 ################################################################################
 # Compilation rules
@@ -60,7 +64,7 @@ VFLAGS := \
 all: verilate exe seed sim
 
 verilate: $(HDL)
-	$(VERILATOR_ROOT)/bin/verilator $(VFLAGS) $(HDL)
+	$(VERILATOR_ROOT)/bin/verilator $(VFLAGS) $(VLT_VCD_TRACING) $(HDL); \
 
 $(BIN_DIR)/$(VM_PREFIX): $(MODEL) $(TB)
 	@mkdir -p $(BUILD_DIR); \
@@ -68,6 +72,7 @@ $(BIN_DIR)/$(VM_PREFIX): $(MODEL) $(TB)
 	make -f ../exe.mk
 
 .PHONY: \
+	clean-sim \
 	clean-exe \
 	clean-vlt \
 	clean \
@@ -83,17 +88,15 @@ coverage:
 	verilator_coverage --annotate logs/annotated logs/coverage.dat
 
 sim: $(BIN_DIR)/$(VM_PREFIX)
-	@if [ ! -f $(INPUT) ]; then \
-		echo "ERROR: run \"make seed\" first."; \
-		exit 1; \
-	else \
-		./$(BIN_DIR)/$(VM_PREFIX) $(INPUT); \
-	fi;
+	./$(BIN_DIR)/$(VM_PREFIX) $(INPUT).0.tf; \
 
 exe: $(BIN_DIR)/$(VM_PREFIX)
 
 seed: afl_in_dir afl_out_dir
-	python3 gen_seed.py $(INPUT) $(NUM_TESTS)
+	python3 $(SCRIPTS)/gen_afl_seeds.py \
+		afl_in/seed \
+		$(NUM_SEEDS) \
+		$(NUM_TESTS_IN_SEED)
 
 afl_in_dir:
 	@echo "Creating dir for AFL input files..."; \
@@ -103,9 +106,14 @@ afl_out_dir:
 	@echo "Creating dir for AFL output files..."; \
 	mkdir -p afl_out;
 
-clean-exe:
+clean-sim:
 	rm -rf logs
 	rm -f *.vcd
+	rm -rf afl_out
+	rm -rf afl_in
+	rm -rf __pycache__
+
+clean-exe:
 	rm -rf $(BIN_DIR)
 	rm -rf $(BIN_DIR).*
 	rm -rf $(BUILD_DIR)
@@ -116,5 +124,4 @@ clean-vlt:
 
 clean: clean-exe clean-vlt
 
-cleanall: clean
-	rm -rf afl_*
+cleanall: clean-sim clean

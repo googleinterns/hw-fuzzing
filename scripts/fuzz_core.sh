@@ -28,8 +28,10 @@ else
             --rm \
             --cap-add SYS_PTRACE \
             --name $CORE-fuzz \
-            -e "BIN_DIR=$BIN_DIR" \
-            -e "CORE=$CORE" \
+            -e BIN_DIR=$BIN_DIR \
+            -e CORE=$CORE \
+            -e NUM_SEEDS=$NUM_SEEDS \
+            -e NUM_TESTS_IN_SEED=$NUM_TESTS_IN_SEED \
             -v $HW_FUZZING/scripts/:/scripts \
             -v $HW_FUZZING/circuits/:/src/circuits \
             -u $(id -u ${USER}):$(id -g ${USER}) \

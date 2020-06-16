@@ -16,7 +16,7 @@
 cd $SRC/circuits/$CORE
 make seed
 $SRC/aflgo/afl-fuzz \
-    -S $CORE \
+    -d \
     -z exp \
     -c 45m \
     -i $SRC/circuits/$CORE/afl_in \

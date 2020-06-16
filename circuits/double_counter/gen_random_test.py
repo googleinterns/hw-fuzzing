@@ -13,30 +13,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import sys
 import random
 import string
 
-SELECT_SIZE = 1
-
-def generateRandomInput(select_size):
-    select = ""
-    for _ in range(select_size):
-        select += random.choice(string.ascii_letters)
-
-    return select
-
-def genRandomTests(test_file_name='double_counter.tf', num_tests=1000):
-
-    # Open Test File
-    test_file = open(test_file_name, "w")
-
-    # Write Tests
-    for _ in range(num_tests):
-        test_file.write("%s\n" % generateRandomInput(SELECT_SIZE))
-
-    # Close Test File
-    test_file.close()
-
-if __name__ == '__main__':
-    genRandomTests(test_file_name=sys.argv[1], num_tests=int(sys.argv[2]))
+def gen_random_test():
+    return random.choice(string.ascii_letters)

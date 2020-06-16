@@ -25,8 +25,8 @@ else
         --rm \
         --cap-add SYS_PTRACE \
         --name $CORE-compile \
-        -e "CORE=$CORE" \
-        -e "DEBUG=$DEBUG" \
+        -e CORE=$CORE \
+        -e DEBUG=$DEBUG \
         -v $HW_FUZZING/scripts/:/scripts \
         -v $HW_FUZZING/circuits/:/src/circuits \
         -v $HW_FUZZING/third_party:/src/third_party \

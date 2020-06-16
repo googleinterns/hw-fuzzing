@@ -15,8 +15,9 @@
 ################################################################################
 # Compiler/Linker
 ################################################################################
-CXX  ?= g++
-LINK ?= $(CXX)
+CXX     ?= g++
+VLT_CXX ?= g++
+LINK    ?= $(CXX)
 
 ################################################################################
 # Switches
@@ -72,17 +73,18 @@ VPATH += $(VERILATOR_ROOT)/include/vltstd
 
 # Optimization flags for non performance-critical/rarely executed code.
 # No optimization by default, which improves compilation speed.
-OPT_SLOW =
+OPT_SLOW = -O0
+
 # Optimization for performance critical/hot code. Most time is spent in these
 # routines. Optimizing by default for improved execution speed.
 #OPT_FAST = -Os
-OPT_FAST =
+OPT_FAST = -O0
+
 # Optimization applied to the common run-time library used by verilated models.
 # For compatibility this is called OPT_GLOBAL even though it only applies to
 # files in the run-time library. Normally there should be no need for the user
 # to change this as the library is small, but can have significant speed impact.
-#OPT_GLOBAL = -Os
-OPT_GLOBAL =
+OPT_GLOBAL = -Os
 
 ################################################################################
 # Verilator/Testbench classes
@@ -122,8 +124,9 @@ $(BUILD_DIR)/%.o: %.cpp
 $(VK_SLOW_OBJS): $(BUILD_DIR)/%.o: %.cpp
 	$(CXX) $(CXXFLAGS) $(CPPFLAGS) $(OPT_SLOW) -c -o $@ $<
 
+# DO NOT instrument this code for fuzzing
 $(VK_GLOBAL_OBJS): $(BUILD_DIR)/%.o: %.cpp
-	$(CXX) $(CXXFLAGS) $(CPPFLAGS) $(OPT_GLOBAL) -c -o $@ $<
+	$(VLT_CXX) $(VLT_CXXFLAGS) $(CPPFLAGS) $(OPT_GLOBAL) -c -o $@ $<
 
 .PHONY: debug-make
 

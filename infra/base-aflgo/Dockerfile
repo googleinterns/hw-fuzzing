@@ -23,15 +23,5 @@ COPY checkout_build_install_aflgo.sh /root/
 RUN /root/checkout_build_install_aflgo.sh
 RUN rm /root/checkout_build_install_aflgo.sh
 
-# Setup the environment
-ENV CC "$SRC/aflgo/afl-clang-fast"
-ENV CXX "$SRC/aflgo/afl-clang-fast++"
-ENV CCC "$SRC/aflgo/afl-clang-fast++"
-
-# Defualt base build flags
-ENV CFLAGS ""
-ENV CXXFLAGS ""
-ENV LDFLAGS ""
-
 # Set working directory
 WORKDIR $SRC

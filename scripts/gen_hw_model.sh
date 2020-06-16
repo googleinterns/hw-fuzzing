@@ -22,54 +22,25 @@ echo "========================================================================="
 echo "Setting compiler/linker flags..."
 echo "-------------------------------------------------------------------------"
 
-# Default build flags for various sanitizers
-SANITIZER_FLAGS_address="-fsanitize=address "\
-"-fsanitize-address-use-after-scope"
-SANITIZER_FLAGS_undefined="-fsanitize=bool,"\
-"array-bounds,"\
-"float-divide-by-zero,"\
-"function,"\
-"integer-divide-by-zero,"\
-"return,"\
-"shift,"\
-"signed-integer-overflow,"\
-"vla-bound,"\
-"vptr "\
-"-fno-sanitize-recover=undefined"
-SANITIZER_FLAGS_memory="-fsanitize=memory "\
-"-fsanitize-memory-track-origins"
+# Set compilers
+export CC="$SRC/aflgo/afl-clang-fast"
+export CXX="$SRC/aflgo/afl-clang-fast++"
+export CCC="$SRC/aflgo/afl-clang-fast++"
+export VLT_CXX="clang++"
 
-# Default build flags for coverage
-#COVERAGE_FLAGS="-fsanitize-coverage=trace-pc-guard,trace-cmp"
-COVERAGE_FLAGS="-fsanitize-coverage=trace-pc-guard"
+# Disable Verilator VCD tracing during fuzzing
+export DISABLE_VCD_TRACING=1
 
-# Workaround ASAN false positive: https://github.com/google/sanitizers/issues/647
-ASAN_OPTIONS="detect_odr_violation=0"
-
-# Set sanitizer flags
-if [ -z "${SANITIZER_FLAGS-}" ]; then
-  FLAGS_VAR="SANITIZER_FLAGS_${SANITIZER}"
-  export SANITIZER_FLAGS=${!FLAGS_VAR-}
-fi
-
-# If using memory sanitizer, use the one installed with Clang 4.0.0
-if [[ $SANITIZER_FLAGS = *sanitize=memory* ]]; then
-    # Take all libraries from lib/msan
-    cp -R /usr/msan/lib/* /usr/lib/
-fi
-
-# Set coverage tracing flag overrides
-COVERAGE_FLAGS_VAR="COVERAGE_FLAGS_$SANITIZER"
-if [[ -n ${!COVERAGE_FLAGS_VAR-} ]]; then
-  export COVERAGE_FLAGS="${!COVERAGE_FLAGS_VAR}"
-fi
+# Build code with source-line table mappings -- same as "-g"
+SOURCE_MAPPINGS_FLAGS="-gline-tables-only"
 
 # Set compiler/linker flags
-export CFLAGS="$CFLAGS $SANITIZER_FLAGS $COVERAGE_FLAGS"
-export CXXFLAGS="$CXXFLAGS $SANITIZER_FLAGS $COVERAGE_FLAGS"
-export LDFLAGS="$LDFLAGS $SANITIZER_FLAGS $COVERAGE_FLAGS"
+export CFLAGS="$SOURCE_MAPPINGS_FLAGS"
+export CXXFLAGS="$SOURCE_MAPPINGS_FLAGS"
+export VLT_CXXFLAGS=""
+export LDFLAGS="$LDFLAGS"
 
-# Print Compiler/Linker Flags
+# Print compiler/linker flags
 echo "Compiler/Linker Flags:"
 echo "CC=$CC"
 echo "CXX=$CXX"
