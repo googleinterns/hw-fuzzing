@@ -31,5 +31,5 @@ else
         -v $HW_FUZZING/circuits/:/src/circuits \
         -u $(id -u ${USER}):$(id -g ${USER}) \
         -t hw-fuzzing/base-aflgo \
-        bash /scripts/rebuild_and_gen_vcd.sh
+        bash /scripts/compile_and_sim_dut_wtracing.sh
 fi

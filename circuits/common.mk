@@ -96,7 +96,7 @@ seed: afl_in_dir afl_out_dir
 	python3 $(SCRIPTS)/gen_afl_seeds.py \
 		afl_in/seed \
 		$(NUM_SEEDS) \
-		$(NUM_TESTS_IN_SEED)
+		$(NUM_TESTS_PER_SEED)
 
 afl_in_dir:
 	@echo "Creating dir for AFL input files..."; \

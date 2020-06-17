@@ -139,7 +139,7 @@ else
 
     # Generate targets to fuzz
     echo "Generating targets to fuzz..."
-    python3 $SCRIPTS/gen_bb_targets.py $BUILD_DIR/BBtargets.txt
+    python3 gen_bb_targets.py $BUILD_DIR/BBtargets.txt
     AFLGO_BB_TARGETS=$BUILD_DIR/BBtargets.txt
 
     # Check if at least one fuzz target was generated

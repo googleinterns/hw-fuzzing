@@ -32,5 +32,5 @@ else
         -v $HW_FUZZING/third_party:/src/third_party \
         -u $(id -u ${USER}):$(id -g ${USER}) \
         -t hw-fuzzing/base-aflgo \
-        bash /scripts/gen_hw_model.sh
+        bash /scripts/compile_dut_for_fuzzing.sh
 fi

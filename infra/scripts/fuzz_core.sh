@@ -27,10 +27,10 @@ else
         --name $CORE-fuzz \
         -e CORE=$CORE \
         -e NUM_SEEDS=$NUM_SEEDS \
-        -e NUM_TESTS_IN_SEED=$NUM_TESTS_IN_SEED \
+        -e NUM_TESTS_PER_SEED=$NUM_TESTS_PER_SEED \
         -v $HW_FUZZING/scripts/:/scripts \
         -v $HW_FUZZING/circuits/:/src/circuits \
         -u $(id -u ${USER}):$(id -g ${USER}) \
         -t hw-fuzzing/base-aflgo \
-        bash /scripts/gen_seed_and_run_aflgo.sh
+        bash /scripts/gen_seeds_and_fuzz.sh
 fi
