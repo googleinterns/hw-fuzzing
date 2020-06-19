@@ -52,12 +52,19 @@ echo "Done!"
 echo "========================================================================="
 echo "Backing up fuzzing results ..."
 echo "-------------------------------------------------------------------------"
-i=0
-BK_DIR="fuzz_exp"
-while [ -d $BK_DIR ]; do
-  BK_DIR=$BK_DIR.$i
-  i=$((i + 1))
-done
+if [[ -z ${BK_DIR-} ]]; then
+    i=1
+    BK_DIR=fuzz_exp.0
+    while [ -d $BK_DIR ]; do
+        BK_DIR=fuzz_exp.$i
+        i=$((i + 1))
+    done
+else
+    if [[ -d $BK_DIR ]]; then
+        echo -e "\e[1;31mAborting ... experiment directory already exists!\e[0m"
+        exit 1
+    fi
+fi
 mkdir $BK_DIR
 mv afl_in $BK_DIR/
 mv afl_out $BK_DIR/

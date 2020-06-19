@@ -66,7 +66,7 @@ cd $SRC/circuits/$CORE
 i=0
 BIN_DIR=$SRC/circuits/$CORE/bin
 while [ -d $BIN_DIR ]; do
-  BIN_DIR=$BIN_DIR.$i
+  BIN_DIR=$SRC/circuits/$CORE/bin.$i
   i=$((i + 1))
 done
 mkdir $BIN_DIR
@@ -127,7 +127,7 @@ else
     BUILD_DIR=$SRC/circuits/$CORE/build
     i=0
     while [ -d $BUILD_DIR ]; do
-      BUILD_DIR=$BUILD_DIR.$i
+      BUILD_DIR=$SRC/circuits/$CORE/build.$i
       i=$((i + 1))
     done
     mkdir $BUILD_DIR
