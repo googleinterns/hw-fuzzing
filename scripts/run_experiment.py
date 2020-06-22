@@ -13,9 +13,11 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import errno
 import importlib
 import json
 import os
+import shutil
 import subprocess
 import sys
 
@@ -25,32 +27,23 @@ NUM_ARGS = 1
 # Configurations dictionary keys
 KEY_EXPERIMENT_NUMBER = "experiment_number"
 KEY_EXPERIMENT_NAME = "experiment_name"
-KEY_ROOT_PATH = "root_path"
 KEY_CORE = "core"
 KEY_DEBUG = "debug"
 KEY_BB_TARGET_GENERATION_SCRIPT = "bb_target_generation_script"
 KEY_NUM_SEEDS = "num_seeds"
 KEY_NUM_TESTS_PER_SEED = "num_tests_per_seed"
+KEY_FUZZING_DURATION_MINS = "fuzzing_duration_mins"
 KEY_DATA_EXTRACTION_SCRIPT = "data_extraction_script"
+KEY_TAG = "tag"
 
 # Docker infrastructure scripts
 INFRA_PATH = "infra/scripts"
 
-def run_subprocess_and_wait(cmd_list, cwd, env):
-    cmd_list = ["./compile_core.sh"]
-    print(env)
-    print(cwd)
-    print(cmd_list)
-    compile_proc = subprocess.Popen(cmd_list, \
-            stdin=subprocess.PIPE, \
-            stdout=subprocess.PIPE, \
-            stderr=subprocess.PIPE, \
-            cwd=cwd, \
-            env=env)
-    output, errors = compile_proc.communicate()
-    compile_proc.wait()
-    print("Output:", output)
-    print("Errors:", errors)
+# Fuzzer
+FUZZER = "aflgo"
+
+# Root data directory name
+ROOT_DATA_PATH = "data"
 
 def main(args):
 
@@ -70,27 +63,75 @@ def main(args):
     # Parse experiment configurations
     experiment_number = config[KEY_EXPERIMENT_NUMBER]
     experiment_name = config[KEY_EXPERIMENT_NAME]
-    root_path = config[KEY_ROOT_PATH]
     core = config[KEY_CORE]
-    debug = config[KEY_DEBUG]
+    debug = int(config[KEY_DEBUG])
     bb_target_generation_script = config[KEY_BB_TARGET_GENERATION_SCRIPT]
-    num_seeds = config[KEY_NUM_SEEDS]
-    num_tests_per_seed = config[KEY_NUM_TESTS_PER_SEED]
+    num_seeds = int(config[KEY_NUM_SEEDS])
+    num_tests_per_seed = int(config[KEY_NUM_TESTS_PER_SEED])
+    fuzzing_duration_mins = float(config[KEY_FUZZING_DURATION_MINS])
     data_extraction_script = config[KEY_DATA_EXTRACTION_SCRIPT]
+    tag = config[KEY_TAG]
 
     # Print experiment configurations
-    print("-------------------------------------------------------------------")
-    print("Experiment Configurations:")
-    print("-------------------------------------------------------------------")
     print("Experiment Number:", experiment_number)
     print("Experiment Name:", experiment_name)
-    print("Root Path:", root_path)
     print("Core:", core)
     print("Debug:", debug)
     print("BB Target Generation Script:", bb_target_generation_script)
     print("Number of Fuzzing Seeds:", num_seeds)
     print("Number of Test per Seed:", num_tests_per_seed)
+    print("Fuzzing Duration (min.):", fuzzing_duration_mins)
     print("Data Extraction Script:", data_extraction_script)
+    print("Tag:", tag)
+
+    # Create root data directory if it does not exist
+    print("-------------------------------------------------------------------")
+    print("Creating directories for fuzzing data ...")
+    print("-------------------------------------------------------------------")
+    root_path = os.getenv('HW_FUZZING')
+    core_data_path = ROOT_DATA_PATH
+    exp_data_path = "%s/exp%s_%s" % \
+            (core_data_path, str(experiment_number).zfill(3), experiment_name)
+
+    # Create core data path
+    try:
+        os.makedirs(core_data_path)
+    except OSError as e:
+        if e.errno != errno.EEXIST:
+            raise
+
+    # Create experiment data path
+    try:
+        os.makedirs(exp_data_path)
+    except OSError as e:
+        if e.errno != errno.EEXIST:
+            raise
+
+    # Construct output directory name
+    fuzz_data_path = "%s/%s_%dseeds_%dtests_%smins%s" % ( \
+            exp_data_path, \
+            FUZZER, \
+            num_seeds, \
+            num_tests_per_seed, \
+            str(fuzzing_duration_mins).replace(".", "_"), \
+            tag)
+
+    # Check if fuzz data directory already exists
+    if os.path.exists(fuzz_data_path):
+        ovw = input('WARNING: fuzzing data already exists. Overwrite? [Yn]')
+        if ovw in {'yes', 'y', 'Y', 'YES', 'Yes', ''}:
+            shutil.rmtree(fuzz_data_path)
+        else:
+            print("ABORT: re-run with different experiment parameters.")
+            sys.exit(-1)
+
+    # Print output directories
+    print("Output Data Paths:")
+    print("Root Path:", root_path)
+    print("Core Data Path:", core_data_path)
+    print("Experiment Data Path:", exp_data_path)
+    print("Fuzzing Data Path:", fuzz_data_path)
+    print("Done!")
 
     # Compile target core for fuzzing
     print("-------------------------------------------------------------------")
@@ -101,9 +142,9 @@ def main(args):
         "--name", "%s-compile" % core, \
         "-e", "CORE=%s" % core, \
         "-e", "DEBUG=%d" % debug, \
-        "-v", "%s/scripts:/scripts" % os.getenv('HW_FUZZING'), \
-        "-v", "%s/circuits:/src/circuits" % os.getenv('HW_FUZZING'), \
-        "-v", "%s/third_party:/src/third_party" % os.getenv('HW_FUZZING'), \
+        "-v", "%s/scripts:/scripts" % root_path, \
+        "-v", "%s/circuits:/src/circuits" % root_path, \
+        "-v", "%s/third_party:/src/third_party" % root_path, \
         "-u", "%d:%d" % (os.getuid(), os.getgid()), \
         "-t", "hw-fuzzing/base-aflgo", \
         "bash", "/scripts/compile_dut_for_fuzzing.sh" \
@@ -119,17 +160,16 @@ def main(args):
     print("-------------------------------------------------------------------")
     print("Fuzzing SW model of %s ..." % core)
     print("-------------------------------------------------------------------")
-    exp_data_dir = "exp%s_%s_data" % \
-            (str(experiment_number).zfill(3), experiment_name)
     command = [\
         "docker", "run", "-i", "--rm", "--cap-add", "SYS_PTRACE", \
         "--name", "%s-fuzz" % core, \
         "-e", "CORE=%s" % core, \
         "-e", "NUM_SEEDS=%d" % num_seeds, \
         "-e", "NUM_TESTS_PER_SEED=%d" % num_tests_per_seed, \
-        "-e", "BK_DIR=%s" % exp_data_dir, \
-        "-v", "%s/scripts:/scripts" % os.getenv('HW_FUZZING'), \
-        "-v", "%s/circuits:/src/circuits" % os.getenv('HW_FUZZING'), \
+        "-e", "FUZZING_DURATION_MINS=%f" % fuzzing_duration_mins, \
+        "-e", "BK_DIR=%s" % fuzz_data_path, \
+        "-v", "%s/scripts:/scripts" % root_path, \
+        "-v", "%s/circuits:/src/circuits" % root_path, \
         "-u", "%d:%d" % (os.getuid(), os.getgid()), \
         "-t", "hw-fuzzing/base-aflgo", \
         "bash", "/scripts/gen_seeds_and_fuzz.sh" \
@@ -149,9 +189,9 @@ def main(args):
         "docker", "run", "-i", "--rm", "--cap-add", "SYS_PTRACE", \
         "--name", "%s-vcd" % core, \
         "-e", "CORE=%s" % core, \
-        "-e", "FUZZ_RESULTS_DIR=%s" % exp_data_dir, \
-        "-v", "%s/scripts:/scripts" % os.getenv('HW_FUZZING'), \
-        "-v", "%s/circuits:/src/circuits" % os.getenv('HW_FUZZING'), \
+        "-e", "FUZZ_RESULTS_DIR=%s" % fuzz_data_path, \
+        "-v", "%s/scripts:/scripts" % root_path, \
+        "-v", "%s/circuits:/src/circuits" % root_path, \
         "-u", "%d:%d" % (os.getuid(), os.getgid()), \
         "-t", "hw-fuzzing/base-aflgo", \
         "bash", "/scripts/compile_and_sim_dut_wtracing.sh" \
@@ -167,9 +207,9 @@ def main(args):
     print("-------------------------------------------------------------------")
     print("Extracting data to analyze ...")
     print("-------------------------------------------------------------------")
-    sys.path.append(os.getenv('HW_FUZZING') + "/scripts/data_extraction")
+    sys.path.append(root_path + "/scripts/data_extraction")
     data_extraction_module = importlib.import_module(data_extraction_script)
-    data_extraction_module.main([exp_data_dir + "/vcd"])
+    data_extraction_module.main([fuzz_data_path + "/vcd"])
     print("Done!")
 
 if __name__ == "__main__":

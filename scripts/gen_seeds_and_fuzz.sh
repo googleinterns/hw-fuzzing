@@ -34,13 +34,24 @@ echo "Done!"
 echo "========================================================================="
 echo "Launching fuzzer ..."
 echo "-------------------------------------------------------------------------"
-$SRC/aflgo/afl-fuzz \
-    -d \
-    -z exp \
-    -c 45m \
-    -i afl_in \
-    -o afl_out \
-    bin/V$CORE @@
+if [[ -z ${FUZZING_DURATION_MINS-} ]]; then
+    $SRC/aflgo/afl-fuzz \
+        -d \
+        -z exp \
+        -c 45m \
+        -i afl_in \
+        -o afl_out \
+        bin/V$CORE @@
+else
+    timeout --foreground ${FUZZING_DURATION_MINS}m\
+        $SRC/aflgo/afl-fuzz \
+        -d \
+        -z exp \
+        -c 45m \
+        -i afl_in \
+        -o afl_out \
+        bin/V$CORE @@
+fi
 echo "-------------------------------------------------------------------------"
 echo "Done!"
 

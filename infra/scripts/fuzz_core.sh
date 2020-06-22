@@ -28,6 +28,7 @@ else
         -e CORE=$CORE \
         -e NUM_SEEDS=$NUM_SEEDS \
         -e NUM_TESTS_PER_SEED=$NUM_TESTS_PER_SEED \
+        -e FUZZING_DURATION_MINS=$FUZZING_DURATION_MINS \
         -v $HW_FUZZING/scripts/:/scripts \
         -v $HW_FUZZING/circuits/:/src/circuits \
         -u $(id -u ${USER}):$(id -g ${USER}) \

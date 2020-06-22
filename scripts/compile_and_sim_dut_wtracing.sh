@@ -73,7 +73,7 @@ echo "-------------------------------------------------------------------------"
 cd $FUZZ_RESULTS_DIR && mkdir -p vcd && cd vcd
 for test_file in ../afl_out/queue/*; do
     echo "Generating VCD trace for: $test_file ..."
-    ../../bin/V$CORE $test_file > /dev/null
+    $SRC/circuits/$CORE/bin/V$CORE $test_file > /dev/null
 done
 echo "-------------------------------------------------------------------------"
 echo "Done!"

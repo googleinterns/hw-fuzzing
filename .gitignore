@@ -9,7 +9,6 @@
 *.txt
 *bin/
 *bin.*/
-*afl_out/
 
 # Verilator Ouputs
 *model/
@@ -18,6 +17,16 @@
 # Simulation Files
 *.vcd
 *.dat
+*.json
+
+# Fuzzer Outputs
+*afl_out
+
+# Plots
+*.pdf
+
+# Allow tracking experiment config files
+!*config/*.json
 
 # MacOS Dir Files
 *.DS_Store
