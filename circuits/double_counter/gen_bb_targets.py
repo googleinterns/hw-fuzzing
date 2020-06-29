@@ -21,11 +21,10 @@ def write_target(src_file, line_num, targets_f):
 def main(args):
     bb_targets_filename = args[0]
     with open(bb_targets_filename, "w") as targets_f:
+        write_target("Vdouble_counter.cpp", 72, targets_f)
         write_target("Vdouble_counter.cpp", 73, targets_f)
         write_target("Vdouble_counter.cpp", 74, targets_f)
         write_target("Vdouble_counter.cpp", 75, targets_f)
-        write_target("Vdouble_counter.cpp", 76, targets_f)
-        write_target("Vdouble_counter.cpp", 77, targets_f)
 
 if __name__ == "__main__":
     main(sys.argv[1:])

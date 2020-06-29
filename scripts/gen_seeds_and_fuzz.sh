@@ -15,73 +15,55 @@
 
 ################################################################################
 ################################################################################
-## Generate AFLGO seeds
-################################################################################
-################################################################################
-echo "========================================================================="
-echo "Generating seed test files ..."
-echo "-------------------------------------------------------------------------"
-cd $SRC/circuits/$CORE
-make seed
-echo "-------------------------------------------------------------------------"
-echo "Done!"
-
-################################################################################
-################################################################################
 ## Fuzz the CORE
 ################################################################################
 ################################################################################
 echo "========================================================================="
 echo "Launching fuzzer ..."
 echo "-------------------------------------------------------------------------"
-if [[ -z ${FUZZING_DURATION_MINS-} ]]; then
-    $SRC/aflgo/afl-fuzz \
-        -d \
-        -z exp \
-        -c 45m \
-        -i afl_in \
-        -o afl_out \
-        bin/V$CORE @@
-else
-    timeout --foreground ${FUZZING_DURATION_MINS}m\
-        $SRC/aflgo/afl-fuzz \
-        -d \
-        -z exp \
-        -c 45m \
-        -i afl_in \
-        -o afl_out \
-        bin/V$CORE @@
-fi
-echo "-------------------------------------------------------------------------"
-echo "Done!"
+cd $SRC/circuits/$CORE/$EXP_DATA_PATH
+#if [[ ! -z ${CHECKPOINT_INTERVAL_MINS-} ]]; then
+    #BK_DIR=$BK_DIR CHECKPOINT_INTERVAL_MINS="$CHECKPOINT_INTERVAL_MINS" \
+        #source $SCRIPTS/checkpoint_aflgo_output.sh &
+    #CHECKPOINTING_PID=$!
+#fi
 
-################################################################################
-################################################################################
-## Backup fuzzing results
-################################################################################
-################################################################################
-echo "========================================================================="
-echo "Backing up fuzzing results ..."
-echo "-------------------------------------------------------------------------"
-if [[ -z ${BK_DIR-} ]]; then
-    i=1
-    BK_DIR=fuzz_exp.0
-    while [ -d $BK_DIR ]; do
-        BK_DIR=fuzz_exp.$i
-        i=$((i + 1))
-    done
-else
-    if [[ -d $BK_DIR ]]; then
-        echo -e "\e[1;31mAborting ... experiment directory already exists!\e[0m"
-        exit 1
+for (( num=1; num <= $NUM_INSTANCES; num++ )); do
+    echo "Launching fuzzer $num ..."
+
+    # Set parallel option
+    if [[ $num -eq 1 ]]; then
+        PARALLEL_OPT="-M ${FUZZER_INSTANCE_BASENAME}_${num}"
+    else
+        PARALLEL_OPT="-S ${FUZZER_INSTANCE_BASENAME}_${num}"
     fi
-fi
-mkdir $BK_DIR
-mv afl_in $BK_DIR/
-mv afl_out $BK_DIR/
-mv build $BK_DIR/
-mv bin $BK_DIR/
-mv model $BK_DIR/
+
+    # Launch fuzzer
+    if [[ -z ${FUZZING_DURATION_MINS-} ]]; then
+        $SRC/aflgo/afl-fuzz \
+            -z exp \
+            -c ${TIME_TO_EXPLOITATION_MINS}m \
+            -i ${FUZZER_INPUT_DIR} \
+            -o ${FUZZER_OUTPUT_DIR} \
+            ${PARALLEL_OPT} \
+            bin/V$CORE @@
+    else
+        timeout --foreground ${FUZZING_DURATION_MINS}m\
+            $SRC/aflgo/afl-fuzz \
+            -z exp \
+            -c ${TIME_TO_EXPLOITATION_MINS}m \
+            -i ${FUZZER_INPUT_DIR} \
+            -o ${FUZZER_OUTPUT_DIR} \
+            ${PARALLEL_OPT} \
+            bin/V$CORE @@
+    fi
+done
+
+#if [[ ! -z ${CHECKPOINTING_PID-} ]]; then
+    #kill -2 $CHECKPOINTING_PID
+    #sleep 0.5s
+#fi
+echo "-------------------------------------------------------------------------"
 echo "Done!"
 echo "========================================================================="
 exit 0

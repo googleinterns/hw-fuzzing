@@ -53,23 +53,24 @@ echo "Done!"
 
 ################################################################################
 ################################################################################
-## Switch to CORE directory and create build directory
+## Switch to experiment directory and create bin directory
 ################################################################################
 ################################################################################
 echo "========================================================================="
-echo "Creating $CORE build directory ..."
+echo "Switching to experiment directory and creating bin directory ..."
 echo "-------------------------------------------------------------------------"
-# Move to target CORE dir
+
+# Move to experiment directory
 cd $SRC/circuits/$CORE
 
-# Make a bin directory to store EXEs and AFLGo outputs
-i=0
-BIN_DIR=$SRC/circuits/$CORE/bin
-while [ -d $BIN_DIR ]; do
-  BIN_DIR=$SRC/circuits/$CORE/bin.$i
-  i=$((i + 1))
-done
+# Make a build directory to store AFLGo compiler inputs/outputs
+BUILD_DIR=$SRC/circuits/$CORE/$EXP_DATA_PATH/build
+mkdir $BUILD_DIR
+
+# Make a bin directory to store instrumented EXEs
+BIN_DIR=$SRC/circuits/$CORE/$EXP_DATA_PATH/bin
 mkdir $BIN_DIR
+
 echo "-------------------------------------------------------------------------"
 echo "Done!"
 
@@ -81,6 +82,7 @@ echo "Done!"
 echo "========================================================================="
 echo "Installing dependencies for $CORE test bench ..."
 echo "-------------------------------------------------------------------------"
+
 source tb_deps.sh
 if [ -z $TB_DEPS ]; then
     echo "No dependencies to install."
@@ -99,7 +101,10 @@ echo "Done!"
 echo "========================================================================="
 echo "Building SW model of $CORE core for fuzzing ..."
 echo "-------------------------------------------------------------------------"
-make verilate
+
+MODEL_DIR=$SRC/circuits/$CORE/$EXP_DATA_PATH/model
+MODEL_DIR=$MODEL_DIR make verilate
+
 echo "-------------------------------------------------------------------------"
 echo "Done!"
 
@@ -123,15 +128,6 @@ if [ -f $BIN_DIR/distance.cfg.txt ]; then
 else
     DO_POSTPROCESS=1
 
-    # Make a build directory to store AFLGo compiler inputs/outputs
-    BUILD_DIR=$SRC/circuits/$CORE/build
-    i=0
-    while [ -d $BUILD_DIR ]; do
-      BUILD_DIR=$SRC/circuits/$CORE/build.$i
-      i=$((i + 1))
-    done
-    mkdir $BUILD_DIR
-
     # Make backup copy of base compiler/linker flags
     COPY_CFLAGS=$CFLAGS
     COPY_CXXFLAGS=$CXXFLAGS
@@ -139,7 +135,7 @@ else
 
     # Generate targets to fuzz
     echo "Generating targets to fuzz..."
-    python3 gen_bb_targets.py $BUILD_DIR/BBtargets.txt
+    python3 $SRC/circuits/$CORE/gen_bb_targets.py $BUILD_DIR/BBtargets.txt
     AFLGO_BB_TARGETS=$BUILD_DIR/BBtargets.txt
 
     # Check if at least one fuzz target was generated
@@ -179,13 +175,17 @@ echo "Done!"
 ################################################################################
 ################################################################################
 echo "========================================================================="
+
 if [ $DO_POSTPROCESS -eq 1 ]; then
     echo "Computing CG/CFG of $CORE SW model ..."
 else
     echo "Compiling/Instrumenting the $CORE SW model ..."
 fi
+
 echo "-------------------------------------------------------------------------"
-BUILD_DIR=$BUILD_DIR BIN_DIR=$BIN_DIR make exe
+
+MODEL_DIR=$MODEL_DIR BUILD_DIR=$BUILD_DIR BIN_DIR=$BIN_DIR make exe
+
 echo "-------------------------------------------------------------------------"
 echo "Done!"
 
@@ -198,7 +198,8 @@ if [ $DO_POSTPROCESS -eq 1 ]; then
 echo "========================================================================="
 echo "Doing AFLGo postprocessing ..."
 echo "-------------------------------------------------------------------------"
-    # Check if AFLGo control flow graph extraction was successfull and fuzz
+
+# Check if AFLGo control flow graph extraction was successfull and fuzz
     # targets were found
     if [ $(grep -Ev "^$" $BUILD_DIR/Ftargets.txt | wc -l) -eq 0 ]; then
         echo -e "\e[1;31mAborting ... No function targets found in model.\e[0m"
@@ -235,8 +236,9 @@ echo "-------------------------------------------------------------------------"
 
     # Second compiler pass (instrumentation happens here)
     echo "Compiling/Instrumenting the $CORE SW model ..."
-    BUILD_DIR=$BUILD_DIR BIN_DIR=$BIN_DIR make exe
+    MODEL_DIR=$MODEL_DIR BUILD_DIR=$BUILD_DIR BIN_DIR=$BIN_DIR make exe
 fi
+
 echo "-------------------------------------------------------------------------"
 echo "Done!"
 
@@ -247,10 +249,12 @@ echo "Done!"
 ################################################################################
 echo "========================================================================="
 echo "Cleaning up ..."
+
 if [ -z "${DEBUG-}" ]; then
     rm -rf $BUILD_DIR
-    make clean-vlt
+    rm -rf $MODEL_DIR
 fi
+
 echo "-------------------------------------------------------------------------"
 echo -e "\e[1;32mBUILD & INSTRUMENTATION SUCCESSFUL -- Done!\e[0m"
 echo "========================================================================="

@@ -15,13 +15,15 @@
 ################################################################################
 # Directories
 ################################################################################
-SCRIPTS     ?= ../../scripts
-HDL_DIR     ?= hdl
-TB_SRCS_DIR ?= src
-TB_INC_DIR  ?= include
-MODEL_DIR   ?= model
-BUILD_DIR   ?= build
-BIN_DIR     ?= bin
+SCRIPTS           ?= ../../scripts
+HDL_DIR           ?= hdl
+TB_SRCS_DIR       ?= src
+TB_INC_DIR        ?= include
+MODEL_DIR         ?= model
+BUILD_DIR         ?= build
+BIN_DIR           ?= bin
+FUZZER_INPUT_DIR  ?= afl_in
+FUZZER_OUTPUT_DIR ?= afl_out
 export TB_SRCS_DIR
 export TB_INC_DIR
 export MODEL_DIR
@@ -34,7 +36,7 @@ export BIN_DIR
 TB    = $(wildcard $(TB_SRCS_DIR)/*.cpp)
 HDL   = $(wildcard $(HDL_DIR)/*.v)
 MODEL = $(wildcard $(MODEL_DIR)/*.cpp)
-INPUT = afl_in/seed
+INPUT = $(FUZZER_INPUT_DIR)/seed
 export TB
 
 ################################################################################
@@ -94,23 +96,23 @@ exe: $(BIN_DIR)/$(VM_PREFIX)
 
 seed: afl_in_dir afl_out_dir
 	python3 $(SCRIPTS)/gen_afl_seeds.py \
-		afl_in/seed \
+		$(FUZZER_INPUT_DIR)/seed \
 		$(NUM_SEEDS) \
 		$(NUM_TESTS_PER_SEED)
 
 afl_in_dir:
-	@echo "Creating dir for AFL input files..."; \
-	mkdir -p afl_in;
+	@echo "Creating dir for fuzzer input files..."; \
+	mkdir -p $(FUZZER_INPUT_DIR);
 
 afl_out_dir:
-	@echo "Creating dir for AFL output files..."; \
-	mkdir -p afl_out;
+	@echo "Creating dir for fuzzer output files..."; \
+	mkdir -p $(FUZZER_OUTPUT_DIR);
 
 clean-sim:
 	rm -rf logs
 	rm -f *.vcd
-	rm -rf afl_out
-	rm -rf afl_in
+	rm -rf $(FUZZER_INPUT_DIR)
+	rm -rf $(FUZZER_OUTPUT_DIR)
 	rm -rf __pycache__
 
 clean-exe:

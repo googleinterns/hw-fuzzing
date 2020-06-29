@@ -43,6 +43,7 @@ def main(args):
     input_file_num = 0
 
     # TODO: sort input files by time stamp? does AFLGO filename correlate?
+    prev_cwd = os.getcwd()
     os.chdir(vcd_files_dir)
     vcd_files = glob.glob("*.vcd")
 
@@ -70,6 +71,9 @@ def main(args):
     # Dump data to a JSON file for plotting
     with open(json_output_filename, 'w') as fp:
         json.dump(data_dict, fp)
+
+    # Change back to orginal directory
+    os.chdir(prev_cwd)
 
 if __name__ == "__main__":
     main(sys.argv[1:])

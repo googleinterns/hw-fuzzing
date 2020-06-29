@@ -20,13 +20,13 @@
 *.json
 
 # Fuzzer Outputs
-*afl_out
+*data/
 
 # Plots
 *.pdf
 
 # Allow tracking experiment config files
-!*config/*.json
+!circuits/double_counter/configs/*.json
 
 # MacOS Dir Files
 *.DS_Store

@@ -1,0 +1,17 @@
+{
+    "experiment_number" : 1,
+    "experiment_name" : "confirm_target_count_1",
+    "core" : "double_counter",
+    "debug" : 1,
+    "bb_target_generation_script" : "gen_bb_targets.py",
+    "num_seeds" : 5,
+    "num_tests_per_seed" : 5,
+    "num_instances" : 1,
+    "fuzzer_input_dir" : "in",
+    "fuzzer_output_dir" : "out",
+    "fuzzing_duration_mins" : 2,
+    "checkpoint_interval_mins" : null,
+    "time_to_exploitation_mins" : 1,
+    "data_extraction_script" : "double_counter_extract_final_counts",
+    "tag" : null
+}
