@@ -24,7 +24,7 @@ export LINKFLAGS := -std=c++11
 # Default number of seed tests (encryptions)
 ################################################################################
 NUM_SEEDS ?= 1
-NUM_TESTS_IN_SEED ?= 5
+NUM_TESTS_PER_SEED ?= 5
 
 ################################################################################
 # Directories

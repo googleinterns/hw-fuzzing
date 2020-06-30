@@ -35,9 +35,9 @@ def main(args):
 
     # Prep data dict
     data_dict = {}
-    data_dict["Input"] = []
+    data_dict["Input File"] = []
     data_dict["Signal"] = []
-    data_dict["Count"] = []
+    data_dict["Value"] = []
 
     # iterate over VCD files in dir
     input_file_num = 0
@@ -61,9 +61,9 @@ def main(args):
             last_value_int = int(last_value_str, 2)
 
             # Add data to dictionary in long format (easier for plotting)
-            data_dict["Input"].append(input_file_num)
+            data_dict["Input File"].append(input_file_num)
             data_dict["Signal"].append(sig)
-            data_dict["Count"].append(last_value_int)
+            data_dict["Value"].append(last_value_int)
 
         # Increment file number
         input_file_num += 1

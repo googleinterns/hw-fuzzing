@@ -39,6 +39,10 @@ def compile_core(config):
     print(LINE_SEP)
     print("Verilating/Compiling %s for fuzzing ..." % config.core)
     print(LINE_SEP)
+    if config.debug:
+        docker_image = "hw-fuzzing/base-aflgo-debug"
+    else:
+        docker_image = "hw-fuzzing/base-aflgo"
     command = [\
         "docker", "run", "-it", "--rm", "--cap-add", "SYS_PTRACE", \
         "--name", "%s-compile" % config.core, \
@@ -49,7 +53,7 @@ def compile_core(config):
         "-v", "%s/circuits:/src/circuits" % config.root_path, \
         "-v", "%s/third_party:/src/third_party" % config.root_path, \
         "-u", "%d:%d" % (os.getuid(), os.getgid()), \
-        "-t", "hw-fuzzing/base-aflgo", \
+        "-t", "%s" % docker_image, \
         "bash", "/scripts/compile_dut_for_fuzzing.sh" \
     ]
     try:
@@ -78,10 +82,15 @@ def fuzz_core(config):
     print(LINE_SEP)
     print("Fuzzing SW model of %s ..." % config.core)
     print(LINE_SEP)
+    if config.debug:
+        docker_image = "hw-fuzzing/base-aflgo-debug"
+    else:
+        docker_image = "hw-fuzzing/base-aflgo"
     command = [\
         "docker", "run", "-it", "--rm", "--cap-add", "SYS_PTRACE", \
         "--name", "%s-fuzz" % config.core, \
         "-e", "CORE=%s" % config.core, \
+        "-e", "DEBUG=%d" % config.debug, \
         "-e", "NUM_INSTANCES=%d" % config.num_instances, \
         "-e", "FUZZER_INSTANCE_BASENAME=%s" % config.fuzzer_instance_basename, \
         "-e", "FUZZING_DURATION_MINS=%s" % \
@@ -96,7 +105,7 @@ def fuzz_core(config):
         "-v", "%s/scripts:/scripts" % config.root_path, \
         "-v", "%s/circuits:/src/circuits" % config.root_path, \
         "-u", "%d:%d" % (os.getuid(), os.getgid()), \
-        "-t", "hw-fuzzing/base-aflgo", \
+        "-t", "%s" % docker_image, \
         "bash", "/scripts/gen_seeds_and_fuzz.sh" \
     ]
     try:
@@ -111,6 +120,10 @@ def simulate_and_trace(config):
     print(LINE_SEP)
     print("Generating VCD traces from fuzzer generated inputs ...")
     print(LINE_SEP)
+    if config.debug:
+        docker_image = "hw-fuzzing/base-aflgo-debug"
+    else:
+        docker_image = "hw-fuzzing/base-aflgo"
     command = [\
         "docker", "run", "-it", "--rm", "--cap-add", "SYS_PTRACE", \
         "--name", "%s-vcd" % config.core, \
@@ -122,7 +135,7 @@ def simulate_and_trace(config):
         "-v", "%s/scripts:/scripts" % config.root_path, \
         "-v", "%s/circuits:/src/circuits" % config.root_path, \
         "-u", "%d:%d" % (os.getuid(), os.getgid()), \
-        "-t", "hw-fuzzing/base-aflgo", \
+        "-t", "%s" % docker_image, \
         "bash", "/scripts/compile_and_sim_dut_wtracing.sh" \
     ]
     try:
@@ -151,15 +164,6 @@ def extract_data_for_plotting(config):
     print(LINE_SEP)
     print("Done!")
 
-    # # Extract checkpointed VCDs
-    # i = 0
-    # while os.path.exists(fuzz_data_path + "/vcd." + str(i)):
-        # print("Extracting checkpointed AFLGo input VCDs (%d) ..." % (i))
-        # data_extraction_module.main([fuzz_data_path + "/vcd." + str(i)])
-        # i += 1
-        # print("Done!")
-        # print(LINE_SEP)
-
 # Main
 def main(args):
 
@@ -171,6 +175,9 @@ def main(args):
     # Load experiment configurations
     config = Config(args[0])
     config.print_configurations()
+
+    # Create experiment directories
+    config.create_experiment_dirs()
 
     # Verilate and compile target core for fuzzing
     compile_core(config)

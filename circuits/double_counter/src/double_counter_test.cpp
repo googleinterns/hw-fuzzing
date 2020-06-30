@@ -58,6 +58,41 @@ int main(int argc, char** argv, char** env) {
     uint8_t count_1 = 0;
     uint8_t count_2 = 0;
 
+    // Get input file name
+    if (argc == 2) {
+        in_file_name = argv[1];
+        cout << "Input file: " << in_file_name << endl;
+    } else {
+        cerr << "Usage: " << argv[0];
+        cerr << " <input file name>" << endl;
+        exit(1);
+    }
+
+    // Open input file
+    in_file.open(in_file_name);
+    if (!in_file) {
+        cerr << "ERROR: input file does not exist." << endl;
+        exit(1);
+    }
+
+    // Check the format of the input file & terminate simulation if not correct.
+    // This trains AFL to throw away mutations that are not in the correct
+    // size format.
+    string line;
+    while (getline(in_file, line)) {
+        if (line.length() > 1) {
+            // Final model cleanup
+            in_file.close();
+
+            // Fin
+            exit(0);
+        }
+    }
+
+    // Reset file pointer to start of file
+    in_file.clear();                 // clear fail and eof bits
+    in_file.seekg(0, std::ios::beg); // back to the start!
+
     // Set debug level, 0 is off, 9 is highest presently used
     // May be overridden by commandArgs
     Verilated::debug(0);
@@ -78,16 +113,6 @@ int main(int argc, char** argv, char** env) {
     top->clk = 0;
     top->n_reset = 0;
     top->select = 0;
-
-    // Get input file name
-    if (argc == 2) {
-        in_file_name = argv[1];
-        cout << "Input file: " << in_file_name << endl;
-    } else {
-        cerr << "Usage: " << argv[0];
-        cerr << " <input file name>" << endl;
-        exit(1);
-    }
 
 #if VM_TRACE
     // If verilator was invoked with --trace argument enable VCD tracing
@@ -142,13 +167,6 @@ int main(int argc, char** argv, char** env) {
 
     // Pull DUT out of reset
     top->n_reset = 1;
-
-    // Open input file
-    in_file.open(in_file_name);
-    if (!in_file) {
-        cerr << "ERROR: input file does not exist." << endl;
-        exit(1);
-    }
 
     // Simulate encrypting all values from the file
     while (!Verilated::gotFinish() && in_file) {

@@ -21,8 +21,9 @@ then
     echo "ERROR: Set HW_FUZZING path and try again."
 else
     # Build Docker infrastructure
-    docker build --pull -t hw-fuzzing/base-image $@ $HW_FUZZING/infra/base-image
+    docker build -t hw-fuzzing/base-image $@ $HW_FUZZING/infra/base-image
     docker build -t hw-fuzzing/base-verilator $@ $HW_FUZZING/infra/base-verilator
     docker build -t hw-fuzzing/base-clang $@ $HW_FUZZING/infra/base-clang
     docker build -t hw-fuzzing/base-aflgo $@ $HW_FUZZING/infra/base-aflgo
+    docker build -t hw-fuzzing/base-aflgo-debug $@ $HW_FUZZING/infra/base-aflgo-debug
 fi

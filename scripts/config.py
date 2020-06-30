@@ -71,8 +71,8 @@ class Config():
         # Load configurations
         self.load_configurations()
 
-        # Configure directory setup
-        self.setup_experiment_dir()
+        # Set experiment directory names
+        self.set_experiment_dir_name()
 
         # Set fuzzer instance basename
         self.set_fuzzer_instance_basename()
@@ -102,17 +102,28 @@ class Config():
             self.data_extraction_script = cdict[KEY_DATA_EXTRACTION_SCRIPT]
             self.tag = cdict[KEY_TAG]
 
-    # Create directories for experiment data
-    def setup_experiment_dir(self):
+    # Set experiment directory name
+    def set_experiment_dir_name(self):
         self.exp_data_path = "%s/exp%s_%s" % \
                 (ROOT_DATA_PATH, \
                 str(self.experiment_number).zfill(3), \
                 self.experiment_name)
-        fuzzer_input_path = "%s/%s" % \
-                (self.exp_data_path, self.fuzzer_input_dir)
-        fuzzer_output_path = "%s/%s" % \
-                (self.exp_data_path, self.fuzzer_output_dir)
 
+    # Set fuzzer instance basename
+    def set_fuzzer_instance_basename(self):
+        self.fuzzer_instance_basename = "aflgo_%dttemins" % ( \
+                self.time_to_exploitation_mins)
+        if self.fuzzing_duration_mins:
+            self.fuzzer_instance_basename += ("_%smins" % \
+                str(self.fuzzing_duration_mins).replace(".", "_"))
+        if self.checkpoint_interval_mins:
+            self.fuzzer_instance_basename += ("_%sminscp" % \
+                str(self.checkpoint_interval_mins).replace(".", "_"))
+        if self.tag:
+            self.fuzzer_instance_basename += ("_%s" % self.tag)
+
+    # Create directories for experiment data
+    def create_experiment_dirs(self):
         # Check if experiment data directory already exists
         if os.path.exists(self.exp_data_path):
             ovw = input('WARNING: experiment data exists. Overwrite? [Yn]')
@@ -138,6 +149,8 @@ class Config():
                 raise
 
         # Create fuzzer input directory (for seeds)
+        fuzzer_input_path = "%s/%s" % \
+                (self.exp_data_path, self.fuzzer_input_dir)
         try:
             os.makedirs(fuzzer_input_path)
         except OSError as e:
@@ -145,24 +158,13 @@ class Config():
                 raise
 
         # Create fuzzer output directory
+        fuzzer_output_path = "%s/%s" % \
+                (self.exp_data_path, self.fuzzer_output_dir)
         try:
             os.makedirs(fuzzer_output_path)
         except OSError as e:
             if e.errno != errno.EEXIST:
                 raise
-
-    # Set fuzzer instance basename
-    def set_fuzzer_instance_basename(self):
-        self.fuzzer_instance_basename = "aflgo_%dttemins" % ( \
-                self.time_to_exploitation_mins)
-        if self.fuzzing_duration_mins:
-            self.fuzzer_instance_basename += ("_%smins" % \
-                str(self.fuzzing_duration_mins).replace(".", "_"))
-        if self.checkpoint_interval_mins:
-            self.fuzzer_instance_basename += ("_%sminscp" % \
-                str(self.checkpoint_interval_mins).replace(".", "_"))
-        if self.tag:
-            self.fuzzer_instance_basename += ("_%s" % self.tag)
 
     # Print experiment configurations
     def print_configurations(self):

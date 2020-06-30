@@ -24,7 +24,7 @@ export LINKFLAGS := -std=c++11
 # Default number of seed tests (counter increments)
 ################################################################################
 NUM_SEEDS ?= 1
-NUM_TESTS_IN_SEED ?= 1
+NUM_TESTS_PER_SEED ?= 1
 
 ################################################################################
 # Directories
