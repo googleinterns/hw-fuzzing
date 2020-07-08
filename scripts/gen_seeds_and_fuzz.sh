@@ -18,9 +18,6 @@
 ## Fuzz the CORE
 ################################################################################
 ################################################################################
-echo "========================================================================="
-echo "Launching fuzzer ..."
-echo "-------------------------------------------------------------------------"
 cd $SRC/circuits/$CORE/$EXP_DATA_PATH
 mkdir logs
 #if [[ ! -z ${CHECKPOINT_INTERVAL_MINS-} ]]; then
@@ -29,50 +26,69 @@ mkdir logs
     #CHECKPOINTING_PID=$!
 #fi
 
-for (( num=1; num <= $NUM_INSTANCES; num++ )); do
-    echo "Launching fuzzer instance $num ..."
+if [[ $FUZZER == "afl" || $FUZZER == "aflgo" ]]; then
+    for (( num=1; num <= $NUM_INSTANCES; num++ )); do
+        # Set log filenames
+        STDERR_LOG="logs/${FUZZER_INSTANCE_BASENAME}_${num}.err.log"
+        STDOUT_LOG="logs/${FUZZER_INSTANCE_BASENAME}_${num}.out.log"
 
-    # Set parallel option
-    if [[ $num -eq 1 ]]; then
-        PARALLEL_OPT="-M ${FUZZER_INSTANCE_BASENAME}_${num}"
-    else
-        PARALLEL_OPT="-S ${FUZZER_INSTANCE_BASENAME}_${num}"
-    fi
+        # Set fuzzer and related options
+        if [ $FUZZER == "aflgo" ]; then
+            FUZZER_BIN="$SRC/aflgo/afl-fuzz"
+            FUZZER_OPTIONS="-z exp -c ${TIME_TO_EXPLOITATION_MINS}m"
+        else
+            FUZZER_BIN="$SRC/AFL/afl-fuzz"
+            FUZZER_OPTIONS=""
+        fi
 
-    # Create logs dir and set logging file names
-    STDERR_LOG="logs/${FUZZER_INSTANCE_BASENAME}_${num}.err.log"
-    STDOUT_LOG="logs/${FUZZER_INSTANCE_BASENAME}_${num}.out.log"
+        # Set parallel option
+        if [[ $num -eq 1 ]]; then
+            PARALLEL_OPT="-M ${FUZZER_INSTANCE_BASENAME}_${num}"
+        else
+            PARALLEL_OPT="-S ${FUZZER_INSTANCE_BASENAME}_${num}"
+        fi
 
-    # Launch fuzzer
-    if [[ -z ${FUZZING_DURATION_MINS-} ]]; then
-        $SRC/aflgo/afl-fuzz \
-            -z exp \
-            -c ${TIME_TO_EXPLOITATION_MINS}m \
-            -i $FUZZER_INPUT_DIR \
-            -o $FUZZER_OUTPUT_DIR \
-            $PARALLEL_OPT \
-            bin/V$CORE @@ \
-            2> $STDERR_LOG \
-            1> $STDOUT_LOG;
-    else
-        timeout --foreground ${FUZZING_DURATION_MINS}m\
-            $SRC/aflgo/afl-fuzz \
-            -z exp \
-            -c ${TIME_TO_EXPLOITATION_MINS}m \
-            -i $FUZZER_INPUT_DIR \
-            -o $FUZZER_OUTPUT_DIR \
-            $PARALLEL_OPT \
-            bin/V$CORE @@ \
-            2> $STDERR_LOG \
-            1> $STDOUT_LOG;
-    fi
-done
+        # Launch fuzzer
+        if [[ -z ${FUZZING_DURATION_MINS-} ]]; then
+            $FUZZER_BIN \
+                $FUZZER_OPTIONS \
+                -i $FUZZER_INPUT_DIR \
+                -o $FUZZER_OUTPUT_DIR \
+                $PARALLEL_OPT \
+                bin/V$CORE @@ \
+                2> $STDERR_LOG \
+                1> $STDOUT_LOG &
+        else
+            timeout --foreground ${FUZZING_DURATION_MINS}m\
+                $FUZZER_BIN \
+                $FUZZER_OPTIONS \
+                -i $FUZZER_INPUT_DIR \
+                -o $FUZZER_OUTPUT_DIR \
+                $PARALLEL_OPT \
+                bin/V$CORE @@ \
+                2> $STDERR_LOG \
+                1> $STDOUT_LOG &
+        fi
+
+        # Set process ID of recently launched fuzzer
+        FUZZER_PID=$!
+        echo "Launched fuzzer instance $num (PID: $FUZZER_PID)"
+
+        # Trap SIGINT to kill all fuzzer processes on ctrl-c
+        trap "kill $FUZZER_PID" SIGINT
+    done
+else
+    echo -e "\e[1;31mAborting ... unsupported fuzzer: $FUZZER.\e[0m"
+    exit 1
+fi
 
 #if [[ ! -z ${CHECKPOINTING_PID-} ]]; then
     #kill -2 $CHECKPOINTING_PID
     #sleep 0.5s
 #fi
-echo "-------------------------------------------------------------------------"
+
+# Wait for all fuzzers to complete
+wait
+
 echo "Done!"
-echo "========================================================================="
 exit 0

@@ -23,6 +23,7 @@ import sys
 KEY_EXPERIMENT_NUMBER           = "experiment_number"
 KEY_EXPERIMENT_NAME             = "experiment_name"
 KEY_CORE                        = "core"
+KEY_FUZZER                      = "fuzzer"
 KEY_DEBUG                       = "debug"
 KEY_BB_TARGET_GENERATION_SCRIPT = "bb_target_generation_script"
 KEY_NUM_SEEDS                   = "num_seeds"
@@ -40,7 +41,7 @@ KEY_TAG                         = "tag"
 ROOT_DATA_PATH = "data"
 
 # Other defines
-LINE_SEP = "-------------------------------------------------------------------"
+LINE_SEP = "==================================================================="
 
 class Config():
     def __init__(self, config_filename):
@@ -51,6 +52,7 @@ class Config():
         self.experiment_number = None
         self.experiment_name = None
         self.core = None
+        self.fuzzer = None
         self.debug = None
         self.bb_target_generation_script = None
         self.num_seeds = None
@@ -81,12 +83,12 @@ class Config():
     def load_configurations(self):
         print(LINE_SEP)
         print("Loading experiment configurations ...")
-        print(LINE_SEP)
         with open(self.config_filename, 'r') as json_file:
             cdict = json.load(json_file)
             self.experiment_number = cdict[KEY_EXPERIMENT_NUMBER]
             self.experiment_name = cdict[KEY_EXPERIMENT_NAME]
             self.core = cdict[KEY_CORE]
+            self.fuzzer = cdict[KEY_FUZZER]
             self.debug = int(cdict[KEY_DEBUG])
             self.bb_target_generation_script = \
                     cdict[KEY_BB_TARGET_GENERATION_SCRIPT]
@@ -111,7 +113,8 @@ class Config():
 
     # Set fuzzer instance basename
     def set_fuzzer_instance_basename(self):
-        self.fuzzer_instance_basename = "aflgo_%dttemins" % ( \
+        self.fuzzer_instance_basename = "%s_%dttemins" % ( \
+                self.fuzzer, \
                 self.time_to_exploitation_mins)
         if self.fuzzing_duration_mins:
             self.fuzzer_instance_basename += ("_%smins" % \
@@ -124,10 +127,12 @@ class Config():
 
     # Create directories for experiment data
     def create_experiment_dirs(self):
+        print(LINE_SEP)
+        print("Creating experiment directories ...")
+
         # Check if experiment data directory already exists
         if os.path.exists(self.exp_data_path):
             ovw = input('WARNING: experiment data exists. Overwrite? [Yn]')
-            print(LINE_SEP)
             if ovw in {'yes', 'y', 'Y', 'YES', 'Yes', ''}:
                 shutil.rmtree(self.exp_data_path)
             else:
@@ -166,13 +171,15 @@ class Config():
             if e.errno != errno.EEXIST:
                 raise
 
+        print("Done!")
+
     # Print experiment configurations
     def print_configurations(self):
         print("Configurations:")
-        print(LINE_SEP)
         print("Experiment Number:           ", self.experiment_number)
         print("Experiment Name:             ", self.experiment_name)
         print("Core:                        ", self.core)
+        print("Fuzzer:                      ", self.fuzzer)
         print("Debug:                       ", self.debug)
         print("BB Target Generation Script: ", self.bb_target_generation_script)
         print("Number of Fuzzing Seeds:     ", self.num_seeds)

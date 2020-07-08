@@ -14,7 +14,7 @@
 
 # Docker image with AFLGo installed.
 
-FROM hw-fuzzing/base-clang
+FROM hw-fuzzing/base-clang-4.0.0
 MAINTAINER ttrippel@google.com
 
 # Putting installation steps in a script reduces the number of intermediate

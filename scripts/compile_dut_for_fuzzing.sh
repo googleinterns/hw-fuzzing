@@ -13,19 +13,30 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+LINE_SEP="-------------------------------------------------------------------"
+
 ################################################################################
 ################################################################################
 ## Set build flags
 ################################################################################
 ################################################################################
-echo "========================================================================="
 echo "Setting compiler/linker flags..."
-echo "-------------------------------------------------------------------------"
 
-# Set compilers
-export CC="$SRC/aflgo/afl-clang-fast"
-export CXX="$SRC/aflgo/afl-clang-fast++"
-export CCC="$SRC/aflgo/afl-clang-fast++"
+# Set fuzzer compiler
+if [[ $FUZZER -eq "afl" ]]; then
+    export CC="$SRC/AFL/afl-clang-fast"
+    export CXX="$SRC/AFL/afl-clang-fast++"
+    export CCC="$SRC/AFL/afl-clang-fast++"
+elif [[ $FUZZER -eq "aflgo" ]]; then
+    export CC="$SRC/aflgo/afl-clang-fast"
+    export CXX="$SRC/aflgo/afl-clang-fast++"
+    export CCC="$SRC/aflgo/afl-clang-fast++"
+else
+    echo -e "\e[1;31mAborting ... unsupported fuzzer: $FUZZER.\e[0m"
+    exit 1
+fi
+
+# Set Verilator compiler
 export VLT_CXX="clang++"
 
 # Disable Verilator VCD tracing during fuzzing
@@ -40,30 +51,20 @@ export CXXFLAGS="$SOURCE_MAPPINGS_FLAGS"
 export VLT_CXXFLAGS=""
 export LDFLAGS="$LDFLAGS"
 
-# Print compiler/linker flags
-echo "Compiler/Linker Flags:"
-echo "CC=$CC"
-echo "CXX=$CXX"
-echo "CFLAGS=$CFLAGS"
-echo "CXXFLAGS=$CXXFLAGS"
-echo "VLT_CXXFLAGS=$VLT_CXXFLAGS"
-echo "LDFLAGS=$LDFLAGS"
-echo "-------------------------------------------------------------------------"
 echo "Done!"
 
 ################################################################################
 ################################################################################
-## Switch to experiment directory and create bin directory
+## Switch to experiment directory and create bin/build directories
 ################################################################################
 ################################################################################
-echo "========================================================================="
+echo $LINE_SEP
 echo "Switching to experiment directory and creating bin directory ..."
-echo "-------------------------------------------------------------------------"
 
 # Move to experiment directory
 cd $SRC/circuits/$CORE
 
-# Make a build directory to store AFLGo compiler inputs/outputs
+# Make a build directory to store fuzzer compiler inputs/outputs
 BUILD_DIR=$SRC/circuits/$CORE/$EXP_DATA_PATH/build
 mkdir $BUILD_DIR
 
@@ -71,7 +72,6 @@ mkdir $BUILD_DIR
 BIN_DIR=$SRC/circuits/$CORE/$EXP_DATA_PATH/bin
 mkdir $BIN_DIR
 
-echo "-------------------------------------------------------------------------"
 echo "Done!"
 
 ################################################################################
@@ -79,9 +79,8 @@ echo "Done!"
 ## Install Verilator test bench dependencies
 ################################################################################
 ################################################################################
-echo "========================================================================="
+echo $LINE_SEP
 echo "Installing dependencies for $CORE test bench ..."
-echo "-------------------------------------------------------------------------"
 
 source tb_deps.sh
 if [ -z $TB_DEPS ]; then
@@ -90,7 +89,6 @@ else
     echo "Installing: $TB_DEPS"
     apt-get install -y $TB_DEPS
 fi
-echo "-------------------------------------------------------------------------"
 echo "Done!"
 
 ################################################################################
@@ -98,95 +96,96 @@ echo "Done!"
 ## Build SW model of HDL using Verilator
 ################################################################################
 ################################################################################
-echo "========================================================================="
+echo $LINE_SEP
 echo "Building SW model of $CORE core for fuzzing ..."
-echo "-------------------------------------------------------------------------"
 
 MODEL_DIR=$SRC/circuits/$CORE/$EXP_DATA_PATH/model
 MODEL_DIR=$MODEL_DIR make verilate
 
-echo "-------------------------------------------------------------------------"
 echo "Done!"
 
 ################################################################################
 ################################################################################
-## Do AFLGo preprocessing
+## Do preprocessing (if necessary)
 ################################################################################
 ################################################################################
-echo "========================================================================="
-echo "Doing AFLGo preprocessing ..."
-echo "-------------------------------------------------------------------------"
+if [ $FUZZER == "aflgo" ]; then
+    echo $LINE_SEP
+    echo "Doing AFLGo preprocessing ..."
 
-# Skip preprocessing if distance.cfg.txt exists already
-if [ -f $BIN_DIR/distance.cfg.txt ]; then
-    DO_POSTPROCESS=0
+    # Skip preprocessing if distance.cfg.txt exists already
+    if [ -f $BIN_DIR/distance.cfg.txt ]; then
+        DO_POSTPROCESS=0
 
-    echo "Setting compiler flags..."
-    export CFLAGS="$CFLAGS -distance=$BIN_DIR/distance.cfg.txt"
-    export CXXFLAGS="$CXXFLAGS -distance=$BIN_DIR/distance.cfg.txt"
-    export LDFLAGS="$LDFLAGS -distance=$BIN_DIR/distance.cfg.txt"
-else
-    DO_POSTPROCESS=1
+        echo "Setting compiler flags..."
+        export CFLAGS="$CFLAGS -distance=$BIN_DIR/distance.cfg.txt"
+        export CXXFLAGS="$CXXFLAGS -distance=$BIN_DIR/distance.cfg.txt"
+        export LDFLAGS="$LDFLAGS -distance=$BIN_DIR/distance.cfg.txt"
+    else
+        DO_POSTPROCESS=1
 
-    # Make backup copy of base compiler/linker flags
-    COPY_CFLAGS=$CFLAGS
-    COPY_CXXFLAGS=$CXXFLAGS
-    COPY_LDFLAGS=$LDFLAGS
+        # Make backup copy of base compiler/linker flags
+        COPY_CFLAGS=$CFLAGS
+        COPY_CXXFLAGS=$CXXFLAGS
+        COPY_LDFLAGS=$LDFLAGS
 
-    # Generate targets to fuzz
-    echo "Generating targets to fuzz..."
-    python3 $SRC/circuits/$CORE/gen_bb_targets.py $BUILD_DIR/BBtargets.txt
-    AFLGO_BB_TARGETS=$BUILD_DIR/BBtargets.txt
+        # Generate targets to fuzz
+        echo "Generating targets to fuzz..."
+        python3 $SRC/circuits/$CORE/gen_bb_targets.py $BUILD_DIR/BBtargets.txt
+        AFLGO_BB_TARGETS=$BUILD_DIR/BBtargets.txt
 
-    # Check if at least one fuzz target was generated
-    if [ $(cat $BUILD_DIR/BBtargets.txt | wc -l) -eq 0 ]; then
-        echo -e "\e[1;31mAborting ... No BB targets to fuzz for $CORE.\e[0m"
-        rm -rf $BUILD_DIR
-        exit 1
+        # Check if at least one fuzz target was generated
+        if [ $(cat $AFLGO_BB_TARGETS | wc -l) -eq 0 ]; then
+            echo -e "\e[1;31mAborting ... No BB targets to fuzz for $CORE.\e[0m"
+            rm -rf $BIN_DIR
+            rm -rf $BUILD_DIR
+            rm -rf $MODEL_DIR
+            exit 1
+        fi
+
+        # Print generated fuzz targets
+        echo "AFLGo Fuzz Targets:"
+        cat $AFLGO_BB_TARGETS
+
+        # Set AFLGo compiler flags
+        echo "Setting compiler flags..."
+        AFLGO_TARGET_FLAGS="-targets=$AFLGO_BB_TARGETS -outdir=$BUILD_DIR"
+        AFLGO_LINKER_FLAGS="-flto -fuse-ld=gold -Wl,-plugin-opt=save-temps"
+        AFLGO_FLAGS="$AFLGO_TARGET_FLAGS $AFLGO_LINKER_FLAGS"
+        export CFLAGS="$CFLAGS $AFLGO_FLAGS"
+        export CXXFLAGS="$CXXFLAGS $AFLGO_FLAGS"
+        export LDFLAGS="$LDFLAGS $AFLGO_FLAGS"
+        echo "Done!"
     fi
-
-    # Print generated fuzz targets
-    echo "AFLGo Fuzz Targets:"
-    cat $BUILD_DIR/BBtargets.txt
-
-    # Set AFLGo compiler flags
-    echo "Setting compiler flags..."
-    AFLGO_TARGET_FLAGS="-targets=$AFLGO_BB_TARGETS -outdir=$BUILD_DIR"
-    AFLGO_LINKER_FLAGS="-flto -fuse-ld=gold -Wl,-plugin-opt=save-temps"
-    AFLGO_FLAGS="$AFLGO_TARGET_FLAGS $AFLGO_LINKER_FLAGS"
-    export CFLAGS="$CFLAGS $AFLGO_FLAGS"
-    export CXXFLAGS="$CXXFLAGS $AFLGO_FLAGS"
-    export LDFLAGS="$LDFLAGS $AFLGO_FLAGS"
+else
+    DO_POSTPROCESS=0
 fi
 
-# Print Compiler/Linker Flags
-echo "Compiler/Linker Flags:"
+# Print Fuzzer/Compiler/Linker Configurations
+echo $LINE_SEP
+echo "Fuzzer/Compiler Configurations:"
+echo "FUZZER=$FUZZER"
 echo "CC=$CC"
 echo "CXX=$CXX"
 echo "CFLAGS=$CFLAGS"
 echo "CXXFLAGS=$CXXFLAGS"
 echo "LDFLAGS=$LDFLAGS"
-echo "-------------------------------------------------------------------------"
-echo "Done!"
 
 ################################################################################
 ################################################################################
-## First Compile Pass
+## First (and potentially only) Compile Pass
 ################################################################################
 ################################################################################
-echo "========================================================================="
+echo $LINE_SEP
 
 if [ $DO_POSTPROCESS -eq 1 ]; then
-    echo "Computing CG/CFG of $CORE SW model ..."
+    echo "Computing CG/CFG of $CORE SW model (for AFLGo) ..."
 else
     echo "Compiling/Instrumenting the $CORE SW model ..."
 fi
 
-echo "-------------------------------------------------------------------------"
-
 MODEL_DIR=$MODEL_DIR BUILD_DIR=$BUILD_DIR BIN_DIR=$BIN_DIR make exe
 
-echo "-------------------------------------------------------------------------"
 echo "Done!"
 
 ################################################################################
@@ -195,17 +194,17 @@ echo "Done!"
 ################################################################################
 ################################################################################
 if [ $DO_POSTPROCESS -eq 1 ]; then
-echo "========================================================================="
-echo "Doing AFLGo postprocessing ..."
-echo "-------------------------------------------------------------------------"
+    echo $LINE_SEP
+    echo "Doing AFLGo postprocessing ..."
 
-# Check if AFLGo control flow graph extraction was successfull and fuzz
+    # Check if AFLGo control flow graph extraction was successfull and fuzz
     # targets were found
     if [ $(grep -Ev "^$" $BUILD_DIR/Ftargets.txt | wc -l) -eq 0 ]; then
         echo -e "\e[1;31mAborting ... No function targets found in model.\e[0m"
         if [ -z "${DEBUG-}" ]; then
             rm -rf $BIN_DIR
             rm -rf $BUILD_DIR
+            rm -rf $MODEL_DIR
         fi
         exit 1
     fi
@@ -237,17 +236,15 @@ echo "-------------------------------------------------------------------------"
     # Second compiler pass (instrumentation happens here)
     echo "Compiling/Instrumenting the $CORE SW model ..."
     MODEL_DIR=$MODEL_DIR BUILD_DIR=$BUILD_DIR BIN_DIR=$BIN_DIR make exe
+    echo "Done!"
 fi
-
-echo "-------------------------------------------------------------------------"
-echo "Done!"
 
 ################################################################################
 ################################################################################
 ## Clean up object files and Verilator output
 ################################################################################
 ################################################################################
-echo "========================================================================="
+echo $LINE_SEP
 echo "Cleaning up ..."
 
 if [ -z "${DEBUG-}" ]; then
@@ -255,7 +252,5 @@ if [ -z "${DEBUG-}" ]; then
     rm -rf $MODEL_DIR
 fi
 
-echo "-------------------------------------------------------------------------"
 echo -e "\e[1;32mBUILD & INSTRUMENTATION SUCCESSFUL -- Done!\e[0m"
-echo "========================================================================="
 exit 0

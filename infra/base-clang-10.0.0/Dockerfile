@@ -1,4 +1,3 @@
-#!/bin/bash
 # Copyright 2020 Google LLC
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -13,16 +12,14 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-# Remove all Docker images
-docker rmi -f hw-fuzzing/base-aflgo-debug:latest
-docker rmi -f hw-fuzzing/base-aflgo:latest
-docker rmi -f hw-fuzzing/base-afl:latest
-docker rmi -f hw-fuzzing/base-clang-4.0.0:latest
-docker rmi -f hw-fuzzing/base-clang-10.0.0:latest
-docker rmi -f hw-fuzzing/base-verilator:latest
-docker rmi -f hw-fuzzing/base-image:latest
+# Docker image with Clang version 10.0.0 installed.
 
-# Cleanup Docker containers
-docker ps -a -q | xargs -I {} docker rm {};
-docker images -q -f dangling=true | xargs -I {} docker rmi -f {};
-docker volume ls -qf dangling=true | xargs -I {} docker volume rm {};
+FROM hw-fuzzing/base-verilator
+MAINTAINER ttrippel@google.com
+
+# Putting installation steps in a script reduces the number of intermediate
+# layers generated from the Dockerfile.
+COPY checkout_build_install_llvm.sh /root/
+RUN /root/checkout_build_install_llvm.sh
+RUN rm /root/checkout_build_install_llvm.sh
+

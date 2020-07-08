@@ -1,3 +1,4 @@
+#!/bin/bash -eu
 # Copyright 2020 Google LLC
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -12,13 +13,26 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-# Docker image with head Clang version 4.0 installed.
+# Install dependencies
+AFL_DEP_PACKAGES="\
+    git \
+    python3-dev \
+    python3-pip"
+apt-get install -y $AFL_DEP_PACKAGES
+pip3 install --upgrade pip
 
-FROM hw-fuzzing/base-verilator
-MAINTAINER ttrippel@google.com
+# Set Python3 as default
+ln -s $(which python3) /usr/bin/python
 
-# Putting installation steps in a script reduces the number of intermediate
-# layers generated from the Dockerfile.
-COPY checkout_build_install_llvm.sh /root/
-RUN /root/checkout_build_install_llvm.sh
-RUN rm /root/checkout_build_install_llvm.sh
+# Clone AFL
+echo "Checking out AFL ..."
+cd $SRC && git clone --depth 1 https://github.com/google/AFL.git
+
+# Build AFL from source
+echo "Compiling AFL ..."
+export CC=clang
+export CXX=clang++
+export CCC=clang++
+cd AFL && make clean all
+cd llvm_mode && make clean all
+echo " done."

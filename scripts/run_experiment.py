@@ -26,7 +26,8 @@ from config import Config
 NUM_ARGS = 1
 
 # Other defines
-LINE_SEP = "-------------------------------------------------------------------"
+# LINE_SEP = "-------------------------------------------------------------------"
+LINE_SEP = "==================================================================="
 
 # Convert to empty string if None
 def xstr(s):
@@ -39,21 +40,18 @@ def compile_core(config):
     print(LINE_SEP)
     print("Verilating/Compiling %s for fuzzing ..." % config.core)
     print(LINE_SEP)
-    if config.debug:
-        docker_image = "hw-fuzzing/base-aflgo-debug"
-    else:
-        docker_image = "hw-fuzzing/base-aflgo"
     command = [\
         "docker", "run", "-it", "--rm", "--cap-add", "SYS_PTRACE", \
         "--name", "%s-compile" % config.core, \
         "-e", "CORE=%s" % config.core, \
+        "-e", "FUZZER=%s" % config.fuzzer, \
         "-e", "DEBUG=%d" % config.debug, \
         "-e", "EXP_DATA_PATH=%s" % config.exp_data_path, \
         "-v", "%s/scripts:/scripts" % config.root_path, \
         "-v", "%s/circuits:/src/circuits" % config.root_path, \
         "-v", "%s/third_party:/src/third_party" % config.root_path, \
         "-u", "%d:%d" % (os.getuid(), os.getgid()), \
-        "-t", "%s" % docker_image, \
+        "-t", "hw-fuzzing/base-%s" % config.fuzzer, \
         "bash", "/scripts/compile_dut_for_fuzzing.sh" \
     ]
     try:
@@ -61,7 +59,6 @@ def compile_core(config):
     except subprocess.CalledProcessError:
         print("ERROR: compilation for fuzzing FAILED. Terminating experiment!")
         sys.exit(1)
-    print("Done!")
 
 # Generate fuzzer input seeds
 def generate_seeds(config):
@@ -82,14 +79,11 @@ def fuzz_core(config):
     print(LINE_SEP)
     print("Fuzzing SW model of %s ..." % config.core)
     print(LINE_SEP)
-    if config.debug:
-        docker_image = "hw-fuzzing/base-aflgo-debug"
-    else:
-        docker_image = "hw-fuzzing/base-aflgo"
     command = [\
         "docker", "run", "-it", "--rm", "--cap-add", "SYS_PTRACE", \
         "--name", "%s-fuzz" % config.core, \
         "-e", "CORE=%s" % config.core, \
+        "-e", "FUZZER=%s" % config.fuzzer, \
         "-e", "DEBUG=%d" % config.debug, \
         "-e", "NUM_INSTANCES=%d" % config.num_instances, \
         "-e", "FUZZER_INSTANCE_BASENAME=%s" % config.fuzzer_instance_basename, \
@@ -105,7 +99,7 @@ def fuzz_core(config):
         "-v", "%s/scripts:/scripts" % config.root_path, \
         "-v", "%s/circuits:/src/circuits" % config.root_path, \
         "-u", "%d:%d" % (os.getuid(), os.getgid()), \
-        "-t", "%s" % docker_image, \
+        "-t", "hw-fuzzing/base-%s" % config.fuzzer, \
         "bash", "/scripts/gen_seeds_and_fuzz.sh" \
     ]
     try:
@@ -113,17 +107,12 @@ def fuzz_core(config):
     except subprocess.CalledProcessError:
         print("ERROR: fuzzing FAILED. Terminating experiment!")
         sys.exit(1)
-    print("Done!")
 
 # Re-verilate/compile core for simulation and (VCD) tracing
 def simulate_and_trace(config):
     print(LINE_SEP)
     print("Generating VCD traces from fuzzer generated inputs ...")
     print(LINE_SEP)
-    if config.debug:
-        docker_image = "hw-fuzzing/base-aflgo-debug"
-    else:
-        docker_image = "hw-fuzzing/base-aflgo"
     command = [\
         "docker", "run", "-it", "--rm", "--cap-add", "SYS_PTRACE", \
         "--name", "%s-vcd" % config.core, \
@@ -135,7 +124,7 @@ def simulate_and_trace(config):
         "-v", "%s/scripts:/scripts" % config.root_path, \
         "-v", "%s/circuits:/src/circuits" % config.root_path, \
         "-u", "%d:%d" % (os.getuid(), os.getgid()), \
-        "-t", "%s" % docker_image, \
+        "-t", "hw-fuzzing/base-%s" % config.fuzzer, \
         "bash", "/scripts/compile_and_sim_dut_wtracing.sh" \
     ]
     try:
@@ -143,8 +132,6 @@ def simulate_and_trace(config):
     except subprocess.CalledProcessError:
         print("ERROR: VCD tracing FAILED. Terminating experiment!")
         sys.exit(1)
-    print("Done!")
-    return
 
 # Extract data from VCD traces for plotting
 def extract_data_for_plotting(config):

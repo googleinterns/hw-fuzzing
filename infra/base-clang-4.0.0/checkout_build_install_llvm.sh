@@ -26,20 +26,35 @@ LLVM_DEP_PACKAGES="\
     wget"
 apt-get install -y $LLVM_DEP_PACKAGES
 
-# Download LLVM version 4.0 as instructed by AFLGo documentation.
-cd $SRC && wget http://releases.llvm.org/4.0.0/llvm-4.0.0.src.tar.xz
+# Download LLVM version 4.0.0 as instructed by AFLGo documentation.
+
+# Download and unpack LLVM
+cd $SRC
+wget http://releases.llvm.org/4.0.0/llvm-4.0.0.src.tar.xz
 tar xf llvm-4.0.0.src.tar.xz
 mv llvm-4.0.0.src llvm
-cd $SRC/llvm/tools && wget http://releases.llvm.org/4.0.0/cfe-4.0.0.src.tar.xz
+
+# Download and unpack Clang
+cd $SRC/llvm/tools
+wget http://releases.llvm.org/4.0.0/cfe-4.0.0.src.tar.xz
 tar xf cfe-4.0.0.src.tar.xz
 mv cfe-4.0.0.src clang
-cd $SRC/llvm/projects && wget http://releases.llvm.org/4.0.0/compiler-rt-4.0.0.src.tar.xz
+
+# Download and unpack Clang runtime library
+cd $SRC/llvm/projects
+wget http://releases.llvm.org/4.0.0/compiler-rt-4.0.0.src.tar.xz
 tar xf compiler-rt-4.0.0.src.tar.xz
 mv compiler-rt-4.0.0.src compiler-rt
-cd $SRC/llvm/projects && wget http://releases.llvm.org/4.0.0/libcxx-4.0.0.src.tar.xz
+
+# Download and unpack libc
+cd $SRC/llvm/projects
+wget http://releases.llvm.org/4.0.0/libcxx-4.0.0.src.tar.xz
 tar xf libcxx-4.0.0.src.tar.xz
 mv libcxx-4.0.0.src libcxx
-cd $SRC/llvm/projects && wget http://releases.llvm.org/4.0.0/libcxxabi-4.0.0.src.tar.xz
+
+# Download and unpack libc ABI
+cd $SRC/llvm/projects
+wget http://releases.llvm.org/4.0.0/libcxxabi-4.0.0.src.tar.xz
 tar xf libcxxabi-4.0.0.src.tar.xz
 mv libcxxabi-4.0.0.src libcxxabi
 
@@ -72,6 +87,7 @@ cp /usr/local/lib/libLTO.so /usr/lib/bfd-plugins
 cp /usr/local/lib/LLVMgold.so /usr/lib/bfd-plugins
 
 # Cleanup
+cd /
 rm -rf $SRC/llvm-4.0.0.src.tar.xz
 rm -rf $SRC/llvm
 apt-get remove --purge -y $LLVM_DEP_PACKAGES
