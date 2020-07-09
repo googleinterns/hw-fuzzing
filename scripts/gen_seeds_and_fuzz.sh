@@ -19,7 +19,7 @@
 ################################################################################
 ################################################################################
 cd $SRC/circuits/$CORE/$EXP_DATA_PATH
-mkdir logs
+mkdir -p logs
 #if [[ ! -z ${CHECKPOINT_INTERVAL_MINS-} ]]; then
     #BK_DIR=$BK_DIR CHECKPOINT_INTERVAL_MINS="$CHECKPOINT_INTERVAL_MINS" \
         #source $SCRIPTS/checkpoint_aflgo_output.sh &
@@ -90,5 +90,5 @@ fi
 # Wait for all fuzzers to complete
 wait
 
-echo "Done!"
+echo -e "\e[1;32mFUZZING SUCCESSFUL -- Done!\e[0m"
 exit 0

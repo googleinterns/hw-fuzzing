@@ -66,11 +66,11 @@ cd $SRC/circuits/$CORE
 
 # Make a build directory to store fuzzer compiler inputs/outputs
 BUILD_DIR=$SRC/circuits/$CORE/$EXP_DATA_PATH/build
-mkdir $BUILD_DIR
+mkdir -p $BUILD_DIR
 
 # Make a bin directory to store instrumented EXEs
 BIN_DIR=$SRC/circuits/$CORE/$EXP_DATA_PATH/bin
-mkdir $BIN_DIR
+mkdir -p $BIN_DIR
 
 echo "Done!"
 
@@ -131,8 +131,8 @@ if [ $FUZZER == "aflgo" ]; then
 
         # Generate targets to fuzz
         echo "Generating targets to fuzz..."
-        python3 $SRC/circuits/$CORE/gen_bb_targets.py $BUILD_DIR/BBtargets.txt
         AFLGO_BB_TARGETS=$BUILD_DIR/BBtargets.txt
+        python3 $SRC/circuits/$CORE/aflgo_gen_bb_targets.py $AFLGO_BB_TARGETS
 
         # Check if at least one fuzz target was generated
         if [ $(cat $AFLGO_BB_TARGETS | wc -l) -eq 0 ]; then

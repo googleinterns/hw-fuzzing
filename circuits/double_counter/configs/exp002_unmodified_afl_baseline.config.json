@@ -1,9 +1,9 @@
 {
     "experiment_number" : 2,
-    "experiment_name" : "confirm_target_convergence",
+    "experiment_name" : "unmodified_afl_baseline",
     "core" : "double_counter",
+    "fuzzer" : "afl",
     "debug" : 1,
-    "bb_target_generation_script" : "gen_bb_targets.py",
     "num_seeds" : 1,
     "num_tests_per_seed" : 2,
     "num_instances" : 1,
@@ -11,7 +11,7 @@
     "fuzzer_output_dir" : "out",
     "fuzzing_duration_mins" : 60,
     "checkpoint_interval_mins" : null,
-    "time_to_exploitation_mins" : 10,
+    "time_to_exploitation_mins" : null,
     "data_extraction_script" : "double_counter_extract_final_counts",
     "tag" : null
 }

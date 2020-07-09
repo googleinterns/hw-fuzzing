@@ -66,7 +66,7 @@ endif
 all: verilate exe seed sim
 
 verilate: $(HDL)
-	$(VERILATOR_ROOT)/bin/verilator $(VFLAGS) $(VLT_VCD_TRACING) $(HDL); \
+	$(VERILATOR_ROOT)/bin/verilator $(VFLAGS) $(VLT_VCD_TRACING) $(HDL)
 
 $(BIN_DIR)/$(VM_PREFIX): $(MODEL) $(TB)
 	@mkdir -p $(BUILD_DIR); \

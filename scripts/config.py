@@ -16,8 +16,6 @@
 import errno
 import json
 import os
-import shutil
-import sys
 
 # Configurations dictionary keys
 KEY_EXPERIMENT_NUMBER           = "experiment_number"
@@ -25,7 +23,6 @@ KEY_EXPERIMENT_NAME             = "experiment_name"
 KEY_CORE                        = "core"
 KEY_FUZZER                      = "fuzzer"
 KEY_DEBUG                       = "debug"
-KEY_BB_TARGET_GENERATION_SCRIPT = "bb_target_generation_script"
 KEY_NUM_SEEDS                   = "num_seeds"
 KEY_NUM_TESTS_PER_SEED          = "num_tests_per_seed"
 KEY_NUM_INSTANCES               = "num_instances"
@@ -43,6 +40,18 @@ ROOT_DATA_PATH = "data"
 # Other defines
 LINE_SEP = "==================================================================="
 
+# Color string RED for printing to terminal
+def color_str_red(s):
+    return "\033[1m\033[91m{}\033[00m".format(s)
+
+# Color string GREEN for printing to terminal
+def color_str_green(s):
+    return "\033[1m\033[92m{}\033[00m".format(s)
+
+# Color string YELLOW for printing to terminal
+def color_str_yellow(s):
+    return "\033[93m{}\033[00m".format(s)
+
 class Config():
     def __init__(self, config_filename):
         # Config filename
@@ -54,7 +63,6 @@ class Config():
         self.core = None
         self.fuzzer = None
         self.debug = None
-        self.bb_target_generation_script = None
         self.num_seeds = None
         self.num_tests_per_seed = None
         self.num_instances = None
@@ -90,8 +98,6 @@ class Config():
             self.core = cdict[KEY_CORE]
             self.fuzzer = cdict[KEY_FUZZER]
             self.debug = int(cdict[KEY_DEBUG])
-            self.bb_target_generation_script = \
-                    cdict[KEY_BB_TARGET_GENERATION_SCRIPT]
             self.num_seeds = int(cdict[KEY_NUM_SEEDS])
             self.num_tests_per_seed = int(cdict[KEY_NUM_TESTS_PER_SEED])
             self.num_instances = int(cdict[KEY_NUM_INSTANCES])
@@ -113,12 +119,13 @@ class Config():
 
     # Set fuzzer instance basename
     def set_fuzzer_instance_basename(self):
-        self.fuzzer_instance_basename = "%s_%dttemins" % ( \
-                self.fuzzer, \
-                self.time_to_exploitation_mins)
+        self.fuzzer_instance_basename = "%s" % (self.fuzzer)
         if self.fuzzing_duration_mins:
             self.fuzzer_instance_basename += ("_%smins" % \
                 str(self.fuzzing_duration_mins).replace(".", "_"))
+        if self.time_to_exploitation_mins:
+            self.fuzzer_instance_basename += ("_%dttemins" % \
+                self.time_to_exploitation_mins)
         if self.checkpoint_interval_mins:
             self.fuzzer_instance_basename += ("_%sminscp" % \
                 str(self.checkpoint_interval_mins).replace(".", "_"))
@@ -130,30 +137,21 @@ class Config():
         print(LINE_SEP)
         print("Creating experiment directories ...")
 
-        # Check if experiment data directory already exists
-        if os.path.exists(self.exp_data_path):
-            ovw = input('WARNING: experiment data exists. Overwrite? [Yn]')
-            if ovw in {'yes', 'y', 'Y', 'YES', 'Yes', ''}:
-                shutil.rmtree(self.exp_data_path)
-            else:
-                print("ABORT: re-run with different experiment configurations.")
-                sys.exit(-1)
-
-        # Create core data path
+        # Create core data path if it does not exist
         try:
             os.makedirs(ROOT_DATA_PATH)
         except OSError as e:
             if e.errno != errno.EEXIST:
                 raise
 
-        # Create experiment data path
+        # Create experiment data path if it does not exist
         try:
             os.makedirs(self.exp_data_path)
         except OSError as e:
             if e.errno != errno.EEXIST:
                 raise
 
-        # Create fuzzer input directory (for seeds)
+        # Create fuzzer input directory if it does not exist
         fuzzer_input_path = "%s/%s" % \
                 (self.exp_data_path, self.fuzzer_input_dir)
         try:
@@ -162,7 +160,7 @@ class Config():
             if e.errno != errno.EEXIST:
                 raise
 
-        # Create fuzzer output directory
+        # Create fuzzer output directory if it does not exist
         fuzzer_output_path = "%s/%s" % \
                 (self.exp_data_path, self.fuzzer_output_dir)
         try:
@@ -171,26 +169,25 @@ class Config():
             if e.errno != errno.EEXIST:
                 raise
 
-        print("Done!")
+        print(color_str_green("DIRECTORY CREATION SUCCESSFUL -- Done!"))
 
     # Print experiment configurations
     def print_configurations(self):
-        print("Configurations:")
-        print("Experiment Number:           ", self.experiment_number)
-        print("Experiment Name:             ", self.experiment_name)
-        print("Core:                        ", self.core)
-        print("Fuzzer:                      ", self.fuzzer)
-        print("Debug:                       ", self.debug)
-        print("BB Target Generation Script: ", self.bb_target_generation_script)
-        print("Number of Fuzzing Seeds:     ", self.num_seeds)
-        print("Number of Test per Seed:     ", self.num_tests_per_seed)
-        print("Number of Instances:         ", self.num_instances)
-        print("Fuzzing Duration (min):      ", self.fuzzing_duration_mins)
-        print("Checkpoint Interval (min):   ", self.checkpoint_interval_mins)
-        print("Time to Exploitation (min):  ", self.time_to_exploitation_mins)
-        print("Data Extraction Script:      ", self.data_extraction_script)
-        print("Tag:                         ", self.tag)
-        print("Experiment Data Path:        ", self.exp_data_path)
-        print("Fuzzer Input Directory:      ", self.fuzzer_input_dir)
-        print("Fuzzer Output Directory:     ", self.fuzzer_output_dir)
-        print("Fuzzer Instance Basename:    ", self.fuzzer_instance_basename)
+        print(color_str_yellow("Configurations:"))
+        print(color_str_yellow("Experiment Number:          "), self.experiment_number)
+        print(color_str_yellow("Experiment Name:            "), self.experiment_name)
+        print(color_str_yellow("Core:                       "), self.core)
+        print(color_str_yellow("Fuzzer:                     "), self.fuzzer)
+        print(color_str_yellow("Debug:                      "), self.debug)
+        print(color_str_yellow("Number of Fuzzing Seeds:    "), self.num_seeds)
+        print(color_str_yellow("Number of Test per Seed:    "), self.num_tests_per_seed)
+        print(color_str_yellow("Number of Instances:        "), self.num_instances)
+        print(color_str_yellow("Fuzzing Duration (min):     "), self.fuzzing_duration_mins)
+        print(color_str_yellow("Checkpoint Interval (min):  "), self.checkpoint_interval_mins)
+        print(color_str_yellow("Time to Exploitation (min): "), self.time_to_exploitation_mins)
+        print(color_str_yellow("Data Extraction Script:     "), self.data_extraction_script)
+        print(color_str_yellow("Tag:                        "), self.tag)
+        print(color_str_yellow("Experiment Data Path:       "), self.exp_data_path)
+        print(color_str_yellow("Fuzzer Input Directory:     "), self.fuzzer_input_dir)
+        print(color_str_yellow("Fuzzer Output Directory:    "), self.fuzzer_output_dir)
+        print(color_str_yellow("Fuzzer Instance Basename:   "), self.fuzzer_instance_basename)

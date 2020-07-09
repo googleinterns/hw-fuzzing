@@ -14,20 +14,30 @@
 # limitations under the License.
 
 # Standard modules
+import glob
 import importlib
 import os
+import shutil
+import signal
 import subprocess
 import sys
 
 # Custom modules
 from config import Config
+from config import color_str_red
+from config import color_str_green
+from config import color_str_yellow
 
 # Number of input arguments
 NUM_ARGS = 1
 
 # Other defines
-# LINE_SEP = "-------------------------------------------------------------------"
 LINE_SEP = "==================================================================="
+
+# Handler to gracefully exit on ctrl+c
+def sigint_handler(sig, frame):
+    print(color_str_red('\nTERMINATING EXPERIMENT!'))
+    sys.exit(0)
 
 # Convert to empty string if None
 def xstr(s):
@@ -42,7 +52,8 @@ def compile_core(config):
     print(LINE_SEP)
     command = [\
         "docker", "run", "-it", "--rm", "--cap-add", "SYS_PTRACE", \
-        "--name", "%s-compile" % config.core, \
+        "--name", "%s_%s_compile" % (config.core, \
+            config.fuzzer_instance_basename), \
         "-e", "CORE=%s" % config.core, \
         "-e", "FUZZER=%s" % config.fuzzer, \
         "-e", "DEBUG=%d" % config.debug, \
@@ -57,31 +68,65 @@ def compile_core(config):
     try:
         subprocess.check_call(command)
     except subprocess.CalledProcessError:
-        print("ERROR: compilation for fuzzing FAILED. Terminating experiment!")
+        error_str = "ERROR: build FAILED. Terminating experiment!"
+        print(color_str_red(error_str))
         sys.exit(1)
 
 # Generate fuzzer input seeds
 def generate_seeds(config):
     print(LINE_SEP)
     print("Generating seeds for fuzzer ...")
-    sys.path.append(config.root_path + "/scripts")
-    seed_gen_module = importlib.import_module("gen_afl_seeds")
-    seed_file_basename = config.exp_data_path + \
-            "/" + config.fuzzer_input_dir + "/seed"
-    seed_gen_module.gen_afl_seeds(\
-            seed_file_basename, \
-            config.num_seeds, \
-            config.num_tests_per_seed)
-    print("Done!")
+
+    # Check if seed(s) already exist --> if so, ask for permission to do nothing
+    full_fuzzer_input_path = "%s/%s" % ( \
+            config.exp_data_path, \
+            config.fuzzer_input_dir)
+    if os.listdir(full_fuzzer_input_path):
+        ovw = input('WARNING: input seed(s) exist. Generate new? [yN]')
+        if ovw in {'yes', 'y', 'Y', 'YES', 'Yes'}:
+            # Remove old seeds
+            shutil.rmtree(self.exp_data_path)
+
+            # Create new random seeds
+            sys.path.append(config.root_path + "/scripts")
+            seed_gen_module = importlib.import_module("gen_afl_seeds")
+            seed_file_basename = config.exp_data_path + \
+                    "/" + config.fuzzer_input_dir + "/seed"
+            seed_gen_module.gen_afl_seeds(\
+                    seed_file_basename, \
+                    config.num_seeds, \
+                    config.num_tests_per_seed)
+        else:
+            print("Continuing with existing input seeds.")
+
+    print(color_str_green("SEED GENERATION SUCCESSFUL -- Done!"))
 
 # Fuzz the software model of the core
 def fuzz_core(config):
     print(LINE_SEP)
     print("Fuzzing SW model of %s ..." % config.core)
     print(LINE_SEP)
+
+    # Check if fuzzer identical fuzzer data already exists
+    full_fuzzer_output_path = "%s/%s/%s_*" % ( \
+            config.exp_data_path, \
+            config.fuzzer_output_dir, \
+            config.fuzzer_instance_basename)
+    if glob.glob(full_fuzzer_output_path):
+        ovw = input('WARNING: experiment data exists. Overwrite? [Yn]')
+        if ovw in {'yes', 'y', 'Y', 'YES', 'Yes', ''}:
+            for fuzzer_data_dir in glob.glob(full_fuzzer_output_path):
+                shutil.rmtree(fuzzer_data_dir)
+        else:
+            abort_str = "ABORT: re-run with different configurations."
+            print(color_str_red(abort_str))
+            sys.exit(-1)
+
+    # Launch fuzzer
     command = [\
         "docker", "run", "-it", "--rm", "--cap-add", "SYS_PTRACE", \
-        "--name", "%s-fuzz" % config.core, \
+        "--name", "%s_%s_fuzz" % (config.core, \
+            config.fuzzer_instance_basename), \
         "-e", "CORE=%s" % config.core, \
         "-e", "FUZZER=%s" % config.fuzzer, \
         "-e", "DEBUG=%d" % config.debug, \
@@ -105,7 +150,8 @@ def fuzz_core(config):
     try:
         subprocess.check_call(command)
     except subprocess.CalledProcessError:
-        print("ERROR: fuzzing FAILED. Terminating experiment!")
+        error_str = "ERROR: fuzzing FAILED. Terminating experiment!"
+        print(color_str_red(error_str))
         sys.exit(1)
 
 # Re-verilate/compile core for simulation and (VCD) tracing
@@ -115,7 +161,8 @@ def simulate_and_trace(config):
     print(LINE_SEP)
     command = [\
         "docker", "run", "-it", "--rm", "--cap-add", "SYS_PTRACE", \
-        "--name", "%s-vcd" % config.core, \
+        "--name", "%s_%s_vcd" % (config.core, \
+            config.fuzzer_instance_basename), \
         "-e", "CORE=%s" % config.core, \
         "-e", "EXP_DATA_PATH=%s" % config.exp_data_path, \
         "-e", "FUZZER_OUTPUT_DIR=%s" % config.fuzzer_output_dir, \
@@ -130,14 +177,14 @@ def simulate_and_trace(config):
     try:
         subprocess.check_call(command)
     except subprocess.CalledProcessError:
-        print("ERROR: VCD tracing FAILED. Terminating experiment!")
+        error_str = "ERROR: VCD tracing FAILED. Terminating experiment!"
+        print(color_str_red(error_str))
         sys.exit(1)
 
 # Extract data from VCD traces for plotting
 def extract_data_for_plotting(config):
     print(LINE_SEP)
     print("Extracting VCD data to analyze ...")
-    print(LINE_SEP)
     sys.path.append(config.root_path + "/scripts/data_extraction")
     data_extraction_module = importlib.import_module(\
             config.data_extraction_script)
@@ -148,8 +195,7 @@ def extract_data_for_plotting(config):
                 config.fuzzer_instance_basename, \
                 instance_num)
     data_extraction_module.main([fuzzer_data_path])
-    print(LINE_SEP)
-    print("Done!")
+    print(color_str_green("DATA EXTRACTION SUCCESSFUL -- Done!"))
 
 # Main
 def main(args):
@@ -182,4 +228,5 @@ def main(args):
     extract_data_for_plotting(config)
 
 if __name__ == "__main__":
+    signal.signal(signal.SIGINT, sigint_handler)
     main(sys.argv[1:])

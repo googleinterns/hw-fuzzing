@@ -81,10 +81,7 @@ int main(int argc, char** argv, char** env) {
     string line;
     while (getline(in_file, line)) {
         if (line.length() > 1) {
-            // Final model cleanup
             in_file.close();
-
-            // Fin
             exit(0);
         }
     }

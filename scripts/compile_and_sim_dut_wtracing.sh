@@ -27,7 +27,7 @@ cd $SRC/circuits/$CORE
 
 # Verilate hardware
 echo "Verilating hardware ..."
-MODEL_DIR=$SRC/circuits/$CORE/$EXP_DATA_PATH/model_vcd
+MODEL_DIR=$SRC/circuits/$CORE/$EXP_DATA_PATH/model_${FUZZER_INSTANCE_BASENAME}_vcd
 MODEL_DIR=$MODEL_DIR make verilate
 echo "Done!"
 echo $LINE_SEP
@@ -55,12 +55,12 @@ echo "Done!"
 echo $LINE_SEP
 
 # Make a build directory to store AFLGo compiler inputs/outputs
-BUILD_DIR=$SRC/circuits/$CORE/$EXP_DATA_PATH/build_vcd
-mkdir $BUILD_DIR
+BUILD_DIR=$SRC/circuits/$CORE/$EXP_DATA_PATH/build_${FUZZER_INSTANCE_BASENAME}_vcd
+mkdir -p $BUILD_DIR
 
 # Make a bin directory to store instrumented EXEs
-BIN_DIR=$SRC/circuits/$CORE/$EXP_DATA_PATH/bin_vcd
-mkdir $BIN_DIR
+BIN_DIR=$SRC/circuits/$CORE/$EXP_DATA_PATH/bin_${FUZZER_INSTANCE_BASENAME}_vcd
+mkdir -p $BIN_DIR
 
 # Compile SW model of HW
 echo "Compiling SW model of HW ..."
@@ -98,5 +98,5 @@ echo $LINE_SEP
 ################################################################################
 echo "Cleaning up ..."
 rm -rf $BUILD_DIR $BIN_DIR $MODEL_DIR
-echo "Done!"
+echo -e "\e[1;32mVCD TRACING SUCCESSFUL -- Done!\e[0m"
 exit 0
