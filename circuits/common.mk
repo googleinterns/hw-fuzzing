@@ -15,17 +15,19 @@
 ################################################################################
 # Directories
 ################################################################################
-SCRIPTS           ?= ../../scripts
-HDL_DIR           ?= hdl
-TB_SRCS_DIR       ?= src
-TB_INC_DIR        ?= include
-MODEL_DIR         ?= model
-BUILD_DIR         ?= build
-BIN_DIR           ?= bin
-FUZZER_INPUT_DIR  ?= afl_in
-FUZZER_OUTPUT_DIR ?= afl_out
+SCRIPTS            ?= $(HW_FUZZING)/scripts
+HDL_DIR            ?= hdl
+TB_SRCS_DIR        ?= src
+TB_INCS_DIR        ?= include
+MODEL_DIR          ?= model
+BUILD_DIR          ?= build
+BIN_DIR            ?= bin
+FUZZER_INPUT_DIR   ?= afl_in
+FUZZER_OUTPUT_DIR  ?= afl_out
 export TB_SRCS_DIR
-export TB_INC_DIR
+export TB_INCS_DIR
+export SHARED_TB_SRCS_DIR
+export SHARED_TB_INCS_DIR
 export MODEL_DIR
 export BUILD_DIR
 export BIN_DIR
@@ -70,7 +72,7 @@ verilate: $(HDL)
 
 $(BIN_DIR)/$(VM_PREFIX): $(MODEL) $(TB)
 	@mkdir -p $(BUILD_DIR); \
-	mkdir -p $(BIN_DIR); \
+		mkdir -p $(BIN_DIR); \
 	make -f ../exe.mk
 
 .PHONY: \

@@ -27,11 +27,12 @@ def gen_afl_seeds(test_file_basename, num_seeds, num_tests_per_seed):
         test_file_name = test_file_basename + test_file_name_ext
 
         # Open Test File
-        test_file = open(test_file_name, "w")
+        test_file = open(test_file_name, 'wb')
 
         # Write Tests
         for _ in range(num_tests_per_seed):
-            test_file.write("%s\n" % gen_random_test())
+            test_file.write(gen_random_test())
+            # test_file.write(b"\n")
 
         # Close Test File
         test_file.close()

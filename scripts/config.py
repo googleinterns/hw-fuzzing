@@ -16,6 +16,7 @@
 import errno
 import json
 import os
+import sys
 
 # Configurations dictionary keys
 KEY_EXPERIMENT_NUMBER           = "experiment_number"
@@ -121,16 +122,23 @@ class Config():
     def set_fuzzer_instance_basename(self):
         self.fuzzer_instance_basename = "%s" % (self.fuzzer)
         if self.fuzzing_duration_mins:
-            self.fuzzer_instance_basename += ("_%smins" % \
+            self.fuzzer_instance_basename += ("_%sm" % \
                 str(self.fuzzing_duration_mins).replace(".", "_"))
         if self.time_to_exploitation_mins:
-            self.fuzzer_instance_basename += ("_%dttemins" % \
+            self.fuzzer_instance_basename += ("_%dttem" % \
                 self.time_to_exploitation_mins)
         if self.checkpoint_interval_mins:
-            self.fuzzer_instance_basename += ("_%sminscp" % \
+            self.fuzzer_instance_basename += ("_%smcp" % \
                 str(self.checkpoint_interval_mins).replace(".", "_"))
         if self.tag:
             self.fuzzer_instance_basename += ("_%s" % self.tag)
+
+        # Check fuzzing instance basename is not too long
+        # (AFL will complain and fail to run if so ...)
+        if len(self.fuzzer_instance_basename) > 32:
+            print(color_str_red("ERROR: fuzzer instance basename too long."), \
+                    color_str_red("Terminating experiment!"))
+            sys.exit(1)
 
     # Create directories for experiment data
     def create_experiment_dirs(self):

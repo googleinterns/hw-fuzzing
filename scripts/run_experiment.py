@@ -52,7 +52,9 @@ def compile_core(config):
     print(LINE_SEP)
     command = [\
         "docker", "run", "-it", "--rm", "--cap-add", "SYS_PTRACE", \
-        "--name", "%s_%s_compile" % (config.core, \
+        "--name", "%s_%s_%s_compile" % ( \
+            config.core, \
+            config.experiment_name, \
             config.fuzzer_instance_basename), \
         "-e", "CORE=%s" % config.core, \
         "-e", "FUZZER=%s" % config.fuzzer, \
@@ -82,23 +84,25 @@ def generate_seeds(config):
             config.exp_data_path, \
             config.fuzzer_input_dir)
     if os.listdir(full_fuzzer_input_path):
-        ovw = input('WARNING: input seed(s) exist. Generate new? [yN]')
+        ovw = input(color_str_yellow( \
+                'WARNING: input seed(s) exist. Generate new? [yN]'))
         if ovw in {'yes', 'y', 'Y', 'YES', 'Yes'}:
             # Remove old seeds
-            shutil.rmtree(self.exp_data_path)
-
-            # Create new random seeds
-            sys.path.append(config.root_path + "/scripts")
-            seed_gen_module = importlib.import_module("gen_afl_seeds")
-            seed_file_basename = config.exp_data_path + \
-                    "/" + config.fuzzer_input_dir + "/seed"
-            seed_gen_module.gen_afl_seeds(\
-                    seed_file_basename, \
-                    config.num_seeds, \
-                    config.num_tests_per_seed)
+            for seed_filename in os.listdir(full_fuzzer_input_path):
+                os.remove(os.path.join(full_fuzzer_input_path, seed_filename))
         else:
             print("Continuing with existing input seeds.")
+            return
 
+    # Create new random seeds
+    sys.path.append(config.root_path + "/scripts")
+    seed_gen_module = importlib.import_module("gen_afl_seeds")
+    seed_file_basename = config.exp_data_path + \
+            "/" + config.fuzzer_input_dir + "/seed"
+    seed_gen_module.gen_afl_seeds(\
+            seed_file_basename, \
+            config.num_seeds, \
+            config.num_tests_per_seed)
     print(color_str_green("SEED GENERATION SUCCESSFUL -- Done!"))
 
 # Fuzz the software model of the core
@@ -113,7 +117,8 @@ def fuzz_core(config):
             config.fuzzer_output_dir, \
             config.fuzzer_instance_basename)
     if glob.glob(full_fuzzer_output_path):
-        ovw = input('WARNING: experiment data exists. Overwrite? [Yn]')
+        ovw = input(color_str_yellow( \
+                'WARNING: experiment data exists. Overwrite? [Yn]'))
         if ovw in {'yes', 'y', 'Y', 'YES', 'Yes', ''}:
             for fuzzer_data_dir in glob.glob(full_fuzzer_output_path):
                 shutil.rmtree(fuzzer_data_dir)
@@ -125,7 +130,9 @@ def fuzz_core(config):
     # Launch fuzzer
     command = [\
         "docker", "run", "-it", "--rm", "--cap-add", "SYS_PTRACE", \
-        "--name", "%s_%s_fuzz" % (config.core, \
+        "--name", "%s_%s_%s_fuzz" % ( \
+            config.core, \
+            config.experiment_name, \
             config.fuzzer_instance_basename), \
         "-e", "CORE=%s" % config.core, \
         "-e", "FUZZER=%s" % config.fuzzer, \
@@ -161,7 +168,9 @@ def simulate_and_trace(config):
     print(LINE_SEP)
     command = [\
         "docker", "run", "-it", "--rm", "--cap-add", "SYS_PTRACE", \
-        "--name", "%s_%s_vcd" % (config.core, \
+        "--name", "%s_%s_%s_vcd" % ( \
+            config.core, \
+            config.experiment_name, \
             config.fuzzer_instance_basename), \
         "-e", "CORE=%s" % config.core, \
         "-e", "EXP_DATA_PATH=%s" % config.exp_data_path, \

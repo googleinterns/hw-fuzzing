@@ -30,13 +30,6 @@ VM_SC = 0
 ################################################################################
 # Compiler flags to use to turn off unused and generated code warnings,
 # such as -Wno-div-by-zero
-#CFG_CXXFLAGS_NO_UNUSED = \
-	#-faligned-new \
-	#-Wno-sign-compare \
-	#-Wno-uninitialized \
-	#-Wno-unused-parameter \
-	#-Wno-unused-variable \
-	#-Wno-shadow
 CFG_CXXFLAGS_NO_UNUSED = \
 	-Wno-sign-compare \
 	-Wno-uninitialized \
@@ -47,8 +40,8 @@ CFG_CXXFLAGS_NO_UNUSED = \
 # Add -MMD -MP if you're using a recent version of GCC.
 VK_CPPFLAGS_ALWAYS += \
 	-MMD \
-	-I$(TB_INC_DIR) \
-	-I$(MODEL_DIR)\
+	-I$(TB_INCS_DIR) \
+	-I$(MODEL_DIR) \
 	-I$(VERILATOR_ROOT)/include \
 	-I$(VERILATOR_ROOT)/include/vltstd \
 	-DVM_COVERAGE=$(VM_COVERAGE) \
@@ -146,5 +139,5 @@ debug-make::
 	@echo VM_SUPPORT_SLOW: $(VM_SUPPORT_SLOW)
 	@echo VM_GLOBAL_FAST: $(VM_GLOBAL_FAST)
 	@echo VM_GLOBAL_SLOW: $(VM_GLOBAL_SLOW)
-	@echo VK_OBJS: $(VK_OBJS)
+	@echo VK_ALL_OBJS: $(VK_ALL_OBJS)
 	@echo

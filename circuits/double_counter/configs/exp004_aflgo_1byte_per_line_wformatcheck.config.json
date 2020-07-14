@@ -1,8 +1,8 @@
 {
-    "experiment_number" : 2,
-    "experiment_name" : "unmodified_afl_baseline",
+    "experiment_number" : 4,
+    "experiment_name" : "aflgo_1byte_per_line_wformatcheck",
     "core" : "double_counter",
-    "fuzzer" : "afl",
+    "fuzzer" : "aflgo",
     "debug" : 1,
     "num_seeds" : 1,
     "num_tests_per_seed" : 2,
@@ -11,7 +11,7 @@
     "fuzzer_output_dir" : "out",
     "fuzzing_duration_mins" : 60,
     "checkpoint_interval_mins" : null,
-    "time_to_exploitation_mins" : null,
+    "time_to_exploitation_mins" : 6,
     "data_extraction_script" : "double_counter_extract_final_counts",
-    "tag" : null
+    "tag" : ""
 }

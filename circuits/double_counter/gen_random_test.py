@@ -14,7 +14,6 @@
 # limitations under the License.
 
 import random
-import string
 
 def gen_random_test():
-    return random.choice(string.ascii_letters)
+    return random.randint(0, 255).to_bytes(1, byteorder='little', signed=False)

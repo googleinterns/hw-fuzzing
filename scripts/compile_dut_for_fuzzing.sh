@@ -23,11 +23,11 @@ LINE_SEP="-------------------------------------------------------------------"
 echo "Setting compiler/linker flags..."
 
 # Set fuzzer compiler
-if [[ $FUZZER -eq "afl" ]]; then
+if [[ $FUZZER == "afl" ]]; then
     export CC="$SRC/AFL/afl-clang-fast"
     export CXX="$SRC/AFL/afl-clang-fast++"
     export CCC="$SRC/AFL/afl-clang-fast++"
-elif [[ $FUZZER -eq "aflgo" ]]; then
+elif [[ $FUZZER == "aflgo" ]]; then
     export CC="$SRC/aflgo/afl-clang-fast"
     export CXX="$SRC/aflgo/afl-clang-fast++"
     export CCC="$SRC/aflgo/afl-clang-fast++"

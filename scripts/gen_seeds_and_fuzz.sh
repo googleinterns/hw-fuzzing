@@ -33,7 +33,7 @@ if [[ $FUZZER == "afl" || $FUZZER == "aflgo" ]]; then
         STDOUT_LOG="logs/${FUZZER_INSTANCE_BASENAME}_${num}.out.log"
 
         # Set fuzzer and related options
-        if [ $FUZZER == "aflgo" ]; then
+        if [[ $FUZZER == "aflgo" ]]; then
             FUZZER_BIN="$SRC/aflgo/afl-fuzz"
             FUZZER_OPTIONS="-z exp -c ${TIME_TO_EXPLOITATION_MINS}m"
         else
