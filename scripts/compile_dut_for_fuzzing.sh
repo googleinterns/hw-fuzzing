@@ -184,7 +184,7 @@ else
     echo "Compiling/Instrumenting the $CORE SW model ..."
 fi
 
-MODEL_DIR=$MODEL_DIR BUILD_DIR=$BUILD_DIR BIN_DIR=$BIN_DIR make exe
+MODEL_DIR=$MODEL_DIR BUILD_DIR=$BUILD_DIR BIN_DIR=$BIN_DIR TB=$TB make exe
 
 echo "Done!"
 
@@ -235,7 +235,7 @@ if [ $DO_POSTPROCESS -eq 1 ]; then
 
     # Second compiler pass (instrumentation happens here)
     echo "Compiling/Instrumenting the $CORE SW model ..."
-    MODEL_DIR=$MODEL_DIR BUILD_DIR=$BUILD_DIR BIN_DIR=$BIN_DIR make exe
+    MODEL_DIR=$MODEL_DIR BUILD_DIR=$BUILD_DIR BIN_DIR=$BIN_DIR TB=$TB make exe
     echo "Done!"
 fi
 

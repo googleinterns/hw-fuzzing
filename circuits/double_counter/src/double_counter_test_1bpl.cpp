@@ -40,8 +40,9 @@ DoubleCounterTest::~DoubleCounterTest() {}
 
 // Open input file stream for reading
 void DoubleCounterTest::OpenSimulationFile() {
-    input_file_stream_ = new std::ifstream(input_file_name_, std::ios::binary);
-    if (!*input_file_stream_) {
+    input_file_stream_ = new std::ifstream();
+    input_file_stream_->open(input_file_name_, std::ifstream::binary);
+    if (!input_file_stream_->is_open()) {
         std::cerr << "ERROR: cannot open testbench input file: ";
         std::cerr << input_file_name_ << std::endl;
         exit(1);
@@ -53,9 +54,15 @@ uint32_t DoubleCounterTest::ReadSimulationInput(
     uint8_t* buffer,
     uint32_t num_bytes) {
     if (!input_file_stream_->eof()) {
-        // Read file as a byte stream
+        // Assume input is formatted as one input per line;
         input_file_stream_->read((char*) buffer, num_bytes);
-        return input_file_stream_->gcount();
+        uint32_t num_bytes_read = input_file_stream_->gcount();
+        if (num_bytes_read == num_bytes && input_file_stream_) {
+            // Read and throw away new line character
+            char throw_away = 0;
+            input_file_stream_->read(&throw_away, 1);
+        }
+        return num_bytes_read;
     }
     return 0;
 }
@@ -169,16 +176,6 @@ void DoubleCounterTest::SimulateDUT() {
 
         // Toggle main clock
         if ((main_time_ % 2) == 0) {
-            // Toggle clock
-            dut_->clk = 1;
-        } else {
-            // perform increment
-            if (select_ & 0x1) {
-                count_1_++;
-            } else {
-                count_2_++;
-            }
-
             // Verify Counter Results
             std::cout << "Checking results for test " << num_checks_done_;
             std::cout << " (time = " << unsigned(main_time_) << ") ...";
@@ -195,6 +192,16 @@ void DoubleCounterTest::SimulateDUT() {
                 "ERROR: Incorrect value for count_2.");
             num_checks_done_++;
 
+            // Toggle clock
+            dut_->clk = 1;
+
+            // perform increment
+            if (select_ & 0x1) {
+                count_1_++;
+            } else {
+                count_2_++;
+            }
+        } else {
             // Toggle clock
             dut_->clk = 0;
 
@@ -214,10 +221,6 @@ void DoubleCounterTest::SimulateDUT() {
                 std::cout << " (0x" << std::hex << unsigned(select_) << ")";
                 std::cout << std::endl;
                 dut_->select = (select_ & 0x1);
-                std::cout << "  dut->select = ";
-                std::cout << std::bitset<INPUT_PORT_SIZE_IN_BYTES * 8>(dut_->select);
-                std::cout << " (0x" << std::hex << unsigned(dut_->select) << ")";
-                std::cout << std::endl;
             }
         }
 
@@ -262,33 +265,6 @@ int main(int argc, char** argv, char** env) {
         std::cerr << " <input file name>" << std::endl;
         exit(1);
     }
-
-    //std::ifstream f( argv[1], std::ios::binary );
-    //std::cout << std::setfill( '0' ) << std::hex << std::uppercase;
-    //while (f)
-    //{
-        //// Define buffer
-        //char s[ 16 ];
-        //std::size_t n, i;
-
-        //// Read bytes
-        //f.read( s, sizeof(s) );
-        //n = f.gcount();
-
-        //// Print hex bytes
-        //for (i = 0; i < n; i++)
-            //std::cout << std::setw( 2 ) << (int)s[ i ] << " ";
-
-        //// Write spaces between hex bytes
-        //while (i++ < sizeof(s))
-            //std::cout << "   ";
-        //std::cout << "  ";
-
-        //// Write new line
-        //std::cout << "\n";
-    //}
-    //exit(0);
-//}
 
     // Instantiate testbench
     DoubleCounterTest tb(argv[1]);

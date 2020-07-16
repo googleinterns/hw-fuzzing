@@ -15,15 +15,15 @@
 ################################################################################
 # Directories
 ################################################################################
-SCRIPTS            ?= $(HW_FUZZING)/scripts
-HDL_DIR            ?= hdl
-TB_SRCS_DIR        ?= src
-TB_INCS_DIR        ?= include
-MODEL_DIR          ?= model
-BUILD_DIR          ?= build
-BIN_DIR            ?= bin
-FUZZER_INPUT_DIR   ?= afl_in
-FUZZER_OUTPUT_DIR  ?= afl_out
+SCRIPTS           ?= $(HW_FUZZING)/scripts
+HDL_DIR           ?= hdl
+TB_SRCS_DIR       ?= src
+TB_INCS_DIR       ?= include
+MODEL_DIR         ?= model
+BUILD_DIR         ?= build
+BIN_DIR           ?= bin
+FUZZER_INPUT_DIR  ?= in
+FUZZER_OUTPUT_DIR ?= out
 export TB_SRCS_DIR
 export TB_INCS_DIR
 export SHARED_TB_SRCS_DIR
@@ -35,10 +35,9 @@ export BIN_DIR
 ################################################################################
 # Sources/Inputs
 ################################################################################
-TB    = $(wildcard $(TB_SRCS_DIR)/*.cpp)
-HDL   = $(wildcard $(HDL_DIR)/*.v)
-MODEL = $(wildcard $(MODEL_DIR)/*.cpp)
-INPUT = $(FUZZER_INPUT_DIR)/seed
+TB    ?= $(TB_SRCS_DIR)/$(DUT)_test.cpp
+HDL    = $(wildcard $(HDL_DIR)/*.v)
+MODEL  = $(wildcard $(MODEL_DIR)/*.cpp)
 export TB
 
 ################################################################################
@@ -84,31 +83,21 @@ $(BIN_DIR)/$(VM_PREFIX): $(MODEL) $(TB)
 	coverage \
 	sim \
 	exe \
-	seed \
-	afl_in_dir \
-	afl_out_dir
+	seed
 
 coverage:
 	verilator_coverage --annotate logs/annotated logs/coverage.dat
 
 sim: $(BIN_DIR)/$(VM_PREFIX)
-	./$(BIN_DIR)/$(VM_PREFIX) $(INPUT).0.tf; \
+	./$(BIN_DIR)/$(VM_PREFIX) $(FUZZER_INPUT_DIR)/$(SEED)
 
 exe: $(BIN_DIR)/$(VM_PREFIX)
 
-seed: afl_in_dir afl_out_dir
-	python3 $(SCRIPTS)/gen_afl_seeds.py \
-		$(FUZZER_INPUT_DIR)/seed \
-		$(NUM_SEEDS) \
-		$(NUM_TESTS_PER_SEED)
-
-afl_in_dir:
-	@echo "Creating dir for fuzzer input files..."; \
-	mkdir -p $(FUZZER_INPUT_DIR);
-
-afl_out_dir:
-	@echo "Creating dir for fuzzer output files..."; \
-	mkdir -p $(FUZZER_OUTPUT_DIR);
+seed:
+	@echo "Creating dir for fuzzer outputs ..."; \
+	echo "Creating dir for fuzzer inputs ..."; \
+	echo "Copying seeds to fuzzer input dir ..."; \
+	cp -r seeds $(FUZZER_INPUT_DIR)
 
 clean-sim:
 	rm -rf logs

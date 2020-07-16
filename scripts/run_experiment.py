@@ -34,6 +34,10 @@ NUM_ARGS = 1
 # Other defines
 LINE_SEP = "==================================================================="
 
+# Use forked fuzzer source code
+# USE_FORKED_FUZZER=""
+USE_FORKED_FUZZER="-fork"
+
 # Handler to gracefully exit on ctrl+c
 def sigint_handler(sig, frame):
     print(color_str_red('\nTERMINATING EXPERIMENT!'))
@@ -57,6 +61,7 @@ def compile_core(config):
             config.experiment_name, \
             config.fuzzer_instance_basename), \
         "-e", "CORE=%s" % config.core, \
+        "-e", "TB=%s" % config.testbench, \
         "-e", "FUZZER=%s" % config.fuzzer, \
         "-e", "DEBUG=%d" % config.debug, \
         "-e", "EXP_DATA_PATH=%s" % config.exp_data_path, \
@@ -64,7 +69,7 @@ def compile_core(config):
         "-v", "%s/circuits:/src/circuits" % config.root_path, \
         "-v", "%s/third_party:/src/third_party" % config.root_path, \
         "-u", "%d:%d" % (os.getuid(), os.getgid()), \
-        "-t", "hw-fuzzing/base-%s" % config.fuzzer, \
+        "-t", "hw-fuzzing/base-%s%s" % (config.fuzzer, USE_FORKED_FUZZER), \
         "bash", "/scripts/compile_dut_for_fuzzing.sh" \
     ]
     try:
@@ -75,35 +80,40 @@ def compile_core(config):
         sys.exit(1)
 
 # Generate fuzzer input seeds
-def generate_seeds(config):
+def copy_seeds(config):
     print(LINE_SEP)
-    print("Generating seeds for fuzzer ...")
+    print("Copying seeds for fuzzer ...")
 
-    # Check if seed(s) already exist --> if so, ask for permission to do nothing
+    # Set fuzzer seeds input path
     full_fuzzer_input_path = "%s/%s" % ( \
             config.exp_data_path, \
             config.fuzzer_input_dir)
+
+    # Check if seed(s) already exist, if so ask for permission to do nothing
     if os.listdir(full_fuzzer_input_path):
         ovw = input(color_str_yellow( \
-                'WARNING: input seed(s) exist. Generate new? [yN]'))
+                'WARNING: input seed(s) exist. Update them? [yN]'))
         if ovw in {'yes', 'y', 'Y', 'YES', 'Yes'}:
             # Remove old seeds
             for seed_filename in os.listdir(full_fuzzer_input_path):
                 os.remove(os.path.join(full_fuzzer_input_path, seed_filename))
         else:
-            print("Continuing with existing input seeds.")
+            print(color_str_green("CONTINUING WITH EXISTING SEEDS -- Done!"))
             return
 
-    # Create new random seeds
-    sys.path.append(config.root_path + "/scripts")
-    seed_gen_module = importlib.import_module("gen_afl_seeds")
-    seed_file_basename = config.exp_data_path + \
-            "/" + config.fuzzer_input_dir + "/seed"
-    seed_gen_module.gen_afl_seeds(\
-            seed_file_basename, \
-            config.num_seeds, \
-            config.num_tests_per_seed)
-    print(color_str_green("SEED GENERATION SUCCESSFUL -- Done!"))
+    # Check if seeds directory exists
+    if os.path.isdir(config.seeds_dir) and os.listdir(config.seeds_dir):
+        # Copy over new seeds
+        for seed_filename in os.listdir(config.seeds_dir):
+            full_seed_path = os.path.join(config.seeds_dir, seed_filename)
+            shutil.copy(full_seed_path, full_fuzzer_input_path)
+        print(color_str_green("SEED COPYING SUCCESSFUL -- Done!"))
+    else:
+        # No seeds to copy
+        error_str = "ERROR: no seeds to copy. Terminating experiment!"
+        print(color_str_red(error_str))
+        sys.exit(1)
+
 
 # Fuzz the software model of the core
 def fuzz_core(config):
@@ -151,7 +161,7 @@ def fuzz_core(config):
         "-v", "%s/scripts:/scripts" % config.root_path, \
         "-v", "%s/circuits:/src/circuits" % config.root_path, \
         "-u", "%d:%d" % (os.getuid(), os.getgid()), \
-        "-t", "hw-fuzzing/base-%s" % config.fuzzer, \
+        "-t", "hw-fuzzing/base-%s%s" % (config.fuzzer, USE_FORKED_FUZZER), \
         "bash", "/scripts/gen_seeds_and_fuzz.sh" \
     ]
     try:
@@ -173,6 +183,7 @@ def simulate_and_trace(config):
             config.experiment_name, \
             config.fuzzer_instance_basename), \
         "-e", "CORE=%s" % config.core, \
+        "-e", "TB=%s" % config.testbench, \
         "-e", "EXP_DATA_PATH=%s" % config.exp_data_path, \
         "-e", "FUZZER_OUTPUT_DIR=%s" % config.fuzzer_output_dir, \
         "-e", "NUM_INSTANCES=%d" % config.num_instances, \
@@ -180,7 +191,7 @@ def simulate_and_trace(config):
         "-v", "%s/scripts:/scripts" % config.root_path, \
         "-v", "%s/circuits:/src/circuits" % config.root_path, \
         "-u", "%d:%d" % (os.getuid(), os.getgid()), \
-        "-t", "hw-fuzzing/base-%s" % config.fuzzer, \
+        "-t", "hw-fuzzing/base-%s%s" % (config.fuzzer, USE_FORKED_FUZZER), \
         "bash", "/scripts/compile_and_sim_dut_wtracing.sh" \
     ]
     try:
@@ -224,8 +235,8 @@ def main(args):
     # Verilate and compile target core for fuzzing
     compile_core(config)
 
-    # Generate inputs seeds
-    generate_seeds(config)
+    # Copy input seeds to experiment directory
+    copy_seeds(config)
 
     # Fuzz target core
     fuzz_core(config)

@@ -19,12 +19,7 @@ export DUT       := double_counter
 export LIBS      :=
 export CPPFLAGS  := -std=c++11
 export LINKFLAGS := -std=c++11
-
-################################################################################
-# Default number of seed tests (counter increments)
-################################################################################
-NUM_SEEDS ?= 1
-NUM_TESTS_PER_SEED ?= 1
+export SEED      := afl_seed.1.tf
 
 ################################################################################
 # Directories

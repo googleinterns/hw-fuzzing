@@ -1,17 +1,16 @@
 {
     "experiment_number" : 2,
-    "experiment_name" : "aflgo_byte_stream_inputs",
+    "experiment_name" : "aflgo_byte_stream",
     "core" : "double_counter",
+    "testbench" : "double_counter_test.cpp",
     "fuzzer" : "aflgo",
     "debug" : 1,
-    "num_seeds" : 1,
-    "num_tests_per_seed" : 2,
     "num_instances" : 1,
     "fuzzer_input_dir" : "in",
     "fuzzer_output_dir" : "out",
-    "fuzzing_duration_mins" : 10,
+    "fuzzing_duration_mins" : 60,
     "checkpoint_interval_mins" : null,
-    "time_to_exploitation_mins" : 1,
+    "time_to_exploitation_mins" : 6,
     "data_extraction_script" : "double_counter_extract_final_counts",
     "tag" : ""
 }

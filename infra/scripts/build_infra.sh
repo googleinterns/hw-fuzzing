@@ -20,13 +20,16 @@ if [ -z "$HW_FUZZING" ]
 then
     echo "ERROR: Set HW_FUZZING path and try again."
 else
-    # Build Docker infrastructure
-    #docker build -t hw-fuzzing/base-image $@ $HW_FUZZING/infra/base-image
+    # Build fuzzing Docker infrastructure
+    #docker build --pull -t hw-fuzzing/base-image $@ $HW_FUZZING/infra/base-image
     #docker build -t hw-fuzzing/base-verilator $@ $HW_FUZZING/infra/base-verilator
     #docker build -t hw-fuzzing/base-clang-10.0.0 $@ $HW_FUZZING/infra/base-clang-10.0.0
     #docker build -t hw-fuzzing/base-clang-4.0.0 $@ $HW_FUZZING/infra/base-clang-4.0.0
     #docker build -t hw-fuzzing/base-afl $@ $HW_FUZZING/infra/base-afl
-    docker build -t hw-fuzzing/base-afl-fork $@ $HW_FUZZING/infra/base-afl-fork
+    #docker build -t hw-fuzzing/base-afl-fork $@ $HW_FUZZING/infra/base-afl-fork
     #docker build -t hw-fuzzing/base-aflgo $@ $HW_FUZZING/infra/base-aflgo
     docker build -t hw-fuzzing/base-aflgo-fork $@ $HW_FUZZING/infra/base-aflgo-fork
+
+    # Build circuit build/sim Docker infrastructure
+    #docker build --pull -t hw-fuzzing/base-opentitan $@ $HW_FUZZING/infra/base-opentitan
 fi

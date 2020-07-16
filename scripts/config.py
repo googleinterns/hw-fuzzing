@@ -19,21 +19,20 @@ import os
 import sys
 
 # Configurations dictionary keys
-KEY_EXPERIMENT_NUMBER           = "experiment_number"
-KEY_EXPERIMENT_NAME             = "experiment_name"
-KEY_CORE                        = "core"
-KEY_FUZZER                      = "fuzzer"
-KEY_DEBUG                       = "debug"
-KEY_NUM_SEEDS                   = "num_seeds"
-KEY_NUM_TESTS_PER_SEED          = "num_tests_per_seed"
-KEY_NUM_INSTANCES               = "num_instances"
-KEY_FUZZER_INPUT_DIR            = "fuzzer_input_dir"
-KEY_FUZZER_OUTPUT_DIR           = "fuzzer_output_dir"
-KEY_FUZZING_DURATION_MINS       = "fuzzing_duration_mins"
-KEY_CHECKPOINT_INTERVAL_MINS    = "checkpoint_interval_mins"
-KEY_TIME_TO_EXPLOITATION_MINS   = "time_to_exploitation_mins"
-KEY_DATA_EXTRACTION_SCRIPT      = "data_extraction_script"
-KEY_TAG                         = "tag"
+KEY_EXPERIMENT_NUMBER         = "experiment_number"
+KEY_EXPERIMENT_NAME           = "experiment_name"
+KEY_CORE                      = "core"
+KEY_TESTBENCH                 = "testbench"
+KEY_FUZZER                    = "fuzzer"
+KEY_DEBUG                     = "debug"
+KEY_NUM_INSTANCES             = "num_instances"
+KEY_FUZZER_INPUT_DIR          = "fuzzer_input_dir"
+KEY_FUZZER_OUTPUT_DIR         = "fuzzer_output_dir"
+KEY_FUZZING_DURATION_MINS     = "fuzzing_duration_mins"
+KEY_CHECKPOINT_INTERVAL_MINS  = "checkpoint_interval_mins"
+KEY_TIME_TO_EXPLOITATION_MINS = "time_to_exploitation_mins"
+KEY_DATA_EXTRACTION_SCRIPT    = "data_extraction_script"
+KEY_TAG                       = "tag"
 
 # Root data directory name
 ROOT_DATA_PATH = "data"
@@ -62,10 +61,10 @@ class Config():
         self.experiment_number = None
         self.experiment_name = None
         self.core = None
+        self.testbench = None
         self.fuzzer = None
+        self.seeds_dir = "seeds" # TODO: add to config file?
         self.debug = None
-        self.num_seeds = None
-        self.num_tests_per_seed = None
         self.num_instances = None
         self.fuzzer_input_dir = None
         self.fuzzer_output_dir = None
@@ -82,6 +81,9 @@ class Config():
         # Load configurations
         self.load_configurations()
 
+        # Set testbench filename
+        self.set_testbench_filename()
+
         # Set experiment directory names
         self.set_experiment_dir_name()
 
@@ -97,10 +99,9 @@ class Config():
             self.experiment_number = cdict[KEY_EXPERIMENT_NUMBER]
             self.experiment_name = cdict[KEY_EXPERIMENT_NAME]
             self.core = cdict[KEY_CORE]
+            self.testbench = cdict[KEY_TESTBENCH]
             self.fuzzer = cdict[KEY_FUZZER]
             self.debug = int(cdict[KEY_DEBUG])
-            self.num_seeds = int(cdict[KEY_NUM_SEEDS])
-            self.num_tests_per_seed = int(cdict[KEY_NUM_TESTS_PER_SEED])
             self.num_instances = int(cdict[KEY_NUM_INSTANCES])
             self.fuzzer_input_dir = cdict[KEY_FUZZER_INPUT_DIR]
             self.fuzzer_output_dir = cdict[KEY_FUZZER_OUTPUT_DIR]
@@ -110,6 +111,13 @@ class Config():
                     cdict[KEY_TIME_TO_EXPLOITATION_MINS]
             self.data_extraction_script = cdict[KEY_DATA_EXTRACTION_SCRIPT]
             self.tag = cdict[KEY_TAG]
+
+    # Set testbench filename
+    def set_testbench_filename(self):
+        if not self.testbench:
+            self.testbench = os.path.join("src", self.core + "_test.cpp")
+        else:
+            self.testbench = os.path.join("src", self.testbench)
 
     # Set experiment directory name
     def set_experiment_dir_name(self):
@@ -185,10 +193,9 @@ class Config():
         print(color_str_yellow("Experiment Number:          "), self.experiment_number)
         print(color_str_yellow("Experiment Name:            "), self.experiment_name)
         print(color_str_yellow("Core:                       "), self.core)
+        print(color_str_yellow("Testbench:                  "), self.testbench)
         print(color_str_yellow("Fuzzer:                     "), self.fuzzer)
         print(color_str_yellow("Debug:                      "), self.debug)
-        print(color_str_yellow("Number of Fuzzing Seeds:    "), self.num_seeds)
-        print(color_str_yellow("Number of Test per Seed:    "), self.num_tests_per_seed)
         print(color_str_yellow("Number of Instances:        "), self.num_instances)
         print(color_str_yellow("Fuzzing Duration (min):     "), self.fuzzing_duration_mins)
         print(color_str_yellow("Checkpoint Interval (min):  "), self.checkpoint_interval_mins)

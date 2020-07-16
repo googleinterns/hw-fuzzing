@@ -64,7 +64,7 @@ mkdir -p $BIN_DIR
 
 # Compile SW model of HW
 echo "Compiling SW model of HW ..."
-MODEL_DIR=$MODEL_DIR BUILD_DIR=$BUILD_DIR BIN_DIR=$BIN_DIR make exe
+MODEL_DIR=$MODEL_DIR BUILD_DIR=$BUILD_DIR BIN_DIR=$BIN_DIR TB=$TB make exe
 
 echo "Done!"
 echo $LINE_SEP

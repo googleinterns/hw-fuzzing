@@ -13,15 +13,18 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-# Remove all Docker images
-docker rmi -f hw-fuzzing/base-aflgo-fork:latest
-docker rmi -f hw-fuzzing/base-aflgo:latest
-docker rmi -f hw-fuzzing/base-afl-fork:latest
-docker rmi -f hw-fuzzing/base-afl:latest
-docker rmi -f hw-fuzzing/base-clang-4.0.0:latest
-docker rmi -f hw-fuzzing/base-clang-10.0.0:latest
-docker rmi -f hw-fuzzing/base-verilator:latest
-docker rmi -f hw-fuzzing/base-image:latest
+## Remove all fuzzing infrastructure Docker images
+#docker rmi -f hw-fuzzing/base-aflgo-fork:latest
+#docker rmi -f hw-fuzzing/base-aflgo:latest
+#docker rmi -f hw-fuzzing/base-afl-fork:latest
+#docker rmi -f hw-fuzzing/base-afl:latest
+#docker rmi -f hw-fuzzing/base-clang-4.0.0:latest
+#docker rmi -f hw-fuzzing/base-clang-10.0.0:latest
+#docker rmi -f hw-fuzzing/base-verilator:latest
+#docker rmi -f hw-fuzzing/base-image:latest
+
+# Remove all circuit infrastructure Docker images
+docker rmi -f hw-fuzzing/base-opentitan:latest
 
 # Cleanup Docker containers
 docker ps -a -q | xargs -I {} docker rm {};
