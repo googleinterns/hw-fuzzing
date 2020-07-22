@@ -40,6 +40,7 @@ CFG_CXXFLAGS_NO_UNUSED = \
 # Add -MMD -MP if you're using a recent version of GCC.
 VK_CPPFLAGS_ALWAYS += \
 	-MMD \
+	-I$(SHARED_TB_INCS_DIR) \
 	-I$(TB_INCS_DIR) \
 	-I$(MODEL_DIR) \
 	-I$(VERILATOR_ROOT)/include \
@@ -54,6 +55,7 @@ CPPFLAGS += $(VK_CPPFLAGS_WALL) $(VK_CPPFLAGS_ALWAYS)
 ################################################################################
 # Source paths
 ################################################################################
+VPATH += $(SHARED_TB_SRCS_DIR)
 VPATH += $(TB_SRCS_DIR)
 VPATH += $(MODEL_DIR)
 VPATH += $(VERILATOR_ROOT)/include
@@ -99,6 +101,7 @@ VK_FAST_OBJS   = $(addprefix $(BUILD_DIR)/, $(addsuffix .o, $(VM_FAST)))
 VK_SLOW_OBJS   = $(addprefix $(BUILD_DIR)/, $(addsuffix .o, $(VM_SLOW)))
 VK_GLOBAL_OBJS = $(addprefix $(BUILD_DIR)/, $(addsuffix .o, $(VM_GLOBAL)))
 VK_USER_OBJS   = $(TB:$(TB_SRCS_DIR)/%.cpp=$(BUILD_DIR)/%.o)
+VK_USER_OBJS  += $(SHARED_TB:$(SHARED_TB_SRCS_DIR)/%.cpp=$(BUILD_DIR)/%.o)
 
 VK_ALL_OBJS = $(VK_USER_OBJS) $(VK_GLOBAL_OBJS) $(VK_FAST_OBJS) $(VK_SLOW_OBJS)
 

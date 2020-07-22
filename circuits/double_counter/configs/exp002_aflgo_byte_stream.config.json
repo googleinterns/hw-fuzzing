@@ -8,9 +8,9 @@
     "num_instances" : 1,
     "fuzzer_input_dir" : "in",
     "fuzzer_output_dir" : "out",
-    "fuzzing_duration_mins" : 60,
+    "fuzzing_duration_mins" : 120,
     "checkpoint_interval_mins" : null,
-    "time_to_exploitation_mins" : 6,
+    "time_to_exploitation_mins" : 10,
     "data_extraction_script" : "double_counter_extract_final_counts",
-    "tag" : ""
+    "tag" : "m"
 }

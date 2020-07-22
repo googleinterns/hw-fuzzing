@@ -12,19 +12,17 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "double_counter_test.h"
+#include "lock_test.h"
 
 #include <bitset>
 #include <iostream>
 
 // Constructor
-DoubleCounterTest::DoubleCounterTest(int argc, char** argv)
+LockTest::LockTest(int argc, char** argv)
     : num_checks_(0),
       main_time_(0),
       dut_(),
-      test_(INPUT_PORT_SIZE_BYTES, argc, argv),
-      count_1_(0),
-      count_2_(0)
+      test_(INPUT_PORT_SIZE_BYTES, argc, argv)
 #if VM_TRACE
       ,
       tracing_file_pointer_(NULL),
@@ -41,7 +39,7 @@ DoubleCounterTest::DoubleCounterTest(int argc, char** argv)
 }
 
 // Destructor
-DoubleCounterTest::~DoubleCounterTest() {
+LockTest::~LockTest() {
 #if VM_TRACE
     // Close VCD trace if opened
     if (tracing_file_pointer_) {
@@ -54,7 +52,7 @@ DoubleCounterTest::~DoubleCounterTest() {
 
 #if VM_TRACE
 // Enable Verilator VCD tracing
-void DoubleCounterTest::InitializeTracing(std::string fname) {
+void LockTest::InitializeTracing(std::string fname) {
     // If verilator was invoked with --trace argument enable VCD tracing
     std::cout << "Tracing enabled." << std::endl;
 
@@ -77,10 +75,10 @@ void DoubleCounterTest::InitializeTracing(std::string fname) {
 #endif
 
 // Initialize DUT inputs
-void DoubleCounterTest::InitializeDUT() {
+void LockTest::InitializeDUT() {
     dut_.clk = 0;
-    dut_.n_reset = 0;
-    dut_.select = 0;
+    dut_.reset_n = 0;
+    dut_.in = 0;
     dut_.eval();
 #if VM_TRACE
     // Dump VCD trace for current time
@@ -94,7 +92,7 @@ void DoubleCounterTest::InitializeDUT() {
 // Toggle clock for num_toggles half clock periods.
 // Model is evaluated AFTER clock state is toggled,
 // and regardless of current clock state.
-void DoubleCounterTest::ToggleClock(uint32_t num_toggles) {
+void LockTest::ToggleClock(uint32_t num_toggles) {
     for (uint32_t i = 0; i < num_toggles; i++) {
         // Toggle main clock
         if (dut_.clk) {
@@ -119,19 +117,19 @@ void DoubleCounterTest::ToggleClock(uint32_t num_toggles) {
 }
 
 // Reset the DUT
-void DoubleCounterTest::ResetDUT() {
+void LockTest::ResetDUT() {
     // Print reset status
     std::cout << "Resetting the DUT (time: " << unsigned(main_time_);
     std::cout << ") ..." << std::endl;
 
     // Place DUT in reset
-    dut_.n_reset = 0;
+    dut_.reset_n = 0;
 
     // Toggle clock for NUM_RESET_PERIODS
     ToggleClock((NUM_RESET_PERIODS * 2) + 1);
 
     // Pull DUT out of reset
-    dut_.n_reset = 1;
+    dut_.reset_n = 1;
 
     // Print reset status
     std::cout << "Reset complete! (time = " << unsigned(main_time_);
@@ -139,52 +137,49 @@ void DoubleCounterTest::ResetDUT() {
 }
 
 // Simulate the DUT with testbench input file
-void DoubleCounterTest::SimulateDUT() {
+void LockTest::SimulateDUT() {
     // Create buffer for test data
     uint8_t test_input[INPUT_PORT_SIZE_BYTES] = {0};
 
     // Read tests and simulate DUT
     while (test_.ReadTest(test_input) && !Verilated::gotFinish()) {
         // Load test into DUT
-        dut_.select = (test_input[0] & 0x1);
+        dut_.in = (test_input[0]);
 
         // Print test read from file
         std::cout << "Loading inputs for test " << test_.get_test_num();
         std::cout << " (time = " << unsigned(main_time_) << ") ...";
         std::cout << std::endl;
-        std::cout << "  select = " << std::bitset<8>(test_input[0]);
+        std::cout << "  in = " << std::bitset<8>(test_input[0]);
         std::cout << " (0x" << std::hex << unsigned(test_input[0]) << ")";
         std::cout << std::endl;
-        std::cout << "  dut.select = " << std::bitset<8>(dut_.select);
-        std::cout << " (0x" << std::hex << unsigned(dut_.select) << ")";
+        std::cout << "  dut.in = " << std::bitset<8>(dut_.in);
+        std::cout << " (0x" << std::hex << unsigned(dut_.in) << ")";
         std::cout << std::endl;
 
         // Update correct "ground truth" state
-        if (test_input[0] & 0x1) {
-            count_1_++;
-        } else {
-            count_2_++;
-        }
+        // N/A
 
         // Toggle clock period
         ToggleClock(2);
 
         // Print vital DUT state
-        std::cout << "Checking results for test " << num_checks_;
-        std::cout << " (time = " << unsigned(main_time_) << ") ...";
-        std::cout << std::endl;
-        std::cout << "  count_1 (DUT / Correct) = ";
-        std::cout << unsigned(dut_.count_1) << "/" << unsigned(count_1_);
-        std::cout << std::endl;
-        std::cout << "  count_2 (DUT / Correct) = ";
-        std::cout << unsigned(dut_.count_2) << "/" << unsigned(count_2_);
-        std::cout << std::endl;
+        std::cout << "Checking if unlocked (time = ";
+        std::cout << unsigned(main_time_) << ") ..." << std::endl;
+        std::cout << "  unlocked = " << unsigned(dut_.unlocked) << std::endl;
+        //std::cout << "Checking results for test " << num_checks_;
+        //std::cout << " (time = " << unsigned(main_time_) << ") ...";
+        //std::cout << std::endl;
+        //std::cout << "  count_1 (DUT / Correct) = ";
+        //std::cout << unsigned(dut_.count_1) << "/" << unsigned(count_1_);
+        //std::cout << std::endl;
+        //std::cout << "  count_2 (DUT / Correct) = ";
+        //std::cout << unsigned(dut_.count_2) << "/" << unsigned(count_2_);
+        //std::cout << std::endl;
 
         // Verify vital DUT state
-        assert(count_1_ == dut_.count_1 &&
-            "ERROR: Incorrect value for count_1.");
-        assert(count_2_ == dut_.count_2 &&
-            "ERROR: Incorrect value for count_2.");
+        assert(dut_.unlocked == 0 &&
+            "SUCCESS: unlocked state has been reached!");
         num_checks_++;
     }
 
@@ -208,35 +203,8 @@ int main(int argc, char** argv, char** env) {
         exit(1);
     }
 
-    //std::ifstream f( argv[1], std::ios::binary );
-    //std::cout << std::setfill( '0' ) << std::hex << std::uppercase;
-    //while (f)
-    //{
-        //// Define buffer
-        //char s[ 16 ];
-        //std::size_t n, i;
-
-        //// Read bytes
-        //f.read( s, sizeof(s) );
-        //n = f.gcount();
-
-        //// Print hex bytes
-        //for (i = 0; i < n; i++)
-            //std::cout << std::setw( 2 ) << (int)s[ i ] << " ";
-
-        //// Write spaces between hex bytes
-        //while (i++ < sizeof(s))
-            //std::cout << "   ";
-        //std::cout << "  ";
-
-        //// Write new line
-        //std::cout << "\n";
-    //}
-    //exit(0);
-//}
-
     // Instantiate testbench
-    DoubleCounterTest tb(argc, argv);
+    LockTest tb(argc, argv);
 
     // Reset the DUT
     tb.ResetDUT();

@@ -12,20 +12,20 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef DOUBLE_COUNTER_TEST_H_
-#define DOUBLE_COUNTER_TEST_H_
+#ifndef LOCK_TEST_H_
+#define LOCK_TEST_H_
 
 #include "verilator_test.h"
-#include "Vdouble_counter.h"
+#include "Vlock.h"
 
 // DUT parameters
 #define INPUT_PORT_SIZE_BYTES 1
 #define NUM_RESET_PERIODS 1
 
-class DoubleCounterTest {
+class LockTest {
  public:
-    explicit DoubleCounterTest(int argc, char** argv);
-    ~DoubleCounterTest();
+    explicit LockTest(int argc, char** argv);
+    ~LockTest();
 
     // DUT drivers
     void ResetDUT();
@@ -39,12 +39,11 @@ class DoubleCounterTest {
     vluint64_t main_time_;  // current simulation time (64-bit unsigned)
 
     // Verilator SW model of the DUT
-    Vdouble_counter dut_;
+    Vlock dut_;
     VerilatorTest test_;
 
     // Correct "ground truth" state
-    uint8_t count_1_;
-    uint8_t count_2_;
+    // N/A
 
 #if VM_TRACE
     // VCD tracing
@@ -58,3 +57,4 @@ class DoubleCounterTest {
     void ToggleClock(uint32_t num_toggles);
 };
 #endif
+

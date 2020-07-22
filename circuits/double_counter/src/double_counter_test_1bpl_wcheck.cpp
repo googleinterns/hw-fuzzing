@@ -269,6 +269,7 @@ int main(int argc, char** argv, char** env) {
     // Check the format of the input file & terminate simulation if not correct.
     // This trains AFL to throw away mutations that are not in the correct
     // size format.
+#if !VM_TRACE
     std::ifstream fin(argv[1]);
     std::string line = "";
     while (getline(fin, line)) {
@@ -277,6 +278,7 @@ int main(int argc, char** argv, char** env) {
         }
     }
     fin.close();
+#endif
 
     // Instantiate testbench
     DoubleCounterTest tb(argv[1]);

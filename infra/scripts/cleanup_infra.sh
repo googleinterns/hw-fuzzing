@@ -14,7 +14,7 @@
 # limitations under the License.
 
 ## Remove all fuzzing infrastructure Docker images
-#docker rmi -f hw-fuzzing/base-aflgo-fork:latest
+docker rmi -f hw-fuzzing/base-aflgo-fork:latest
 #docker rmi -f hw-fuzzing/base-aflgo:latest
 #docker rmi -f hw-fuzzing/base-afl-fork:latest
 #docker rmi -f hw-fuzzing/base-afl:latest
@@ -24,7 +24,7 @@
 #docker rmi -f hw-fuzzing/base-image:latest
 
 # Remove all circuit infrastructure Docker images
-docker rmi -f hw-fuzzing/base-opentitan:latest
+#docker rmi -f hw-fuzzing/base-opentitan:latest
 
 # Cleanup Docker containers
 docker ps -a -q | xargs -I {} docker rm {};

@@ -44,6 +44,7 @@ if [[ $FUZZER == "afl" || $FUZZER == "aflgo" ]]; then
         # Set parallel option
         if [[ $num -eq 1 ]]; then
             PARALLEL_OPT="-M ${FUZZER_INSTANCE_BASENAME}_${num}"
+            #PARALLEL_OPT="-S ${FUZZER_INSTANCE_BASENAME}_${num}"
         else
             PARALLEL_OPT="-S ${FUZZER_INSTANCE_BASENAME}_${num}"
         fi
@@ -56,8 +57,7 @@ if [[ $FUZZER == "afl" || $FUZZER == "aflgo" ]]; then
                 -o $FUZZER_OUTPUT_DIR \
                 $PARALLEL_OPT \
                 bin/V$CORE @@ \
-                2> $STDERR_LOG \
-                1> $STDOUT_LOG &
+                2> $STDERR_LOG
         else
             timeout --foreground ${FUZZING_DURATION_MINS}m\
                 $FUZZER_BIN \

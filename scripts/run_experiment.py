@@ -35,8 +35,8 @@ NUM_ARGS = 1
 LINE_SEP = "==================================================================="
 
 # Use forked fuzzer source code
-# USE_FORKED_FUZZER=""
-USE_FORKED_FUZZER="-fork"
+USE_FORKED_FUZZER=""
+# USE_FORKED_FUZZER="-fork"
 
 # Handler to gracefully exit on ctrl+c
 def sigint_handler(sig, frame):
@@ -242,10 +242,10 @@ def main(args):
     fuzz_core(config)
 
     # Generate VCD traces
-    simulate_and_trace(config)
+    # simulate_and_trace(config)
 
     # Extract VCD data for plotting
-    extract_data_for_plotting(config)
+    # extract_data_for_plotting(config)
 
 if __name__ == "__main__":
     signal.signal(signal.SIGINT, sigint_handler)
