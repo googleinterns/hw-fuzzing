@@ -1,4 +1,3 @@
-#!/bin/bash
 # Copyright 2020 Google LLC
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -13,4 +12,13 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-export TB_DEPS=""
+# Docker image for fuzzing circuits with AFL
+
+FROM hw-fuzzing/base-afl
+MAINTAINER ttrippel@google.com
+
+ENV CIRCUITS=$SRC/circuits
+RUN mkdir $CIRCUITS
+COPY common.mk exe.mk $CIRCUITS/
+COPY testbench $CIRCUITS/testbench
+COPY compile_for_fuzzing fuzz compile_for_tracing $SCRIPTS/

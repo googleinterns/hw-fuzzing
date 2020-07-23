@@ -1,3 +1,4 @@
+#!/bin/bash
 # Copyright 2020 Google LLC
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -13,22 +14,21 @@
 # limitations under the License.
 
 ################################################################################
-# Core specific configs
+# Define these on container launch
+NUM_LOCK_STATES=8
+LOCK_COMP_WIDTH=8
+BACKTRACK_PROBABILITY=0
+CORE=lock
 ################################################################################
-export DUT       := lock
-export LIBS      :=
-export CPPFLAGS  := -std=c++11
-export LINKFLAGS := -std=c++11
-export SEED      := afl_seed.crash_0.tf
 
-################################################################################
-# Directories
-################################################################################
-#HDL_DIR := ../../third_party/$(DUT)# uncomment if third party IP block
+mkdir -p $DUT/hdl
 
-########## DO NOT MODIFY BELOW ##########
+# generate lock circuit with passed parameters
+cd $DUT/hdl_generator
+cargo build
+cargo run -- \
+    --states $NUM_LOCK_STATES \
+    --width $LOCK_COMP_WIDTH \
+    --backtrack $BACKTRACK_PROBABILITY > $DUT/hdl/$CORE.v
 
-################################################################################
-# Include common build targets
-################################################################################
-include ../common.mk
+exit 0

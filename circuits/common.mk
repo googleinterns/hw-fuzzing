@@ -75,7 +75,7 @@ verilate: $(HDL)
 
 $(BIN_DIR)/$(VM_PREFIX): $(MODEL) $(SHARED_TB) $(TB)
 	@mkdir -p $(BUILD_DIR); \
-		mkdir -p $(BIN_DIR); \
+	mkdir -p $(BIN_DIR); \
 	make -f ../exe.mk
 
 .PHONY: \

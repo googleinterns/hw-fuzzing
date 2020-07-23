@@ -166,16 +166,8 @@ void LockTest::SimulateDUT() {
         // Print vital DUT state
         std::cout << "Checking if unlocked (time = ";
         std::cout << unsigned(main_time_) << ") ..." << std::endl;
+        std::cout << "  state = " << unsigned(dut_.state) << std::endl;
         std::cout << "  unlocked = " << unsigned(dut_.unlocked) << std::endl;
-        //std::cout << "Checking results for test " << num_checks_;
-        //std::cout << " (time = " << unsigned(main_time_) << ") ...";
-        //std::cout << std::endl;
-        //std::cout << "  count_1 (DUT / Correct) = ";
-        //std::cout << unsigned(dut_.count_1) << "/" << unsigned(count_1_);
-        //std::cout << std::endl;
-        //std::cout << "  count_2 (DUT / Correct) = ";
-        //std::cout << unsigned(dut_.count_2) << "/" << unsigned(count_2_);
-        //std::cout << std::endl;
 
         // Verify vital DUT state
         assert(dut_.unlocked == 0 &&

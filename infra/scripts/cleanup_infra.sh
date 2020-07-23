@@ -13,8 +13,9 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-## Remove all fuzzing infrastructure Docker images
-docker rmi -f hw-fuzzing/base-aflgo-fork:latest
+# Remove all local fuzzing infrastructure Docker images
+docker rmi -f hw-fuzzing/base-circuit:latest
+#docker rmi -f hw-fuzzing/base-aflgo-fork:latest
 #docker rmi -f hw-fuzzing/base-aflgo:latest
 #docker rmi -f hw-fuzzing/base-afl-fork:latest
 #docker rmi -f hw-fuzzing/base-afl:latest
@@ -23,7 +24,8 @@ docker rmi -f hw-fuzzing/base-aflgo-fork:latest
 #docker rmi -f hw-fuzzing/base-verilator:latest
 #docker rmi -f hw-fuzzing/base-image:latest
 
-# Remove all circuit infrastructure Docker images
+# Remove others
+#docker rmi -f gcr.io/hardware-fuzzing/locksmith
 #docker rmi -f hw-fuzzing/base-opentitan:latest
 
 # Cleanup Docker containers
