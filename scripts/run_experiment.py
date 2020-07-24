@@ -34,20 +34,10 @@ NUM_ARGS = 1
 # Other defines
 LINE_SEP = "==================================================================="
 
-# Use forked fuzzer source code
-USE_FORKED_FUZZER=""
-# USE_FORKED_FUZZER="-fork"
-
 # Handler to gracefully exit on ctrl+c
 def sigint_handler(sig, frame):
     print(color_str_red('\nTERMINATING EXPERIMENT!'))
     sys.exit(0)
-
-# Convert to empty string if None
-def xstr(s):
-    if s is None:
-        return ''
-    return str(s)
 
 def run_cmd(cmd, error_str):
     try:
@@ -58,43 +48,52 @@ def run_cmd(cmd, error_str):
 
 def build_docker_image(config):
     print(LINE_SEP)
-    print("Building Docker image to fuzz %s ..." % config.core)
+    print("Building Docker image to fuzz %s ..." % config.circuit)
     print(LINE_SEP)
-    cmd = ["docker", "build", "-t", "hw-fuzzing/%s" % config.core, \
-           "%s/circuits/%s" % (config.root_path, config.core)]
+    cmd = ["docker", "build", "-t", "hw-fuzzing/%s" % config.circuit, \
+           "%s/circuits/%s" % (config.root_path, config.circuit)]
     error_str = "ERROR: image build FAILED. Terminating experiment!"
     run_cmd(cmd, error_str)
     print(color_str_green("IMAGE BUILD SUCCESSFUL -- Done!"))
 
-# # Verilate and compile target core for fuzzing
-# def compile_core(config):
-    # print(LINE_SEP)
-    # print("Verilating/Compiling %s for fuzzing ..." % config.core)
-    # print(LINE_SEP)
-    # command = [\
-        # "docker", "run", "-it", "--rm", "--cap-add", "SYS_PTRACE", \
-        # "--name", "%s_%s_%s_compile" % ( \
-            # config.core, \
-            # config.experiment_name, \
-            # config.fuzzer_instance_basename), \
-        # "-e", "CORE=%s" % config.core, \
-        # "-e", "TB=%s" % config.testbench, \
-        # "-e", "FUZZER=%s" % config.fuzzer, \
-        # "-e", "DEBUG=%d" % config.debug, \
-        # "-e", "EXP_DATA_PATH=%s" % config.exp_data_path, \
-        # "-v", "%s/scripts:/scripts" % config.root_path, \
-        # "-v", "%s/circuits:/src/circuits" % config.root_path, \
-        # "-v", "%s/third_party:/src/third_party" % config.root_path, \
-        # "-u", "%d:%d" % (os.getuid(), os.getgid()), \
-        # "-t", "hw-fuzzing/base-%s%s" % (config.fuzzer, USE_FORKED_FUZZER), \
-        # "bash", "/scripts/compile_dut_for_fuzzing.sh" \
-    # ]
-    # try:
-        # subprocess.check_call(command)
-    # except subprocess.CalledProcessError:
-        # error_str = "ERROR: build FAILED. Terminating experiment!"
-        # print(color_str_red(error_str))
-        # sys.exit(1)
+def run_docker_container(config):
+    print(LINE_SEP)
+    print("Running Docker container to fuzz %s ..." % config.circuit)
+    print(LINE_SEP)
+    cmd = ["docker", "run", "-it", "--rm", "--name", config.experiment_name]
+    # Add HDL generator config
+    for param, value in config.hdl_gen_params.items():
+        cmd.extend(["-e", "%s=%s" % (param.upper(), value)])
+    print(cmd)
+    sys.exit(1)
+    cmd.extend(["-t", "hw-fuzzing/%s" % config.circuit])
+    error_str = "ERROR: container run FAILED. Terminating experiment!"
+    run_cmd(cmd, error_str)
+    print(color_str_green("CONTAINER RUN SUCCESSFUL -- Done!"))
+
+# Main
+def main(args):
+
+    # Parse cmd args
+    if len(args) != NUM_ARGS:
+        print("Usage: [python3] ./run_experiment.py <config filename>")
+        sys.exit(1)
+
+    # Load experiment configurations
+    config = Config(args[0])
+
+    # Build docker image to fuzz target circuit
+    build_docker_image(config)
+
+    # make local directory to hold resulting data and config file for ref
+    # and check path won't be overwritten
+
+    # Run Docker container to fuzz circuit
+    run_docker_container(config)
+
+if __name__ == "__main__":
+    signal.signal(signal.SIGINT, sigint_handler)
+    main(sys.argv[1:])
 
 # # Generate fuzzer input seeds
 # def copy_seeds(config):
@@ -131,11 +130,10 @@ def build_docker_image(config):
         # print(color_str_red(error_str))
         # sys.exit(1)
 
-
 # # Fuzz the software model of the core
 # def fuzz_core(config):
     # print(LINE_SEP)
-    # print("Fuzzing SW model of %s ..." % config.core)
+    # print("Fuzzing SW model of %s ..." % config.circuit)
     # print(LINE_SEP)
 
     # # Check if fuzzer identical fuzzer data already exists
@@ -158,10 +156,10 @@ def build_docker_image(config):
     # command = [\
         # "docker", "run", "-it", "--rm", "--cap-add", "SYS_PTRACE", \
         # "--name", "%s_%s_%s_fuzz" % ( \
-            # config.core, \
+            # config.circuit, \
             # config.experiment_name, \
             # config.fuzzer_instance_basename), \
-        # "-e", "CORE=%s" % config.core, \
+        # "-e", "CORE=%s" % config.circuit, \
         # "-e", "FUZZER=%s" % config.fuzzer, \
         # "-e", "DEBUG=%d" % config.debug, \
         # "-e", "NUM_INSTANCES=%d" % config.num_instances, \
@@ -196,10 +194,10 @@ def build_docker_image(config):
     # command = [\
         # "docker", "run", "-it", "--rm", "--cap-add", "SYS_PTRACE", \
         # "--name", "%s_%s_%s_vcd" % ( \
-            # config.core, \
+            # config.circuit, \
             # config.experiment_name, \
             # config.fuzzer_instance_basename), \
-        # "-e", "CORE=%s" % config.core, \
+        # "-e", "CORE=%s" % config.circuit, \
         # "-e", "TB=%s" % config.testbench, \
         # "-e", "EXP_DATA_PATH=%s" % config.exp_data_path, \
         # "-e", "FUZZER_OUTPUT_DIR=%s" % config.fuzzer_output_dir, \
@@ -234,39 +232,3 @@ def build_docker_image(config):
     # data_extraction_module.main([fuzzer_data_path])
     # print(color_str_green("DATA EXTRACTION SUCCESSFUL -- Done!"))
 
-# Main
-def main(args):
-
-    # Parse cmd args
-    if len(args) != NUM_ARGS:
-        print("Usage: [python3] ./run_experiment.py <config filename>")
-        sys.exit(1)
-
-    # Load experiment configurations
-    config = Config(args[0])
-    config.print_configurations()
-
-    # Create experiment directories
-    config.create_experiment_dirs()
-
-    # Build docker image for target core
-    build_docker_image(config)
-
-    # Verilate and compile target core for fuzzing
-    # compile_core(config)
-
-    # Copy input seeds to experiment directory
-    # copy_seeds(config)
-
-    # Fuzz target core
-    # fuzz_core(config)
-
-    # Generate VCD traces
-    # simulate_and_trace(config)
-
-    # Extract VCD data for plotting
-    # extract_data_for_plotting(config)
-
-if __name__ == "__main__":
-    signal.signal(signal.SIGINT, sigint_handler)
-    main(sys.argv[1:])

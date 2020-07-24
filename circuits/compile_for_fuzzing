@@ -13,20 +13,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-################################################################################
-# Define these on container launch
-NUM_LOCK_STATES=8
-LOCK_COMP_WIDTH=8
-BACKTRACK_PROBABILITY=0
-CORE=lock
-FUZZER=afl
-EXP_DATA_PATH=data/exp001_test
-TB=src/lock_test.cpp
-DEBUG=1
-# MAP VOLUME <circuit>/data
-mkdir -p $EXP_DATA_PATH
-################################################################################
-
 LINE_SEP="-------------------------------------------------------------------"
 
 ################################################################################

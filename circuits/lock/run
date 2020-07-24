@@ -15,3 +15,4 @@
 
 generate_hdl
 compile_for_fuzzing
+fuzz

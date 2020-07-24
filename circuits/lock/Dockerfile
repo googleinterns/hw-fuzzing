@@ -32,6 +32,7 @@ COPY src $DUT/src
 COPY include $DUT/include
 COPY seeds $DUT/seeds
 COPY Makefile $DUT/
+#COPY tb_deps.sh $DUT/
 COPY generate_hdl run $SCRIPTS/
 
 # Set working directory

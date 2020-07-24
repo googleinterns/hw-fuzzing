@@ -14,25 +14,11 @@
 # limitations under the License.
 
 import errno
-import json
+# import json
+import hjson
 import os
+import prettytable
 import sys
-
-# Configurations dictionary keys
-KEY_EXPERIMENT_NUMBER         = "experiment_number"
-KEY_EXPERIMENT_NAME           = "experiment_name"
-KEY_CORE                      = "core"
-KEY_TESTBENCH                 = "testbench"
-KEY_FUZZER                    = "fuzzer"
-KEY_DEBUG                     = "debug"
-KEY_NUM_INSTANCES             = "num_instances"
-KEY_FUZZER_INPUT_DIR          = "fuzzer_input_dir"
-KEY_FUZZER_OUTPUT_DIR         = "fuzzer_output_dir"
-KEY_FUZZING_DURATION_MINS     = "fuzzing_duration_mins"
-KEY_CHECKPOINT_INTERVAL_MINS  = "checkpoint_interval_mins"
-KEY_TIME_TO_EXPLOITATION_MINS = "time_to_exploitation_mins"
-KEY_DATA_EXTRACTION_SCRIPT    = "data_extraction_script"
-KEY_TAG                       = "tag"
 
 # Root data directory name
 ROOT_DATA_PATH = "data"
@@ -54,155 +40,81 @@ def color_str_yellow(s):
 
 class Config():
     def __init__(self, config_filename):
-        # Config filename
-        self.config_filename = config_filename
-
-        # Configurations
-        self.experiment_number = None
+        # Experiment configs
         self.experiment_name = None
-        self.core = None
+        self.circuit = None
         self.testbench = None
+        self.hdl_gen_params = None
+        self.compile_params = None
         self.fuzzer = None
-        self.seeds_dir = "seeds" # TODO: add to config file?
-        self.debug = None
-        self.num_instances = None
-        self.fuzzer_input_dir = None
-        self.fuzzer_output_dir = None
-        self.fuzzing_duration_mins = None
-        self.checkpoint_interval_mins = None
-        self.time_to_exploitation_mins = None
-        self.data_extraction_script = None
-        self.tag = None
+        self.fuzzer_params = None
+
+        # Initialize experiment data paths
+        self.root_path = os.getenv('HW_FUZZING')
         self.exp_data_path = None
 
-        # Set root path
-        self.root_path = os.getenv('HW_FUZZING')
-
-        # Load configurations
-        self.load_configurations()
-
-        # Set testbench filename
+        # Setup experiment
+        self.load_configurations(config_filename)
         self.set_testbench_filename()
-
-        # Set experiment directory names
         self.set_experiment_dir_name()
-
-        # Set fuzzer instance basename
-        self.set_fuzzer_instance_basename()
+        self.print_configs()
+        self.validate_configs()
 
     # Load experiment configurations
-    def load_configurations(self):
+    def load_configurations(self, config_filename):
         print(LINE_SEP)
         print("Loading experiment configurations ...")
-        with open(self.config_filename, 'r') as json_file:
-            cdict = json.load(json_file)
-            self.experiment_number = cdict[KEY_EXPERIMENT_NUMBER]
-            self.experiment_name = cdict[KEY_EXPERIMENT_NAME]
-            self.core = cdict[KEY_CORE]
-            self.testbench = cdict[KEY_TESTBENCH]
-            self.fuzzer = cdict[KEY_FUZZER]
-            self.debug = int(cdict[KEY_DEBUG])
-            self.num_instances = int(cdict[KEY_NUM_INSTANCES])
-            self.fuzzer_input_dir = cdict[KEY_FUZZER_INPUT_DIR]
-            self.fuzzer_output_dir = cdict[KEY_FUZZER_OUTPUT_DIR]
-            self.fuzzing_duration_mins = cdict[KEY_FUZZING_DURATION_MINS]
-            self.checkpoint_interval_mins = cdict[KEY_CHECKPOINT_INTERVAL_MINS]
-            self.time_to_exploitation_mins = \
-                    cdict[KEY_TIME_TO_EXPLOITATION_MINS]
-            self.data_extraction_script = cdict[KEY_DATA_EXTRACTION_SCRIPT]
-            self.tag = cdict[KEY_TAG]
+        with open(config_filename, 'r') as hjson_file:
+            # Load HJSON file
+            cdict = hjson.load(hjson_file)
+            # Parse config dict
+            self.experiment_name = cdict["experiment_name"]
+            self.circuit = cdict["circuit"]
+            self.testbench = cdict["testbench"]
+            self.run_on_gcp = cdict["run_on_gcp"]
+            self.hdl_gen_params = cdict["hdl_gen_params"]
+            self.compile_params = cdict["compile_params"]
+            self.fuzzer = cdict["fuzzer"]
+            self.fuzzer_params = cdict["fuzzer_params"]
+
+    # TODO: make sure didn't make mistakes writing config file!
+    def validate_configs(self):
+        # print(color_str_red("ERROR: fuzzer instance basename too long."), \
+                # color_str_red("Terminating experiment!"))
+        # sys.exit(1)
+        return True
 
     # Set testbench filename
     def set_testbench_filename(self):
-        if not self.testbench:
-            self.testbench = os.path.join("src", self.core + "_test.cpp")
-        else:
-            self.testbench = os.path.join("src", self.testbench)
+        self.testbench = os.path.join("src", self.testbench)
 
     # Set experiment directory name
     def set_experiment_dir_name(self):
-        self.exp_data_path = "%s/exp%s_%s" % \
-                (ROOT_DATA_PATH, \
-                str(self.experiment_number).zfill(3), \
-                self.experiment_name)
+        self.exp_data_path = os.path.join(ROOT_DATA_PATH, self.experiment_name)
 
-    # Set fuzzer instance basename
-    def set_fuzzer_instance_basename(self):
-        self.fuzzer_instance_basename = "%s" % (self.fuzzer)
-        if self.fuzzing_duration_mins:
-            self.fuzzer_instance_basename += ("_%sm" % \
-                str(self.fuzzing_duration_mins).replace(".", "_"))
-        if self.time_to_exploitation_mins:
-            self.fuzzer_instance_basename += ("_%dttem" % \
-                self.time_to_exploitation_mins)
-        if self.checkpoint_interval_mins:
-            self.fuzzer_instance_basename += ("_%smcp" % \
-                str(self.checkpoint_interval_mins).replace(".", "_"))
-        if self.tag:
-            self.fuzzer_instance_basename += ("_%s" % self.tag)
+    def print_configs(self):
+        # Create table for printing
+        exp_config_table = prettytable.PrettyTable(header=False)
+        exp_config_table.title = "Experiment Parameters"
+        exp_config_table.field_names = ["Parameter", "Value"]
 
-        # Check fuzzing instance basename is not too long
-        # (AFL will complain and fail to run if so ...)
-        if len(self.fuzzer_instance_basename) > 32:
-            print(color_str_red("ERROR: fuzzer instance basename too long."), \
-                    color_str_red("Terminating experiment!"))
-            sys.exit(1)
+        # Add main experiment parameters
+        exp_config_table.add_row(["Experiment Name:", self.experiment_name])
+        exp_config_table.add_row(["Circuit:", self.circuit])
+        exp_config_table.add_row(["Testbench:", self.testbench])
+        exp_config_table.add_row(["Fuzzer:", self.fuzzer])
+        exp_config_table.add_row(["Run on GCP:", self.run_on_gcp])
+        exp_config_table.add_row(["Experiment Data Path:", self.exp_data_path])
 
-    # Create directories for experiment data
-    def create_experiment_dirs(self):
-        print(LINE_SEP)
-        print("Creating experiment directories ...")
+        # Add other parameters
+        sub_configs = [self.hdl_gen_params, \
+                self.compile_params, \
+                self.fuzzer_params]
+        for config in sub_configs:
+            for param, value in config.items():
+                param = param.replace("_", " ").title() + ":"
+                exp_config_table.add_row([param, value])
 
-        # Create core data path if it does not exist
-        try:
-            os.makedirs(ROOT_DATA_PATH)
-        except OSError as e:
-            if e.errno != errno.EEXIST:
-                raise
-
-        # Create experiment data path if it does not exist
-        try:
-            os.makedirs(self.exp_data_path)
-        except OSError as e:
-            if e.errno != errno.EEXIST:
-                raise
-
-        # Create fuzzer input directory if it does not exist
-        fuzzer_input_path = "%s/%s" % \
-                (self.exp_data_path, self.fuzzer_input_dir)
-        try:
-            os.makedirs(fuzzer_input_path)
-        except OSError as e:
-            if e.errno != errno.EEXIST:
-                raise
-
-        # Create fuzzer output directory if it does not exist
-        fuzzer_output_path = "%s/%s" % \
-                (self.exp_data_path, self.fuzzer_output_dir)
-        try:
-            os.makedirs(fuzzer_output_path)
-        except OSError as e:
-            if e.errno != errno.EEXIST:
-                raise
-
-        print(color_str_green("DIRECTORY CREATION SUCCESSFUL -- Done!"))
-
-    # Print experiment configurations
-    def print_configurations(self):
-        print(color_str_yellow("Configurations:"))
-        print(color_str_yellow("Experiment Number:          "), self.experiment_number)
-        print(color_str_yellow("Experiment Name:            "), self.experiment_name)
-        print(color_str_yellow("Core:                       "), self.core)
-        print(color_str_yellow("Testbench:                  "), self.testbench)
-        print(color_str_yellow("Fuzzer:                     "), self.fuzzer)
-        print(color_str_yellow("Debug:                      "), self.debug)
-        print(color_str_yellow("Number of Instances:        "), self.num_instances)
-        print(color_str_yellow("Fuzzing Duration (min):     "), self.fuzzing_duration_mins)
-        print(color_str_yellow("Checkpoint Interval (min):  "), self.checkpoint_interval_mins)
-        print(color_str_yellow("Time to Exploitation (min): "), self.time_to_exploitation_mins)
-        print(color_str_yellow("Data Extraction Script:     "), self.data_extraction_script)
-        print(color_str_yellow("Tag:                        "), self.tag)
-        print(color_str_yellow("Experiment Data Path:       "), self.exp_data_path)
-        print(color_str_yellow("Fuzzer Input Directory:     "), self.fuzzer_input_dir)
-        print(color_str_yellow("Fuzzer Output Directory:    "), self.fuzzer_output_dir)
-        print(color_str_yellow("Fuzzer Instance Basename:   "), self.fuzzer_instance_basename)
+        # Print table
+        exp_config_table.align = "l"
+        print(color_str_yellow(exp_config_table.get_string()))

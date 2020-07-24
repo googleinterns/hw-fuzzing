@@ -13,14 +13,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-################################################################################
-# Define these on container launch
-NUM_LOCK_STATES=8
-LOCK_COMP_WIDTH=8
-BACKTRACK_PROBABILITY=0
-CORE=lock
-################################################################################
-
 mkdir -p $DUT/hdl
 
 # generate lock circuit with passed parameters

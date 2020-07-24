@@ -18,8 +18,11 @@
 ## Fuzz the CORE
 ################################################################################
 ################################################################################
-cd $SRC/circuits/$CORE/$EXP_DATA_PATH
+cp -r $DUT/seeds $DUT/$EXP_DATA_PATH/$FUZZER_INPUT_DIR
+cd $DUT/$EXP_DATA_PATH
 mkdir -p logs
+mkdir -p $FUZZER_OUTPUT_DIR
+
 #if [[ ! -z ${CHECKPOINT_INTERVAL_MINS-} ]]; then
     #BK_DIR=$BK_DIR CHECKPOINT_INTERVAL_MINS="$CHECKPOINT_INTERVAL_MINS" \
         #source $SCRIPTS/checkpoint_aflgo_output.sh &
@@ -28,10 +31,6 @@ mkdir -p logs
 
 if [[ $FUZZER == "afl" || $FUZZER == "aflgo" ]]; then
     for (( num=1; num <= $NUM_INSTANCES; num++ )); do
-        # Set log filenames
-        STDERR_LOG="logs/${FUZZER_INSTANCE_BASENAME}_${num}.err.log"
-        STDOUT_LOG="logs/${FUZZER_INSTANCE_BASENAME}_${num}.out.log"
-
         # Set fuzzer and related options
         if [[ $FUZZER == "aflgo" ]]; then
             FUZZER_BIN="$SRC/aflgo/afl-fuzz"
@@ -41,30 +40,34 @@ if [[ $FUZZER == "afl" || $FUZZER == "aflgo" ]]; then
             FUZZER_OPTIONS=""
         fi
 
-        # Set parallel option
-        if [[ $num -eq 1 ]]; then
-            PARALLEL_OPT="-M ${FUZZER_INSTANCE_BASENAME}_${num}"
-            #PARALLEL_OPT="-S ${FUZZER_INSTANCE_BASENAME}_${num}"
+        # Set fuzzer mode (Master or Secondary)
+        if [[ $num -eq 1 && $FUZZER_MODE == "m" ]]; then
+            FUZZER_MODE="-M"
         else
-            PARALLEL_OPT="-S ${FUZZER_INSTANCE_BASENAME}_${num}"
+            FUZZER_MODE="-S"
         fi
+        FUZZER_OPTIONS="$FUZZER_OPTIONS $FUZZER_MODE"
+
+        # Set log filenames
+        STDERR_LOG="logs/${FUZZER}_${num}.err.log"
+        STDOUT_LOG="logs/${FUZZER}_${num}.out.log"
 
         # Launch fuzzer
         if [[ -z ${FUZZING_DURATION_MINS-} ]]; then
             $FUZZER_BIN \
-                $FUZZER_OPTIONS \
                 -i $FUZZER_INPUT_DIR \
                 -o $FUZZER_OUTPUT_DIR \
-                $PARALLEL_OPT \
+                $FUZZER_OPTIONS \
+                ${FUZZER}_${num} \
                 bin/V$CORE @@ \
                 2> $STDERR_LOG
         else
             timeout --foreground ${FUZZING_DURATION_MINS}m\
                 $FUZZER_BIN \
-                $FUZZER_OPTIONS \
                 -i $FUZZER_INPUT_DIR \
                 -o $FUZZER_OUTPUT_DIR \
-                $PARALLEL_OPT \
+                $FUZZER_OPTIONS \
+                ${FUZZER}_${num} \
                 bin/V$CORE @@ \
                 2> $STDERR_LOG \
                 1> $STDOUT_LOG &
