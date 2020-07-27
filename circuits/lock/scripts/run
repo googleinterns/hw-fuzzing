@@ -13,6 +13,16 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+function check_exit_code {
+    if [[ "$?" != "0" ]]; then
+        exit 1
+    fi
+}
+
 generate_hdl
+check_exit_code
 compile_for_fuzzing
+check_exit_code
 fuzz
+check_exit_code
+exit 0

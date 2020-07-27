@@ -13,22 +13,18 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+function check_exit_code {
+    if [[ "$?" != "0" ]]; then
+        exit 1
+    fi
+}
+
 ################################################################################
 ################################################################################
 ## Fuzz the CORE
+## TODO: test AFLGo with new infrastructure
 ################################################################################
 ################################################################################
-cp -r $DUT/seeds $DUT/$EXP_DATA_PATH/$FUZZER_INPUT_DIR
-cd $DUT/$EXP_DATA_PATH
-mkdir -p logs
-mkdir -p $FUZZER_OUTPUT_DIR
-
-#if [[ ! -z ${CHECKPOINT_INTERVAL_MINS-} ]]; then
-    #BK_DIR=$BK_DIR CHECKPOINT_INTERVAL_MINS="$CHECKPOINT_INTERVAL_MINS" \
-        #source $SCRIPTS/checkpoint_aflgo_output.sh &
-    #CHECKPOINTING_PID=$!
-#fi
-
 if [[ $FUZZER == "afl" || $FUZZER == "aflgo" ]]; then
     for (( num=1; num <= $NUM_INSTANCES; num++ )); do
         # Set fuzzer and related options
@@ -41,37 +37,38 @@ if [[ $FUZZER == "afl" || $FUZZER == "aflgo" ]]; then
         fi
 
         # Set fuzzer mode (Master or Secondary)
-        if [[ $num -eq 1 && $FUZZER_MODE == "m" ]]; then
-            FUZZER_MODE="-M"
+        if [[ $num -eq 1 && $MODE == "m" ]]; then
+            FUZZER_OPTIONS="$FUZZER_OPTIONS -M"
         else
-            FUZZER_MODE="-S"
+            FUZZER_OPTIONS="$FUZZER_OPTIONS -S"
         fi
-        FUZZER_OPTIONS="$FUZZER_OPTIONS $FUZZER_MODE"
 
         # Set log filenames
         STDERR_LOG="logs/${FUZZER}_${num}.err.log"
         STDOUT_LOG="logs/${FUZZER}_${num}.out.log"
 
         # Launch fuzzer
-        if [[ -z ${FUZZING_DURATION_MINS-} ]]; then
+        if [[ -z ${DURATION_MINS-} ]]; then
             $FUZZER_BIN \
-                -i $FUZZER_INPUT_DIR \
-                -o $FUZZER_OUTPUT_DIR \
+                -i in \
+                -o out \
                 $FUZZER_OPTIONS \
                 ${FUZZER}_${num} \
-                bin/V$CORE @@ \
-                2> $STDERR_LOG
+                bin/V$CIRCUIT @@ \
+                2> $STDERR_LOG \
+                1> $STDOUT_LOG &
         else
-            timeout --foreground ${FUZZING_DURATION_MINS}m\
+            timeout --foreground ${DURATION_MINS}m\
                 $FUZZER_BIN \
-                -i $FUZZER_INPUT_DIR \
-                -o $FUZZER_OUTPUT_DIR \
+                -i in \
+                -o out \
                 $FUZZER_OPTIONS \
                 ${FUZZER}_${num} \
-                bin/V$CORE @@ \
+                bin/V$CIRCUIT @@ \
                 2> $STDERR_LOG \
                 1> $STDOUT_LOG &
         fi
+        check_exit_code
 
         # Set process ID of recently launched fuzzer
         FUZZER_PID=$!
@@ -85,13 +82,7 @@ else
     exit 1
 fi
 
-#if [[ ! -z ${CHECKPOINTING_PID-} ]]; then
-    #kill -2 $CHECKPOINTING_PID
-    #sleep 0.5s
-#fi
-
 # Wait for all fuzzers to complete
 wait
-
 echo -e "\e[1;32mFUZZING SUCCESSFUL -- Done!\e[0m"
 exit 0

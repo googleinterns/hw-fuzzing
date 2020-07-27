@@ -1,0 +1,22 @@
+{
+    // Experiment Parameters
+    experiment_name: exp001_lock_test
+    circuit: lock
+    testbench: lock_test.cpp
+    fuzzer: afl
+    run_on_gcp: 0
+
+    // HDL Generation Parameters (if any)
+    hdl_gen_params: {
+        num_lock_states: 8
+        lock_comp_width: 8
+        backtrack_probability: 0
+    }
+
+    // Fuzzer Parameters
+    fuzzer_params: {
+        num_instances: 1
+        mode: s
+        duration_mins: null
+    }
+}

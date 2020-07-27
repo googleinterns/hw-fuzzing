@@ -13,22 +13,41 @@
 # limitations under the License.
 
 ################################################################################
-# Core specific configs
+# Circuit specific configs
 ################################################################################
-export DUT       := lock
-export LIBS      :=
-export CPPFLAGS  := -std=c++11
-export LINKFLAGS := -std=c++11
-export SEED      := afl_seed.crash_0.tf
+export CIRCUIT        := lock
+export LIBS           :=
+export CPPFLAGS       := -std=c++11
+export LINKFLAGS      := -std=c++11
+export SEED           := afl_seed.0.tf
+NUM_LOCK_STATES       ?= 8
+LOCK_COMP_WIDTH       ?= 8
+BACKTRACK_PROBABILITY ?= 0
 
 ################################################################################
 # Directories
 ################################################################################
-#HDL_DIR := ../../third_party/$(DUT)# uncomment if third party IP block
-
-########## DO NOT MODIFY BELOW ##########
+#HDL_DIR := ../../third_party/$(CIRCUIT)# uncomment if third party IP block
 
 ################################################################################
 # Include common build targets
 ################################################################################
 include ../common.mk
+
+################################################################################
+# HDL generation/clean targets
+################################################################################
+.PHONY: clean-hdl
+
+hdl: hdl_generator/src/main.rs
+	@mkdir hdl; \
+	cd hdl_generator; \
+	cargo build; \
+	cargo run -- \
+		--states $(NUM_LOCK_STATES) \
+		--width $(LOCK_COMP_WIDTH) \
+		--backtrack $(BACKTRACK_PROBABILITY) > ../hdl/$(CIRCUIT).v; \
+	cd ..
+
+clean-hdl:
+	rm -rf hdl

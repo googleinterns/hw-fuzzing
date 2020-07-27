@@ -15,6 +15,12 @@
 
 LINE_SEP="-------------------------------------------------------------------"
 
+function check_exit_code {
+    if [[ "$?" != "0" ]]; then
+        exit 1
+    fi
+}
+
 ################################################################################
 ################################################################################
 ## Set build flags
@@ -61,11 +67,11 @@ echo $LINE_SEP
 echo "Switching to experiment directory and creating bin directory ..."
 
 # Make a build directory to store fuzzer compiler inputs/outputs
-BUILD_DIR=$DUT/$EXP_DATA_PATH/build
+BUILD_DIR=build
 mkdir -p $BUILD_DIR
 
 # Make a bin directory to store instrumented EXEs
-BIN_DIR=$DUT/$EXP_DATA_PATH/bin
+BIN_DIR=bin
 mkdir -p $BIN_DIR
 echo "Done!"
 
@@ -75,13 +81,14 @@ echo "Done!"
 ################################################################################
 ################################################################################
 echo $LINE_SEP
-echo "Installing dependencies for $CORE test bench ..."
+echo "Installing dependencies for testbench ..."
 if [[ ! -f tb_deps.sh ]]; then
     echo "No dependencies to install."
 else
     tb_deps.sh
     echo "Installing: $TB_DEPS"
     apt-get install -y $TB_DEPS
+    check_exit_code
 fi
 echo "Done!"
 
@@ -91,9 +98,10 @@ echo "Done!"
 ################################################################################
 ################################################################################
 echo $LINE_SEP
-echo "Building SW model of $CORE core for fuzzing ..."
-MODEL_DIR=$DUT/$EXP_DATA_PATH/model
-MODEL_DIR=$MODEL_DIR make verilate
+echo "Building SW model of DUT for fuzzing ..."
+MODEL_DIR=model
+make verilate
+check_exit_code
 echo "Done!"
 
 ################################################################################
@@ -126,13 +134,11 @@ if [ $FUZZER == "aflgo" ]; then
         echo "Generating targets to fuzz..."
         AFLGO_BB_TARGETS=$BUILD_DIR/BBtargets.txt
         python3 $DUT/aflgo_gen_bb_targets.py $AFLGO_BB_TARGETS
+        check_exit_code
 
         # Check if at least one fuzz target was generated
         if [ $(cat $AFLGO_BB_TARGETS | wc -l) -eq 0 ]; then
-            echo -e "\e[1;31mAborting ... No BB targets to fuzz for $CORE.\e[0m"
-            rm -rf $BIN_DIR
-            rm -rf $BUILD_DIR
-            rm -rf $MODEL_DIR
+            echo -e "\e[1;31mAborting ... No BB targets to fuzz for DUT.\e[0m"
             exit 1
         fi
 
@@ -171,11 +177,12 @@ echo "LDFLAGS=$LDFLAGS"
 ################################################################################
 echo $LINE_SEP
 if [ $DO_POSTPROCESS -eq 1 ]; then
-    echo "Computing CG/CFG of $CORE SW model (for AFLGo) ..."
+    echo "Computing CG/CFG of DUT SW model (for AFLGo) ..."
 else
-    echo "Compiling/Instrumenting the $CORE SW model ..."
+    echo "Compiling/Instrumenting the DUT SW model ..."
 fi
 MODEL_DIR=$MODEL_DIR BUILD_DIR=$BUILD_DIR BIN_DIR=$BIN_DIR TB=$TB make exe
+check_exit_code
 echo "Done!"
 
 ################################################################################
@@ -192,11 +199,6 @@ if [ $DO_POSTPROCESS -eq 1 ]; then
     # targets were found
     if [ $(grep -Ev "^$" $BUILD_DIR/Ftargets.txt | wc -l) -eq 0 ]; then
         echo -e "\e[1;31mAborting ... No function targets found in model.\e[0m"
-        if [ -z "${DEBUG-}" ]; then
-            rm -rf $BIN_DIR
-            rm -rf $BUILD_DIR
-            rm -rf $MODEL_DIR
-        fi
         exit 1
     fi
 
@@ -210,13 +212,11 @@ if [ $DO_POSTPROCESS -eq 1 ]; then
 
     echo "Computing distances to fuzz targets..."
     $SRC/aflgo/scripts/genDistance.sh $BIN_DIR $BUILD_DIR
+    check_exit_code
 
     # Clean up
     rm $BIN_DIR/*
-    cp $BUILD_DIR/distance.cfg.txt $BIN_DIR
-    if [ -n "${DEBUG-}" ]; then
-        cp $BUILD_DIR/*.txt $BIN_DIR
-    fi
+    cp $BUILD_DIR/*.txt $BIN_DIR
     rm -rf $BUILD_DIR/*
 
     # Restore compiler/linker flags
@@ -225,7 +225,7 @@ if [ $DO_POSTPROCESS -eq 1 ]; then
     export LDFLAGS="$COPY_LDFLAGS -distance=$BIN_DIR/distance.cfg.txt"
 
     # Second compiler pass (instrumentation happens here)
-    echo "Compiling/Instrumenting the $CORE SW model ..."
+    echo "Compiling/Instrumenting the DUT SW model ..."
     MODEL_DIR=$MODEL_DIR BUILD_DIR=$BUILD_DIR BIN_DIR=$BIN_DIR TB=$TB make exe
     echo "Done!"
 fi
@@ -236,12 +236,8 @@ fi
 ################################################################################
 ################################################################################
 echo $LINE_SEP
-echo "Cleaning up ..."
-
-if [ -z "${DEBUG-}" ]; then
-    rm -rf $BUILD_DIR
-    rm -rf $MODEL_DIR
-fi
-
+#echo "Cleaning up ..."
+#rm -rf $BUILD_DIR
+#rm -rf $MODEL_DIR
 echo -e "\e[1;32mBUILD & INSTRUMENTATION SUCCESSFUL -- Done!\e[0m"
 exit 0

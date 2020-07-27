@@ -21,6 +21,6 @@ cargo build
 cargo run -- \
     --states $NUM_LOCK_STATES \
     --width $LOCK_COMP_WIDTH \
-    --backtrack $BACKTRACK_PROBABILITY > $DUT/hdl/$CORE.v
+    --backtrack $BACKTRACK_PROBABILITY > $DUT/hdl/$CIRCUIT.v
 
 exit 0

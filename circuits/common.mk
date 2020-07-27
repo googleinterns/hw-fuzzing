@@ -38,7 +38,7 @@ export BIN_DIR
 # Sources/Inputs
 ################################################################################
 SHARED_TB ?= $(SHARED_TB_SRCS_DIR)/verilator_test.cpp
-TB        ?= $(TB_SRCS_DIR)/$(DUT)_test.cpp
+TB        ?= $(TB_SRCS_DIR)/$(CIRCUIT)_test.cpp
 HDL        = $(wildcard $(HDL_DIR)/*.v)
 MODEL      = $(wildcard $(MODEL_DIR)/*.cpp)
 export SHARED_TB
@@ -47,7 +47,7 @@ export TB
 ################################################################################
 # Verilator module prefix
 ################################################################################
-VM_PREFIX = V$(DUT)
+VM_PREFIX = V$(CIRCUIT)
 export VM_PREFIX
 
 ################################################################################
@@ -55,7 +55,7 @@ export VM_PREFIX
 ################################################################################
 VFLAGS := \
 	-Wno-fatal \
-	--top-module $(DUT) \
+	--top-module $(CIRCUIT) \
 	--Mdir $(MODEL_DIR) \
 	--cc
 
@@ -70,7 +70,7 @@ endif
 ################################################################################
 all: verilate exe seed sim
 
-verilate: $(HDL)
+verilate: $(HDL_DIR)
 	$(VERILATOR_ROOT)/bin/verilator $(VFLAGS) $(VLT_VCD_TRACING) $(HDL)
 
 $(BIN_DIR)/$(VM_PREFIX): $(MODEL) $(SHARED_TB) $(TB)
@@ -79,12 +79,14 @@ $(BIN_DIR)/$(VM_PREFIX): $(MODEL) $(SHARED_TB) $(TB)
 	make -f ../exe.mk
 
 .PHONY: \
+	clean-hdl \
 	clean-sim \
 	clean-exe \
 	clean-vlt \
 	clean \
 	cleanall \
 	coverage \
+	hdl \
 	sim \
 	exe \
 	seed
@@ -121,4 +123,4 @@ clean-vlt:
 
 clean: clean-exe clean-vlt
 
-cleanall: clean-sim clean
+cleanall: clean-sim clean-hdl clean

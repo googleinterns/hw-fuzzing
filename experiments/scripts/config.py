@@ -13,15 +13,10 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import errno
-# import json
 import hjson
 import os
 import prettytable
 import sys
-
-# Root data directory name
-ROOT_DATA_PATH = "data"
 
 # Other defines
 LINE_SEP = "==================================================================="
@@ -40,23 +35,23 @@ def color_str_yellow(s):
 
 class Config():
     def __init__(self, config_filename):
+        self.config_filename = config_filename
+
         # Experiment configs
         self.experiment_name = None
         self.circuit = None
         self.testbench = None
-        self.hdl_gen_params = None
-        self.compile_params = None
         self.fuzzer = None
+        self.run_on_gcp = None
+        self.hdl_gen_params = None
         self.fuzzer_params = None
 
         # Initialize experiment data paths
         self.root_path = os.getenv('HW_FUZZING')
-        self.exp_data_path = None
 
         # Setup experiment
         self.load_configurations(config_filename)
         self.set_testbench_filename()
-        self.set_experiment_dir_name()
         self.print_configs()
         self.validate_configs()
 
@@ -71,10 +66,9 @@ class Config():
             self.experiment_name = cdict["experiment_name"]
             self.circuit = cdict["circuit"]
             self.testbench = cdict["testbench"]
+            self.fuzzer = cdict["fuzzer"]
             self.run_on_gcp = cdict["run_on_gcp"]
             self.hdl_gen_params = cdict["hdl_gen_params"]
-            self.compile_params = cdict["compile_params"]
-            self.fuzzer = cdict["fuzzer"]
             self.fuzzer_params = cdict["fuzzer_params"]
 
     # TODO: make sure didn't make mistakes writing config file!
@@ -88,10 +82,6 @@ class Config():
     def set_testbench_filename(self):
         self.testbench = os.path.join("src", self.testbench)
 
-    # Set experiment directory name
-    def set_experiment_dir_name(self):
-        self.exp_data_path = os.path.join(ROOT_DATA_PATH, self.experiment_name)
-
     def print_configs(self):
         # Create table for printing
         exp_config_table = prettytable.PrettyTable(header=False)
@@ -104,13 +94,9 @@ class Config():
         exp_config_table.add_row(["Testbench:", self.testbench])
         exp_config_table.add_row(["Fuzzer:", self.fuzzer])
         exp_config_table.add_row(["Run on GCP:", self.run_on_gcp])
-        exp_config_table.add_row(["Experiment Data Path:", self.exp_data_path])
 
         # Add other parameters
-        sub_configs = [self.hdl_gen_params, \
-                self.compile_params, \
-                self.fuzzer_params]
-        for config in sub_configs:
+        for config in [self.hdl_gen_params, self.fuzzer_params]:
             for param, value in config.items():
                 param = param.replace("_", " ").title() + ":"
                 exp_config_table.add_row([param, value])

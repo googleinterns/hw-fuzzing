@@ -39,6 +39,15 @@ def sigint_handler(sig, frame):
     print(color_str_red('\nTERMINATING EXPERIMENT!'))
     sys.exit(0)
 
+def add_env_to_cmd(cmd, param, value):
+    if value != None:
+        cmd.extend(["-e", "%s=%s" % (param.upper(), value)])
+    return cmd
+
+def add_volume_mount_to_cmd(cmd, src, dst):
+    cmd.extend(["-v", "%s:%s" % (src, dst)])
+    return cmd
+
 def run_cmd(cmd, error_str):
     try:
         subprocess.check_call(cmd)
@@ -50,26 +59,77 @@ def build_docker_image(config):
     print(LINE_SEP)
     print("Building Docker image to fuzz %s ..." % config.circuit)
     print(LINE_SEP)
-    cmd = ["docker", "build", "-t", "hw-fuzzing/%s" % config.circuit, \
+    cmd = ["docker", "build", \
+           "-t", "gcr.io/hardware-fuzzing/%s" % config.circuit, \
            "%s/circuits/%s" % (config.root_path, config.circuit)]
     error_str = "ERROR: image build FAILED. Terminating experiment!"
     run_cmd(cmd, error_str)
     print(color_str_green("IMAGE BUILD SUCCESSFUL -- Done!"))
 
-def run_docker_container(config):
+def run_docker_container_locally(config, exp_data_path):
     print(LINE_SEP)
     print("Running Docker container to fuzz %s ..." % config.circuit)
     print(LINE_SEP)
     cmd = ["docker", "run", "-it", "--rm", "--name", config.experiment_name]
-    # Add HDL generator config
+    # Set environment variables for general configs
+    cmd = add_env_to_cmd(cmd, "circuit", config.circuit)
+    cmd = add_env_to_cmd(cmd, "tb", config.testbench)
+    cmd = add_env_to_cmd(cmd, "fuzzer", config.fuzzer)
+    # Set environment variables for HDL generator configs
     for param, value in config.hdl_gen_params.items():
-        cmd.extend(["-e", "%s=%s" % (param.upper(), value)])
-    print(cmd)
-    sys.exit(1)
-    cmd.extend(["-t", "hw-fuzzing/%s" % config.circuit])
+        cmd = add_env_to_cmd(cmd, param, value)
+    # Set environment variables for fuzzer configs
+    for param, value in config.fuzzer_params.items():
+        cmd = add_env_to_cmd(cmd, param, value)
+    # Mount volumes for output data
+    cmd.extend(["-v", "%s/logs:/src/circuits/%s/logs" % \
+            (exp_data_path, config.circuit)])
+    cmd.extend(["-v", "%s/out:/src/circuits/%s/out" % \
+            (exp_data_path, config.circuit)])
+    cmd.extend(["-v", "%s/in:/src/circuits/%s/in" % \
+            (exp_data_path, config.circuit)])
+    # Run container with current user/group IDs
+    # cmd.extend(["-u", "%d:%d" % (os.getuid(), os.getgid())])
+    # Set target Docker image and run
+    cmd.extend(["-t", "gcr.io/hardware-fuzzing/%s" % config.circuit])
+    # print(cmd)
+    # sys.exit(1)
+    # cmd.append("/bin/bash")
     error_str = "ERROR: container run FAILED. Terminating experiment!"
     run_cmd(cmd, error_str)
     print(color_str_green("CONTAINER RUN SUCCESSFUL -- Done!"))
+
+def run_docker_container_on_gcp_vm(config, exp_data_path):
+    return
+
+def create_experiment_data_dir(config):
+    exp_data_path = "%s/experiments/data/%s" % \
+            (config.root_path, config.experiment_name)
+
+    # Check if experiment data directory with same name exists
+    if glob.glob(exp_data_path):
+        ovw = input(color_str_yellow( \
+                'WARNING: experiment data exists. Overwrite? [Yn]'))
+        if ovw in {'yes', 'y', 'Y', 'YES', 'Yes', ''}:
+            shutil.rmtree(exp_data_path)
+        else:
+            abort_str = "ABORT: re-run with different experiment name."
+            print(color_str_red(abort_str))
+            sys.exit(-1)
+
+    # Create experiment data directories
+    os.mkdir(exp_data_path)
+    os.mkdir(os.path.join(exp_data_path, "out"))
+    os.mkdir(os.path.join(exp_data_path, "logs"))
+
+    # Copy over seeds that were used in this experiment
+    seeds_dir = "%s/circuits/%s/seeds" % (config.root_path, config.circuit)
+    shutil.copytree(seeds_dir, os.path.join(exp_data_path, "in"))
+
+    # Copy over HJSON config file that was used
+    shutil.copy2(config.config_filename, exp_data_path)
+
+    return exp_data_path
 
 # Main
 def main(args):
@@ -82,14 +142,17 @@ def main(args):
     # Load experiment configurations
     config = Config(args[0])
 
+    # make local directory to hold resulting data and copy of config file
+    exp_data_path = create_experiment_data_dir(config)
+
     # Build docker image to fuzz target circuit
     build_docker_image(config)
 
-    # make local directory to hold resulting data and config file for ref
-    # and check path won't be overwritten
-
     # Run Docker container to fuzz circuit
-    run_docker_container(config)
+    if config.run_on_gcp == 0:
+        run_docker_container_locally(config, exp_data_path)
+    else:
+        run_docker_container_on_gcp_vm(config, exp_data_path)
 
 if __name__ == "__main__":
     signal.signal(signal.SIGINT, sigint_handler)

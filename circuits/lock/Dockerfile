@@ -24,19 +24,20 @@ RUN apt-get remove --purge -y curl
 RUN apt-get autoremove -y
 ENV PATH="$PATH:/root/.cargo/bin"
 
-# Copy in lock HDL or HDL generator, testbench, seeds, build scripts
+# create DUT directory
 ENV DUT=$CIRCUITS/lock
-RUN mkdir -p $DUT
+RUN mkdir $DUT
+
+# Copy in HDL and testbench
 COPY hdl_generator $DUT/hdl_generator
-COPY src $DUT/src
+#COPY hdl $DUT/hdl
 COPY include $DUT/include
-COPY seeds $DUT/seeds
-COPY Makefile $DUT/
+COPY src $DUT/src
 #COPY tb_deps.sh $DUT/
-COPY generate_hdl run $SCRIPTS/
 
-# Set working directory
+# Copy in build scripts
+COPY Makefile $DUT/
+COPY scripts/generate_hdl scripts/run $SCRIPTS/
+
 WORKDIR $DUT
-
-# Set entrypoint
 CMD ["run"]
