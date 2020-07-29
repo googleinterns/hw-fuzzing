@@ -20,6 +20,7 @@ import os
 import shutil
 import signal
 import subprocess
+import stat
 import sys
 
 # Custom modules
@@ -39,20 +40,46 @@ def sigint_handler(sig, frame):
     print(color_str_red('\nTERMINATING EXPERIMENT!'))
     sys.exit(0)
 
-def add_env_to_cmd(cmd, param, value):
-    if value != None:
-        cmd.extend(["-e", "%s=%s" % (param.upper(), value)])
-    return cmd
-
-def add_volume_mount_to_cmd(cmd, src, dst):
-    cmd.extend(["-v", "%s:%s" % (src, dst)])
-    return cmd
-
 def run_cmd(cmd, error_str):
     try:
+        print("Running command:")
+        print(color_str_yellow(subprocess.list2cmdline(cmd)))
         subprocess.check_call(cmd)
     except subprocess.CalledProcessError:
         print(color_str_red(error_str))
+        sys.exit(1)
+
+# Check if experiment data directory with same name exists
+def check_for_data_locally(config):
+    exp_data_path = "%s/experiments/data/%s" % \
+            (config.root_path, config.experiment_name)
+    if glob.glob(exp_data_path):
+        ovw = input(color_str_yellow( \
+                'WARNING: experiment data exists. Overwrite? [Yn]'))
+        if ovw in {'yes', 'y', 'Y', 'YES', 'Yes', ''}:
+            shutil.rmtree(exp_data_path)
+        else:
+            abort_str = "ABORT: re-run with different experiment name."
+            print(color_str_red(abort_str))
+            sys.exit(1)
+
+def check_for_data_in_gcs(config):
+    cmd = ["gsutil", "-q", "stat", "gs://%s/%s/**" % \
+            ("fuzzing-data", config.experiment_name)]
+    try:
+        subprocess.check_call(cmd)
+    except subprocess.CalledProcessError:
+        return
+    ovw = input(color_str_yellow( \
+            'WARNING: experiment data exists in GCS. Overwrite? [Yn]'))
+    if ovw in {'yes', 'y', 'Y', 'YES', 'Yes', ''}:
+        sub_cmd = ["gsutil", "rm", "gs://%s/%s/**" % \
+                ("fuzzing-data", config.experiment_name)]
+        error_str = "ERROR: deleting existing data. Terminating Experiment!"
+        run_cmd(sub_cmd, error_str)
+    else:
+        abort_str = "ABORT: re-run with different experiment name."
+        print(color_str_red(abort_str))
         sys.exit(1)
 
 def build_docker_image(config):
@@ -66,70 +93,127 @@ def build_docker_image(config):
     run_cmd(cmd, error_str)
     print(color_str_green("IMAGE BUILD SUCCESSFUL -- Done!"))
 
+# Create experiment data directories and copy over configs
+def create_local_experiment_data_dir(config):
+    print(LINE_SEP)
+    print("Creating local directories for fuzzing data ..." % config.circuit)
+    print(LINE_SEP)
+    exp_data_path = "%s/experiments/data/%s" % \
+            (config.root_path, config.experiment_name)
+
+    # Create directories
+    os.mkdir(exp_data_path)
+    os.chmod(exp_data_path, stat.S_IRWXU | stat.S_IRGRP | stat.S_IROTH)
+    os.mkdir(os.path.join(exp_data_path, "out"))
+    os.chmod(os.path.join(exp_data_path, "out"), \
+            stat.S_IRWXU | stat.S_IRGRP | stat.S_IROTH)
+    os.mkdir(os.path.join(exp_data_path, "logs"))
+    os.chmod(os.path.join(exp_data_path, "logs"), \
+            stat.S_IRWXU | stat.S_IRGRP | stat.S_IROTH)
+
+    # Copy over seeds that were used in this experiment
+    seeds_dir = "%s/circuits/%s/seeds" % (config.root_path, config.circuit)
+    shutil.copytree(seeds_dir, os.path.join(exp_data_path, "seeds"))
+    os.chmod(os.path.join(exp_data_path, "seeds"), \
+            stat.S_IRWXU | stat.S_IRGRP | stat.S_IROTH)
+
+    # Copy over HJSON config file that was used
+    shutil.copy2(config.config_filename, exp_data_path)
+    print(color_str_green("DIRECTORY CREATION SUCCESSFUL -- Done!"))
+    return exp_data_path
+
 def run_docker_container_locally(config, exp_data_path):
     print(LINE_SEP)
     print("Running Docker container to fuzz %s ..." % config.circuit)
     print(LINE_SEP)
     cmd = ["docker", "run", "-it", "--rm", "--name", config.experiment_name]
     # Set environment variables for general configs
-    cmd = add_env_to_cmd(cmd, "circuit", config.circuit)
-    cmd = add_env_to_cmd(cmd, "tb", config.testbench)
-    cmd = add_env_to_cmd(cmd, "fuzzer", config.fuzzer)
+    cmd.extend(["-e", "%s=%s" % ("CIRCUIT", config.circuit)])
+    cmd.extend(["-e", "%s=%s" % ("TB", config.testbench)])
+    cmd.extend(["-e", "%s=%s" % ("FUZZER", config.fuzzer)])
+    cmd.extend(["-e", "%s=%s" % ("RUN_ON_GCP", config.run_on_gcp)])
     # Set environment variables for HDL generator configs
     for param, value in config.hdl_gen_params.items():
-        cmd = add_env_to_cmd(cmd, param, value)
+        if value != None:
+            cmd.extend(["-e", "%s=%s" % (param.upper(), value)])
     # Set environment variables for fuzzer configs
     for param, value in config.fuzzer_params.items():
-        cmd = add_env_to_cmd(cmd, param, value)
+        if value != None:
+            cmd.extend(["-e", "%s=%s" % (param.upper(), value)])
     # Mount volumes for output data
     cmd.extend(["-v", "%s/logs:/src/circuits/%s/logs" % \
             (exp_data_path, config.circuit)])
     cmd.extend(["-v", "%s/out:/src/circuits/%s/out" % \
             (exp_data_path, config.circuit)])
-    cmd.extend(["-v", "%s/in:/src/circuits/%s/in" % \
-            (exp_data_path, config.circuit)])
-    # Run container with current user/group IDs
-    # cmd.extend(["-u", "%d:%d" % (os.getuid(), os.getgid())])
     # Set target Docker image and run
     cmd.extend(["-t", "gcr.io/hardware-fuzzing/%s" % config.circuit])
-    # print(cmd)
-    # sys.exit(1)
-    # cmd.append("/bin/bash")
+    # cmd.append("bash")
     error_str = "ERROR: container run FAILED. Terminating experiment!"
     run_cmd(cmd, error_str)
     print(color_str_green("CONTAINER RUN SUCCESSFUL -- Done!"))
 
-def run_docker_container_on_gcp_vm(config, exp_data_path):
-    return
+def push_docker_container_to_gcr(config):
+    print(LINE_SEP)
+    print("Pushing Docker image to GCR ...")
+    print(LINE_SEP)
+    cmd = ["docker", "push", "gcr.io/hardware-fuzzing/%s" % config.circuit]
+    error_str = "ERROR: pushing image to GCR FAILED. Terminating experiment!"
+    run_cmd(cmd, error_str)
+    print(color_str_green("IMAGE PUSH SUCCESSFUL -- Done!"))
 
-def create_experiment_data_dir(config):
-    exp_data_path = "%s/experiments/data/%s" % \
-            (config.root_path, config.experiment_name)
+def push_vm_management_scripts_to_gcs(config):
+    print(LINE_SEP)
+    print("Copying VM management script to GCS ...")
+    print(LINE_SEP)
+    cmd = ["gsutil", "cp", "%s/experiments/scripts/gce_vm_startup.sh" % \
+            config.root_path, "gs://%s/gce_vm_startup.sh" % "vm-management"]
+    error_str = "ERROR: pushing scripts to GCS FAILED. Terminating experiment!"
+    run_cmd(cmd, error_str)
+    print(color_str_green("COPY SUCCESSFUL -- Done!"))
 
-    # Check if experiment data directory with same name exists
-    if glob.glob(exp_data_path):
-        ovw = input(color_str_yellow( \
-                'WARNING: experiment data exists. Overwrite? [Yn]'))
-        if ovw in {'yes', 'y', 'Y', 'YES', 'Yes', ''}:
-            shutil.rmtree(exp_data_path)
-        else:
-            abort_str = "ABORT: re-run with different experiment name."
-            print(color_str_red(abort_str))
-            sys.exit(-1)
+def run_docker_container_on_gce(config):
+    print(LINE_SEP)
+    print("Launching GCE VM to fuzz %s ..." % config.circuit)
+    print(LINE_SEP)
 
-    # Create experiment data directories
-    os.mkdir(exp_data_path)
-    os.mkdir(os.path.join(exp_data_path, "out"))
-    os.mkdir(os.path.join(exp_data_path, "logs"))
+    # TODO: ***IMPORTANT*** check how many VM instances currently up
+    # gcloud compute instances list
 
-    # Copy over seeds that were used in this experiment
-    seeds_dir = "%s/circuits/%s/seeds" % (config.root_path, config.circuit)
-    shutil.copytree(seeds_dir, os.path.join(exp_data_path, "in"))
-
-    # Copy over HJSON config file that was used
-    shutil.copy2(config.config_filename, exp_data_path)
-
-    return exp_data_path
+    # if above under $$$ threshold, create VM instance, else wait
+    cmd = ["gcloud", "compute", "--project=%s" % "hardware-fuzzing", \
+            "instances", "create-with-container", config.experiment_name, \
+            "--container-image", "gcr.io/hardware-fuzzing/%s" % config.circuit,\
+            "--container-restart-policy", "never", \
+            "--zone=%s" % "us-east4-a", \
+            "--machine-type=%s" % "n1-standard-1", \
+            "--boot-disk-size=%s" % "10GB", \
+            "--scopes=default,compute-rw,storage-rw", \
+            "--metadata=startup-script-url=%s" % \
+                    "gs://vm-management/gce_vm_startup.sh"]
+    # Set environment variables for general configs
+    cmd.extend(["--container-env", "%s=%s" % ("CIRCUIT", config.circuit)])
+    cmd.extend(["--container-env", "%s=%s" % ("TB", config.testbench)])
+    cmd.extend(["--container-env", "%s=%s" % ("FUZZER", config.fuzzer)])
+    cmd.extend(["--container-env", "%s=%s" % ("RUN_ON_GCP", config.run_on_gcp)])
+    # Set environment variables for HDL generator configs
+    for param, value in config.hdl_gen_params.items():
+        if value != None:
+            cmd.extend(["--container-env", "%s=%s" % (param.upper(), value)])
+    # Set environment variables for fuzzer configs
+    for param, value in config.fuzzer_params.items():
+        if value != None:
+            cmd.extend(["--container-env", "%s=%s" % (param.upper(), value)])
+    # Mount volumes for output data
+    # cmd.extend(["--container-mount-host-path", \
+            # "mount-path=/src/circuits/%s/logs,host-path=/tmp/logs,mode=rw" % \
+            # config.circuit])
+    # cmd.extend(["--container-mount-host-path", \
+            # "mount-path=/src/circuits/%s/out,host-path=/tmp/out,mode=rw" % \
+            # config.circuit])
+    # launch container in VM instance
+    error_str = "ERROR: launching VM on GCE FAILED. Terminating experiment!"
+    run_cmd(cmd, error_str)
+    print(color_str_green("VM LAUNCH SUCCESSFUL -- Done!"))
 
 # Main
 def main(args):
@@ -142,156 +226,24 @@ def main(args):
     # Load experiment configurations
     config = Config(args[0])
 
-    # make local directory to hold resulting data and copy of config file
-    exp_data_path = create_experiment_data_dir(config)
+    # Check if experiment data already exists
+    if config.run_on_gcp == 0:
+        check_for_data_locally(config)
+    else:
+        check_for_data_in_gcs(config)
 
     # Build docker image to fuzz target circuit
     build_docker_image(config)
 
     # Run Docker container to fuzz circuit
     if config.run_on_gcp == 0:
+        exp_data_path = create_experiment_data_dir(config)
         run_docker_container_locally(config, exp_data_path)
     else:
-        run_docker_container_on_gcp_vm(config, exp_data_path)
+        push_docker_container_to_gcr(config)
+        push_vm_management_scripts_to_gcs(config)
+        run_docker_container_on_gce(config)
 
 if __name__ == "__main__":
     signal.signal(signal.SIGINT, sigint_handler)
     main(sys.argv[1:])
-
-# # Generate fuzzer input seeds
-# def copy_seeds(config):
-    # print(LINE_SEP)
-    # print("Copying seeds for fuzzer ...")
-
-    # # Set fuzzer seeds input path
-    # full_fuzzer_input_path = "%s/%s" % ( \
-            # config.exp_data_path, \
-            # config.fuzzer_input_dir)
-
-    # # Check if seed(s) already exist, if so ask for permission to do nothing
-    # if os.listdir(full_fuzzer_input_path):
-        # ovw = input(color_str_yellow( \
-                # 'WARNING: input seed(s) exist. Update them? [yN]'))
-        # if ovw in {'yes', 'y', 'Y', 'YES', 'Yes'}:
-            # # Remove old seeds
-            # for seed_filename in os.listdir(full_fuzzer_input_path):
-                # os.remove(os.path.join(full_fuzzer_input_path, seed_filename))
-        # else:
-            # print(color_str_green("CONTINUING WITH EXISTING SEEDS -- Done!"))
-            # return
-
-    # # Check if seeds directory exists
-    # if os.path.isdir(config.seeds_dir) and os.listdir(config.seeds_dir):
-        # # Copy over new seeds
-        # for seed_filename in os.listdir(config.seeds_dir):
-            # full_seed_path = os.path.join(config.seeds_dir, seed_filename)
-            # shutil.copy(full_seed_path, full_fuzzer_input_path)
-        # print(color_str_green("SEED COPYING SUCCESSFUL -- Done!"))
-    # else:
-        # # No seeds to copy
-        # error_str = "ERROR: no seeds to copy. Terminating experiment!"
-        # print(color_str_red(error_str))
-        # sys.exit(1)
-
-# # Fuzz the software model of the core
-# def fuzz_core(config):
-    # print(LINE_SEP)
-    # print("Fuzzing SW model of %s ..." % config.circuit)
-    # print(LINE_SEP)
-
-    # # Check if fuzzer identical fuzzer data already exists
-    # full_fuzzer_output_path = "%s/%s/%s_*" % ( \
-            # config.exp_data_path, \
-            # config.fuzzer_output_dir, \
-            # config.fuzzer_instance_basename)
-    # if glob.glob(full_fuzzer_output_path):
-        # ovw = input(color_str_yellow( \
-                # 'WARNING: experiment data exists. Overwrite? [Yn]'))
-        # if ovw in {'yes', 'y', 'Y', 'YES', 'Yes', ''}:
-            # for fuzzer_data_dir in glob.glob(full_fuzzer_output_path):
-                # shutil.rmtree(fuzzer_data_dir)
-        # else:
-            # abort_str = "ABORT: re-run with different configurations."
-            # print(color_str_red(abort_str))
-            # sys.exit(-1)
-
-    # # Launch fuzzer
-    # command = [\
-        # "docker", "run", "-it", "--rm", "--cap-add", "SYS_PTRACE", \
-        # "--name", "%s_%s_%s_fuzz" % ( \
-            # config.circuit, \
-            # config.experiment_name, \
-            # config.fuzzer_instance_basename), \
-        # "-e", "CORE=%s" % config.circuit, \
-        # "-e", "FUZZER=%s" % config.fuzzer, \
-        # "-e", "DEBUG=%d" % config.debug, \
-        # "-e", "NUM_INSTANCES=%d" % config.num_instances, \
-        # "-e", "FUZZER_INSTANCE_BASENAME=%s" % config.fuzzer_instance_basename, \
-        # "-e", "FUZZING_DURATION_MINS=%s" % \
-            # xstr(config.fuzzing_duration_mins), \
-        # "-e", "CHECKPOINT_INTERVAL_MINS=%s" % \
-            # xstr(config.checkpoint_interval_mins), \
-        # "-e", "TIME_TO_EXPLOITATION_MINS=%s" % \
-            # config.time_to_exploitation_mins, \
-        # "-e", "EXP_DATA_PATH=%s" % config.exp_data_path, \
-        # "-e", "FUZZER_INPUT_DIR=%s" % config.fuzzer_input_dir, \
-        # "-e", "FUZZER_OUTPUT_DIR=%s" % config.fuzzer_output_dir, \
-        # "-v", "%s/scripts:/scripts" % config.root_path, \
-        # "-v", "%s/circuits:/src/circuits" % config.root_path, \
-        # "-u", "%d:%d" % (os.getuid(), os.getgid()), \
-        # "-t", "hw-fuzzing/base-%s%s" % (config.fuzzer, USE_FORKED_FUZZER), \
-        # "bash", "/scripts/gen_seeds_and_fuzz.sh" \
-    # ]
-    # try:
-        # subprocess.check_call(command)
-    # except subprocess.CalledProcessError:
-        # error_str = "ERROR: fuzzing FAILED. Terminating experiment!"
-        # print(color_str_red(error_str))
-        # sys.exit(1)
-
-# # Re-verilate/compile core for simulation and (VCD) tracing
-# def simulate_and_trace(config):
-    # print(LINE_SEP)
-    # print("Generating VCD traces from fuzzer generated inputs ...")
-    # print(LINE_SEP)
-    # command = [\
-        # "docker", "run", "-it", "--rm", "--cap-add", "SYS_PTRACE", \
-        # "--name", "%s_%s_%s_vcd" % ( \
-            # config.circuit, \
-            # config.experiment_name, \
-            # config.fuzzer_instance_basename), \
-        # "-e", "CORE=%s" % config.circuit, \
-        # "-e", "TB=%s" % config.testbench, \
-        # "-e", "EXP_DATA_PATH=%s" % config.exp_data_path, \
-        # "-e", "FUZZER_OUTPUT_DIR=%s" % config.fuzzer_output_dir, \
-        # "-e", "NUM_INSTANCES=%d" % config.num_instances, \
-        # "-e", "FUZZER_INSTANCE_BASENAME=%s" % config.fuzzer_instance_basename, \
-        # "-v", "%s/scripts:/scripts" % config.root_path, \
-        # "-v", "%s/circuits:/src/circuits" % config.root_path, \
-        # "-u", "%d:%d" % (os.getuid(), os.getgid()), \
-        # "-t", "hw-fuzzing/base-%s%s" % (config.fuzzer, USE_FORKED_FUZZER), \
-        # "bash", "/scripts/compile_and_sim_dut_wtracing.sh" \
-    # ]
-    # try:
-        # subprocess.check_call(command)
-    # except subprocess.CalledProcessError:
-        # error_str = "ERROR: VCD tracing FAILED. Terminating experiment!"
-        # print(color_str_red(error_str))
-        # sys.exit(1)
-
-# # Extract data from VCD traces for plotting
-# def extract_data_for_plotting(config):
-    # print(LINE_SEP)
-    # print("Extracting VCD data to analyze ...")
-    # sys.path.append(config.root_path + "/scripts/data_extraction")
-    # data_extraction_module = importlib.import_module(\
-            # config.data_extraction_script)
-    # for instance_num in range(1, config.num_instances + 1):
-        # fuzzer_data_path = "%s/%s/%s_%d/vcd" % \
-                # (config.exp_data_path, \
-                # config.fuzzer_output_dir, \
-                # config.fuzzer_instance_basename, \
-                # instance_num)
-    # data_extraction_module.main([fuzzer_data_path])
-    # print(color_str_green("DATA EXTRACTION SUCCESSFUL -- Done!"))
-

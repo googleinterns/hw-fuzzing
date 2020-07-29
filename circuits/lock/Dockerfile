@@ -20,8 +20,6 @@ MAINTAINER ttrippel@google.com
 # Install Rust compiler/build system for HDL generator
 RUN apt-get install -y curl
 RUN curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y
-RUN apt-get remove --purge -y curl
-RUN apt-get autoremove -y
 ENV PATH="$PATH:/root/.cargo/bin"
 
 # create DUT directory
@@ -33,6 +31,7 @@ COPY hdl_generator $DUT/hdl_generator
 #COPY hdl $DUT/hdl
 COPY include $DUT/include
 COPY src $DUT/src
+COPY seeds $DUT/seeds
 #COPY tb_deps.sh $DUT/
 
 # Copy in build scripts

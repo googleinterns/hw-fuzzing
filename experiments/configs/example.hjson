@@ -1,10 +1,15 @@
 {
     // Experiment Parameters
-    experiment_name: exp001_lock_test
+    experiment_name: exp001-lock-test
     circuit: lock
     testbench: lock_test.cpp
     fuzzer: afl
-    run_on_gcp: 0
+    run_on_gcp: 1
+
+    // GCP Parameters (if any)
+    // gcp_params: {
+    //    project: hardware-fuzzing,
+    // }
 
     // HDL Generation Parameters (if any)
     hdl_gen_params: {
@@ -17,6 +22,6 @@
     fuzzer_params: {
         num_instances: 1
         mode: s
-        duration_mins: null
+        duration_mins: 1
     }
 }

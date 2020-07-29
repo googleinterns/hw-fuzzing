@@ -50,7 +50,7 @@ if [[ $FUZZER == "afl" || $FUZZER == "aflgo" ]]; then
         # Launch fuzzer
         if [[ -z ${DURATION_MINS-} ]]; then
             $FUZZER_BIN \
-                -i in \
+                -i seeds \
                 -o out \
                 $FUZZER_OPTIONS \
                 ${FUZZER}_${num} \
@@ -60,7 +60,7 @@ if [[ $FUZZER == "afl" || $FUZZER == "aflgo" ]]; then
         else
             timeout --foreground ${DURATION_MINS}m\
                 $FUZZER_BIN \
-                -i in \
+                -i seeds \
                 -o out \
                 $FUZZER_OPTIONS \
                 ${FUZZER}_${num} \
@@ -84,5 +84,10 @@ fi
 
 # Wait for all fuzzers to complete
 wait
+
+# Change permission on all files to allow access outside of container
+find out -type d -exec chmod 755 {} \;
+find out -type f -exec chmod 644 {} \;
+
 echo -e "\e[1;32mFUZZING SUCCESSFUL -- Done!\e[0m"
 exit 0
