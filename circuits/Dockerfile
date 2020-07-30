@@ -21,4 +21,4 @@ ENV CIRCUITS=$SRC/circuits
 RUN mkdir $CIRCUITS
 COPY common.mk exe.mk $CIRCUITS/
 COPY testbench $CIRCUITS/testbench
-COPY compile_for_fuzzing fuzz compile_for_tracing $SCRIPTS/
+COPY compile_for_fuzzing fuzz compile_for_tracing save_and_shutdown $SCRIPTS/

@@ -96,7 +96,7 @@ def build_docker_image(config):
 # Create experiment data directories and copy over configs
 def create_local_experiment_data_dir(config):
     print(LINE_SEP)
-    print("Creating local directories for fuzzing data ..." % config.circuit)
+    print("Creating local directories for fuzzing data ...")
     print(LINE_SEP)
     exp_data_path = "%s/experiments/data/%s" % \
             (config.root_path, config.experiment_name)
@@ -181,8 +181,9 @@ def run_docker_container_on_gce(config):
 
     # if above under $$$ threshold, create VM instance, else wait
     cmd = ["gcloud", "compute", "--project=%s" % "hardware-fuzzing", \
-            "instances", "create-with-container", config.experiment_name, \
-            "--container-image", "gcr.io/hardware-fuzzing/%s" % config.circuit,\
+            "instances", "create-with-container", \
+            config.experiment_name, "--container-image", \
+            "gcr.io/%s/%s" % ("hardware-fuzzing", config.circuit),\
             "--container-restart-policy", "never", \
             "--zone=%s" % "us-east4-a", \
             "--machine-type=%s" % "n1-standard-1", \
@@ -190,6 +191,7 @@ def run_docker_container_on_gce(config):
             "--scopes=default,compute-rw,storage-rw", \
             "--metadata=startup-script-url=%s" % \
                     "gs://vm-management/gce_vm_startup.sh"]
+    # cmd.extend["--container-tty", "--container-stdin", "--container-arg=bash"]
     # Set environment variables for general configs
     cmd.extend(["--container-env", "%s=%s" % ("CIRCUIT", config.circuit)])
     cmd.extend(["--container-env", "%s=%s" % ("TB", config.testbench)])
@@ -203,13 +205,6 @@ def run_docker_container_on_gce(config):
     for param, value in config.fuzzer_params.items():
         if value != None:
             cmd.extend(["--container-env", "%s=%s" % (param.upper(), value)])
-    # Mount volumes for output data
-    # cmd.extend(["--container-mount-host-path", \
-            # "mount-path=/src/circuits/%s/logs,host-path=/tmp/logs,mode=rw" % \
-            # config.circuit])
-    # cmd.extend(["--container-mount-host-path", \
-            # "mount-path=/src/circuits/%s/out,host-path=/tmp/out,mode=rw" % \
-            # config.circuit])
     # launch container in VM instance
     error_str = "ERROR: launching VM on GCE FAILED. Terminating experiment!"
     run_cmd(cmd, error_str)
@@ -237,7 +232,7 @@ def main(args):
 
     # Run Docker container to fuzz circuit
     if config.run_on_gcp == 0:
-        exp_data_path = create_experiment_data_dir(config)
+        exp_data_path = create_local_experiment_data_dir(config)
         run_docker_container_locally(config, exp_data_path)
     else:
         push_docker_container_to_gcr(config)

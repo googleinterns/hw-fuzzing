@@ -25,6 +25,9 @@ function check_exit_code {
 ## TODO: test AFLGo with new infrastructure
 ################################################################################
 ################################################################################
+if [ ! -d "out" ]; then
+    mkdir -p out
+fi
 if [[ $FUZZER == "afl" || $FUZZER == "aflgo" ]]; then
     for (( num=1; num <= $NUM_INSTANCES; num++ )); do
         # Set fuzzer and related options
@@ -86,7 +89,7 @@ fi
 wait
 
 # Change permission on all files to allow access outside of container
-find out -type d -exec chmod 755 {} \;
+find out -type d -exec chmod 777 {} \;
 find out -type f -exec chmod 644 {} \;
 
 echo -e "\e[1;32mFUZZING SUCCESSFUL -- Done!\e[0m"

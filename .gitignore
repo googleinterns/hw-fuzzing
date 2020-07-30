@@ -1,6 +1,12 @@
 # Testbench Inputs
 *.tf
 
+# HDL Generation Outputs
+# Rust
+debug/
+target/
+Cargo.lock
+
 # Compiler Ouputs
 *.a
 *.d

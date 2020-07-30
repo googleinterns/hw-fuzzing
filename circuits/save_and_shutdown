@@ -1,0 +1,56 @@
+#!/bin/bash
+# Copyright 2020 Google LLC
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#      http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+# If running on GCP --> tear down VM on completion
+if [[ $RUN_ON_GCP == "1" ]]; then
+    # Metadata Server URLS
+    METADATA_URL="http://metadata.google.internal/computeMetadata/v1"
+    PROJECT_ID_URL="$METADATA_URL/project/project-id"
+    ZONE_URL="$METADATA_URL/instance/zone"
+    INSTANCE_NAME_URL="$METADATA_URL/instance/name"
+    AUTH_TOKEN_URL="$METADATA_URL/instance/service-accounts/default/token"
+
+    # Get GCE VM instance info
+    PROJECT_ID=`curl -H "Metadata-Flavor: Google" $PROJECT_ID_URL`
+    ZONE=`curl -H "Metadata-Flavor: Google" $ZONE_URL`
+    IFS_BACKUP=$IFS
+    IFS=$'/'
+    ZONE_SPLIT=($ZONE)
+    ZONE="${ZONE_SPLIT[3]}"
+    IFS=$IFS_BACKUP
+    INSTANCE_NAME=`curl -H "Metadata-Flavor: Google" $INSTANCE_NAME_URL`
+
+    # Get GCE metadata authorization token
+    TOKEN=`curl -H "Metadata-Flavor: Google" $AUTH_TOKEN_URL | python3 -c \
+        "import sys, json; print(json.load(sys.stdin)['access_token'])"`
+
+    # Save fuzzing data to GCS
+    BUCKET_NAME="fuzzing-data"
+    GCS_API_URL="https://storage.googleapis.com/upload/storage/v1/b"
+    find logs -type f -exec curl -X POST --data-binary @{} \
+        -H "Authorization: Bearer $TOKEN" \
+        -H "Content-Type: text" \
+        "$GCS_API_URL/$BUCKET_NAME/o?uploadType=media&name=$INSTANCE_NAME/{}" \; > /dev/null
+    find out -type f -exec curl -X POST --data-binary @{} \
+        -H "Authorization: Bearer $TOKEN" \
+        -H "Content-Type: text" \
+        "$GCS_API_URL/$BUCKET_NAME/o?uploadType=media&name=$INSTANCE_NAME/{}" \; > /dev/null
+
+    # Delete VM instance
+    GCE_API_URL="https://www.googleapis.com/compute/v1/projects"
+    GCE_INSTANCE_URL="$GCE_API_URL/$PROJECT_ID/zones/$ZONE/instances/$INSTANCE_NAME"
+    curl -XDELETE -H "Authorization: Bearer $TOKEN" $GCE_INSTANCE_URL
+fi
+exit 0

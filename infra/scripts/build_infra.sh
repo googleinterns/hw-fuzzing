@@ -30,8 +30,4 @@ else
     #docker build -t hw-fuzzing/base-aflgo $@ $HW_FUZZING/infra/base-aflgo
     #docker build -t hw-fuzzing/base-aflgo-fork $@ $HW_FUZZING/infra/base-aflgo-fork
     docker build -t hw-fuzzing/base-circuit $@ $HW_FUZZING/circuits
-
-    # Build others
-    #docker build -t gcr.io/hardware-fuzzing/locksmith $@ $HW_FUZZING/infra/gcp_experiments/locksmith
-    #docker build --pull -t hw-fuzzing/base-opentitan $@ $HW_FUZZING/infra/base-opentitan
 fi

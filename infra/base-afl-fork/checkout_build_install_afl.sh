@@ -18,6 +18,7 @@ AFL_DEP_PACKAGES="\
     git \
     python3-dev \
     python3-pip"
+apt-get update
 apt-get install -y $AFL_DEP_PACKAGES
 pip3 install --upgrade pip
 

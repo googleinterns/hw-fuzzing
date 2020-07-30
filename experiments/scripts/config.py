@@ -50,13 +50,13 @@ class Config():
         self.root_path = os.getenv('HW_FUZZING')
 
         # Setup experiment
-        self.load_configurations(config_filename)
+        self.load_configs_from_hjson_file(config_filename)
         self.set_testbench_filename()
         self.print_configs()
         self.validate_configs()
 
     # Load experiment configurations
-    def load_configurations(self, config_filename):
+    def load_configs_from_hjson_file(self, config_filename):
         print(LINE_SEP)
         print("Loading experiment configurations ...")
         with open(config_filename, 'r') as hjson_file:

@@ -19,51 +19,15 @@ function check_exit_code {
     fi
 }
 
-generate_hdl
-check_exit_code
-compile_for_fuzzing
-check_exit_code
-fuzz
-check_exit_code
-
-# Tear down VM on completion
-if [[ $RUN_ON_GCP == "1" ]]; then
-    # Metadata Server URLS
-    METADATA_URL="http://metadata.google.internal/computeMetadata/v1"
-    PROJECT_ID_URL="$METADATA_URL/project/project-id"
-    ZONE_URL="$METADATA_URL/instance/zone"
-    INSTANCE_NAME_URL="$METADATA_URL/instance/name"
-    AUTH_TOKEN_URL="$METADATA_URL/instance/service-accounts/default/token"
-
-    # Get GCE VM instance info
-    PROJECT_ID=`curl -H "Metadata-Flavor: Google" $PROJECT_ID_URL`
-    ZONE=`curl -H "Metadata-Flavor: Google" $ZONE_URL`
-    IFS_BACKUP=$IFS
-    IFS=$'/'
-    ZONE_SPLIT=($ZONE)
-    ZONE="${ZONE_SPLIT[3]}"
-    IFS=$IFS_BACKUP
-    INSTANCE_NAME=`curl -H "Metadata-Flavor: Google" $INSTANCE_NAME_URL`
-
-    # Get GCE metadata authorization token
-    TOKEN=`curl -H "Metadata-Flavor: Google" $AUTH_TOKEN_URL | python3 -c \
-        "import sys, json; print(json.load(sys.stdin)['access_token'])"`
-
-    # Save fuzzing data to GCS
-    BUCKET_NAME="fuzzing-data"
-    GCS_API_URL="https://storage.googleapis.com/upload/storage/v1/b"
-    find logs -type f -exec curl -X POST --data-binary @{} \
-        -H "Authorization: Bearer $TOKEN" \
-        -H "Content-Type: text" \
-        "$GCS_API_URL/$BUCKET_NAME/o?uploadType=media&name=$INSTANCE_NAME/{}" \; > /dev/null
-    find out -type f -exec curl -X POST --data-binary @{} \
-        -H "Authorization: Bearer $TOKEN" \
-        -H "Content-Type: text" \
-        "$GCS_API_URL/$BUCKET_NAME/o?uploadType=media&name=$INSTANCE_NAME/{}" \; > /dev/null
-
-    # Delete VM instance
-    GCE_API_URL="https://www.googleapis.com/compute/v1/projects"
-    GCE_INSTANCE_URL="$GCE_API_URL/$PROJECT_ID/zones/$ZONE/instances/$INSTANCE_NAME"
-    curl -XDELETE -H "Authorization: Bearer $TOKEN" $GCE_INSTANCE_URL
+if [ ! -d "logs" ]; then
+    mkdir -p logs
 fi
+
+generate_hdl 2>&1 | tee logs/exp.log
+check_exit_code
+compile_for_fuzzing 2>&1 | tee -a logs/exp.log
+check_exit_code
+fuzz 2>&1 | tee -a logs/exp.log
+check_exit_code
+save_and_shutdown # if on GCP --> save data and tear down VM
 exit 0

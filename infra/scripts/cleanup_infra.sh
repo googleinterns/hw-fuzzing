@@ -24,10 +24,6 @@ docker rmi -f hw-fuzzing/base-circuit:latest
 #docker rmi -f hw-fuzzing/base-verilator:latest
 #docker rmi -f hw-fuzzing/base-image:latest
 
-# Remove others
-#docker rmi -f gcr.io/hardware-fuzzing/locksmith
-#docker rmi -f hw-fuzzing/base-opentitan:latest
-
 # Cleanup Docker containers
 docker ps -a -q | xargs -I {} docker rm {};
 docker images -q -f dangling=true | xargs -I {} docker rmi -f {};
