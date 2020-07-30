@@ -1,3 +1,7 @@
+# Experiment configs
+*.hjson
+!example.hjson
+
 # Testbench Inputs
 *.tf
 

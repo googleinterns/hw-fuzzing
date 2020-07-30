@@ -13,94 +13,102 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import hjson
+# Standard modules
 import os
-import prettytable
-import sys
 
-# Other defines
+# Installed dependencies
+import hjson
+import prettytable
+
+# Macros
 LINE_SEP = "==================================================================="
+
 
 # Color string RED for printing to terminal
 def color_str_red(s):
-    return "\033[1m\033[91m{}\033[00m".format(s)
+  return "\033[1m\033[91m{}\033[00m".format(s)
+
 
 # Color string GREEN for printing to terminal
 def color_str_green(s):
-    return "\033[1m\033[92m{}\033[00m".format(s)
+  return "\033[1m\033[92m{}\033[00m".format(s)
+
 
 # Color string YELLOW for printing to terminal
 def color_str_yellow(s):
-    return "\033[93m{}\033[00m".format(s)
+  return "\033[93m{}\033[00m".format(s)
+
 
 class Config():
-    def __init__(self, config_filename):
-        self.config_filename = config_filename
+  """Loads and stores experiment configuration data."""
 
-        # Experiment configs
-        self.experiment_name = None
-        self.circuit = None
-        self.testbench = None
-        self.fuzzer = None
-        self.run_on_gcp = None
-        self.hdl_gen_params = None
-        self.fuzzer_params = None
+  def __init__(self, config_filename):
+    self.config_filename = config_filename
 
-        # Initialize experiment data paths
-        self.root_path = os.getenv('HW_FUZZING')
+    # Experiment configs
+    self.experiment_name = None
+    self.circuit = None
+    self.testbench = None
+    self.fuzzer = None
+    self.run_on_gcp = None
+    self.hdl_gen_params = None
+    self.fuzzer_params = None
 
-        # Setup experiment
-        self.load_configs_from_hjson_file(config_filename)
-        self.set_testbench_filename()
-        self.print_configs()
-        self.validate_configs()
+    # Initialize experiment data paths
+    self.root_path = os.getenv("HW_FUZZING")
 
-    # Load experiment configurations
-    def load_configs_from_hjson_file(self, config_filename):
-        print(LINE_SEP)
-        print("Loading experiment configurations ...")
-        with open(config_filename, 'r') as hjson_file:
-            # Load HJSON file
-            cdict = hjson.load(hjson_file)
-            # Parse config dict
-            self.experiment_name = cdict["experiment_name"]
-            self.circuit = cdict["circuit"]
-            self.testbench = cdict["testbench"]
-            self.fuzzer = cdict["fuzzer"]
-            self.run_on_gcp = cdict["run_on_gcp"]
-            self.hdl_gen_params = cdict["hdl_gen_params"]
-            self.fuzzer_params = cdict["fuzzer_params"]
+    # Setup experiment
+    self.load_configs_from_hjson_file(config_filename)
+    self.set_testbench_filename()
+    self.print_configs()
+    self.validate_configs()
 
-    # TODO: make sure didn't make mistakes writing config file!
-    def validate_configs(self):
-        # print(color_str_red("ERROR: fuzzer instance basename too long."), \
-                # color_str_red("Terminating experiment!"))
-        # sys.exit(1)
-        return True
+  # Load experiment configurations
+  def load_configs_from_hjson_file(self, config_filename):
+    """Loads experiment configurations from an HJSON file."""
+    print(LINE_SEP)
+    print("Loading experiment configurations ...")
+    with open(config_filename, "r") as hjson_file:
+      # Load HJSON file
+      cdict = hjson.load(hjson_file)
+      # Parse config dict
+      self.experiment_name = cdict["experiment_name"]
+      self.circuit = cdict["circuit"]
+      self.testbench = cdict["testbench"]
+      self.fuzzer = cdict["fuzzer"]
+      self.run_on_gcp = cdict["run_on_gcp"]
+      self.hdl_gen_params = cdict["hdl_gen_params"]
+      self.fuzzer_params = cdict["fuzzer_params"]
 
-    # Set testbench filename
-    def set_testbench_filename(self):
-        self.testbench = os.path.join("src", self.testbench)
+  # TODO(ttrippel): make sure didn't make mistakes writing config file!
+  def validate_configs(self):
+    # print(color_str_red("ERROR: fuzzer instance basename too long."), \
+        # color_str_red("Terminating experiment!"))
+    # sys.exit(1)
+    return True
 
-    def print_configs(self):
-        # Create table for printing
-        exp_config_table = prettytable.PrettyTable(header=False)
-        exp_config_table.title = "Experiment Parameters"
-        exp_config_table.field_names = ["Parameter", "Value"]
+  def set_testbench_filename(self):
+    self.testbench = os.path.join("src", self.testbench)
 
-        # Add main experiment parameters
-        exp_config_table.add_row(["Experiment Name:", self.experiment_name])
-        exp_config_table.add_row(["Circuit:", self.circuit])
-        exp_config_table.add_row(["Testbench:", self.testbench])
-        exp_config_table.add_row(["Fuzzer:", self.fuzzer])
-        exp_config_table.add_row(["Run on GCP:", self.run_on_gcp])
+  def print_configs(self):
+    """Creates a table detailing experiment configurations and prints."""
+    exp_config_table = prettytable.PrettyTable(header=False)
+    exp_config_table.title = "Experiment Parameters"
+    exp_config_table.field_names = ["Parameter", "Value"]
 
-        # Add other parameters
-        for config in [self.hdl_gen_params, self.fuzzer_params]:
-            for param, value in config.items():
-                param = param.replace("_", " ").title() + ":"
-                exp_config_table.add_row([param, value])
+    # Add main experiment parameters
+    exp_config_table.add_row(["Experiment Name:", self.experiment_name])
+    exp_config_table.add_row(["Circuit:", self.circuit])
+    exp_config_table.add_row(["Testbench:", self.testbench])
+    exp_config_table.add_row(["Fuzzer:", self.fuzzer])
+    exp_config_table.add_row(["Run on GCP:", self.run_on_gcp])
 
-        # Print table
-        exp_config_table.align = "l"
-        print(color_str_yellow(exp_config_table.get_string()))
+    # Add other parameters
+    for config in [self.hdl_gen_params, self.fuzzer_params]:
+      for param, value in config.items():
+        param = param.replace("_", " ").title() + ":"
+        exp_config_table.add_row([param, value])
+
+    # Print table
+    exp_config_table.align = "l"
+    print(color_str_yellow(exp_config_table.get_string()))

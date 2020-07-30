@@ -1,6 +1,6 @@
 {
     // Experiment Parameters
-    experiment_name: exp001-lock-test
+    experiment_name: exp001-lock-test2
     circuit: lock
     testbench: lock_test.cpp
     fuzzer: afl
@@ -22,6 +22,6 @@
     fuzzer_params: {
         num_instances: 1
         mode: s
-        duration_mins: 1
+        duration_mins: null
     }
 }
