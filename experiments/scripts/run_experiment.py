@@ -191,17 +191,16 @@ def check_num_active_vm_instances():
   print(LINE_SEP)
   print("Checking number of active VMs on GCE ...")
   print(LINE_SEP)
-  cmd = ["gcloud compute instances list"]
-  process = subprocess.Popen(\
+  cmd = ["gcloud", "compute", "instances", "list"]
+  proc = subprocess.Popen(\
       cmd, \
-      shell=True, \
       stdin=subprocess.PIPE, \
       stdout=subprocess.PIPE, \
       stderr=subprocess.STDOUT, \
       close_fds=True)
   num_active_vm_instances = -1  # first line is header
   while True:
-    line = process.stdout.readline()
+    line = proc.stdout.readline()
     if not line:
       break
     num_active_vm_instances += 1

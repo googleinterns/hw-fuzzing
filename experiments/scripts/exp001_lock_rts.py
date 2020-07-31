@@ -42,8 +42,10 @@ BASE_CONFIG_DICT = {
         "duration_mins": None,
     },
 }
-NUM_STATES = [2, 4, 8, 16, 32, 64, 128, 156]
-COMP_WIDTHS = [1, 2, 4, 8, 16, 32]
+# NUM_STATES = [2, 4, 8, 16, 32, 64, 128, 156]
+NUM_STATES = [256]
+# COMP_WIDTHS = [1, 2, 4, 8, 16, 32]
+COMP_WIDTHS = [2, 4, 8, 16, 32]
 
 # Macros
 LINE_SEP = "*******************************************************************"
