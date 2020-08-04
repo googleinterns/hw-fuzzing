@@ -42,10 +42,9 @@ BASE_CONFIG_DICT = {
         "duration_mins": None,
     },
 }
-# NUM_STATES = [2, 4, 8, 16, 32, 64, 128, 156]
-NUM_STATES = [256]
-# COMP_WIDTHS = [1, 2, 4, 8, 16, 32]
-COMP_WIDTHS = [2, 4, 8, 16, 32]
+NUM_STATES = [2, 4, 8, 16, 32, 64, 128, 256]
+COMP_WIDTHS = [1, 2, 4, 8, 16, 32]
+RUNS = range(0, 1)
 
 # Macros
 LINE_SEP = "*******************************************************************"
@@ -70,28 +69,29 @@ def main():
   print(LINE_SEP)
   print(LINE_SEP)
   print(LINE_SEP)
-  for states in NUM_STATES:
-    for width in COMP_WIDTHS:
-      # craft config dictionary
-      cdict = copy.deepcopy(BASE_CONFIG_DICT)
-      experiment_name = "exp001-lock-runtime-%dstates-%dwidth" % (states, width)
-      cdict["experiment_name"] = experiment_name
-      cdict["hdl_gen_params"]["num_lock_states"] = states
-      cdict["hdl_gen_params"]["lock_comp_width"] = width
-      cdict["hdl_gen_params"]["backtrack_probability"] = 0
+  for run in RUNS:
+    for states in NUM_STATES:
+      for width in COMP_WIDTHS:
+        # craft config dictionary
+        cdict = copy.deepcopy(BASE_CONFIG_DICT)
+        experiment_name = "exp001-lock-runtime-%dstates-%dwidth-%d" % \
+            (states, width, run)
+        cdict["experiment_name"] = experiment_name
+        cdict["hdl_gen_params"]["num_lock_states"] = states
+        cdict["hdl_gen_params"]["lock_comp_width"] = width
 
-      # write to HJSON file
-      hjson_filename = experiment_name + ".hjson"
-      hjson_file_path = os.path.join(os.getenv("HW_FUZZING"), \
-          "experiments", "configs", hjson_filename)
-      with open(hjson_file_path, "w") as fp:
-        hjson.dump(cdict, fp)
+        # write to HJSON file
+        hjson_filename = experiment_name + ".hjson"
+        hjson_file_path = os.path.join(os.getenv("HW_FUZZING"), \
+            "experiments", "configs", hjson_filename)
+        with open(hjson_file_path, "w") as fp:
+          hjson.dump(cdict, fp)
 
-      # launch experiment
-      run_experiment([hjson_file_path])
+        # launch experiment
+        run_experiment([hjson_file_path])
 
-      # cleanup config file
-      os.remove(hjson_file_path)
+        # cleanup config file
+        os.remove(hjson_file_path)
   print(LINE_SEP)
   print(LINE_SEP)
   print(LINE_SEP)

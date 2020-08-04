@@ -14,7 +14,7 @@
 
 # Docker image for fuzzing various lock circuits with AFL
 
-FROM hw-fuzzing/base-circuit
+FROM hw-fuzzing/base-circuit-time-eval
 MAINTAINER ttrippel@google.com
 
 # Install Rust compiler/build system for HDL generator

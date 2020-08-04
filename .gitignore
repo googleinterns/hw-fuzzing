@@ -1,6 +1,6 @@
 # Experiment configs
 *.hjson
-!example.hjson
+!lock_example.hjson
 
 # Testbench Inputs
 *.tf

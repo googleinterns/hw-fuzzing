@@ -39,14 +39,13 @@ include ../common.mk
 ################################################################################
 .PHONY: clean-hdl
 
-hdl: hdl_generator/src/main.rs
+hdl/lock.v: hdl_generator/src/main.rs
 	@mkdir hdl; \
 	cd hdl_generator; \
 	cargo build; \
 	cargo run -- \
 		--states $(NUM_LOCK_STATES) \
-		--width $(LOCK_COMP_WIDTH) \
-		--backtrack $(BACKTRACK_PROBABILITY) > ../hdl/$(CIRCUIT).v; \
+		--width $(LOCK_COMP_WIDTH) > ../hdl/$(CIRCUIT).v; \
 	cd ..
 
 clean-hdl:

@@ -1,6 +1,6 @@
 {
     // Experiment Parameters
-    experiment_name: exp001-lock-test2
+    experiment_name: exp001-lock-test
     circuit: lock
     testbench: lock_test.cpp
     fuzzer: afl
@@ -15,7 +15,6 @@
     hdl_gen_params: {
         num_lock_states: 8
         lock_comp_width: 8
-        backtrack_probability: 0
     }
 
     // Fuzzer Parameters

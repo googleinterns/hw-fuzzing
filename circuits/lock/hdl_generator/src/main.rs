@@ -15,10 +15,6 @@ struct Options {
     /// The width of the registers and ports making up the lock.
     #[structopt(long, default_value = "32")]
     width: u32,
-
-    /// The probability of inserting a reverse transition with a random input symbol.
-    #[structopt(long, default_value = "0")]
-    backtrack: f32,
 }
 
 fn main() -> std::io::Result<()> {
@@ -27,7 +23,6 @@ fn main() -> std::io::Result<()> {
     let generator = Generator {
         states: options.states,
         width: options.width,
-        backtrack: options.backtrack,
     };
 
     let mut context = Context::new();
@@ -38,39 +33,43 @@ fn main() -> std::io::Result<()> {
 struct Generator {
     states: u32,
     width: u32,
-    backtrack: f32,
+}
+
+const fn num_bits<T>() -> usize { std::mem::size_of::<T>() * 8 }
+
+fn log_2(x: u32) -> u32 {
+    num_bits::<u32>() as u32 - x.leading_zeros()
 }
 
 impl Generator {
     fn generate<'a>(&'a self, c: &'a mut Context<'a>) -> &'a Module {
         let mut rng = rand::thread_rng();
 
+        // compute width of state register
+        let state_reg_width = log_2(self.states - 1u32);
+
+        // create lock module with a single state register and trigger input
         let lock = c.module("lock");
-        let lit = |v: u32| lock.lit(v, self.width);
         let input = lock.input("in", self.width);
-        let state = lock.reg("state", self.width);
+        let state = lock.reg("state", state_reg_width);
+        state.default_value(0u32);
 
-        state.default_value(0x00000000u32);
-
-        let mut transitions = Vec::new();
-        for i in 0..self.states {
-            transitions.push((i, i, i + 1));
-        }
-
+        // define lock state transitions
         let mut next = state.value;
-        for (from, trigger, to) in transitions {
-            let (from, trigger, to) = (lit(from), lit(trigger), lit(to));
+        for i in 0..(self.states - 1u32) {
+            let trigger_value = rng.gen_range(0u32, 2u32.pow(self.width));
+            let from = lock.lit(i, state_reg_width);
+            let to = lock.lit(i + 1u32, state_reg_width);
+            let trigger = lock.lit(trigger_value, self.width);
             next = (state.value.eq(from) & input.eq(trigger)).mux(to, next);
-
-            if rng.gen::<f32>() < self.backtrack {
-                next = (state.value.eq(to) & input.eq(lit(rng.gen::<u32>()))).mux(from, next);
-            }
         }
         state.drive_next(next);
 
-        lock.output("unlocked", state.value.eq(lit(self.states)));
+        // Define lock outputs
+        lock.output("unlocked", state.value.eq(lock.lit(self.states - 1u32, state_reg_width)));
         lock.output("state", state.value);
 
+        // Return HDL
         lock
     }
 }
