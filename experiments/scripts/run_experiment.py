@@ -37,7 +37,7 @@ VM_LAUNCH_WAIT_TIME_S = 30
 
 
 # Handler to gracefully exit on ctrl+c
-def sigint_handler():
+def sigint_handler(sig, frame):
   print(color_str_red("\nTERMINATING EXPERIMENT!"))
   sys.exit(0)
 
@@ -72,7 +72,7 @@ def check_for_data_locally(config):
 def check_for_data_in_gcs(config):
   """Check Google Cloud Storage for existing experiment data files."""
   cmd = ["gsutil", "-q", "stat", "gs://%s/%s/**" % \
-      ("fuzzing-data", config.experiment_name)]
+      (config.gcp_params["data_bucket"], config.experiment_name)]
   try:
     subprocess.check_call(cmd)
   except subprocess.CalledProcessError:
@@ -81,7 +81,7 @@ def check_for_data_in_gcs(config):
       "WARNING: experiment data exists in GCS. Overwrite? [Yn]"))
   if ovw in {"yes", "y", "Y", "YES", "Yes", ""}:
     sub_cmd = ["gsutil", "rm", "gs://%s/%s/**" % \
-        ("fuzzing-data", config.experiment_name)]
+        (config.gcp_params["data_bucket"], config.experiment_name)]
     error_str = "ERROR: deleting existing data. Terminating Experiment!"
     run_cmd(sub_cmd, error_str)
   else:
@@ -91,11 +91,13 @@ def check_for_data_in_gcs(config):
 
 
 def build_docker_image(config):
+  """Creates docker image containing DUT to fuzz."""
   print(LINE_SEP)
   print("Building Docker image to fuzz %s ..." % config.circuit)
   print(LINE_SEP)
   cmd = ["docker", "build", \
-      "-t", "gcr.io/hardware-fuzzing/%s" % config.circuit, \
+      "--build-arg", "FUZZER=%s" % config.fuzzer, \
+      "-t", "gcr.io/%s/%s" % (config.gcp_params["project"], config.circuit), \
       "%s/circuits/%s" % (config.root_path, config.circuit)]
   error_str = "ERROR: image build FAILED. Terminating experiment!"
   run_cmd(cmd, error_str)
@@ -141,24 +143,22 @@ def run_docker_container_locally(config, exp_data_path):
   cmd = ["docker", "run", "-it", "--rm", "--name", config.experiment_name]
   # Set environment variables for general configs
   cmd.extend(["-e", "%s=%s" % ("CIRCUIT", config.circuit)])
-  cmd.extend(["-e", "%s=%s" % ("TB", config.testbench)])
+  cmd.extend(["-e", "%s=%s" % ("TB_DIR", config.testbench_dir)])
   cmd.extend(["-e", "%s=%s" % ("FUZZER", config.fuzzer)])
   cmd.extend(["-e", "%s=%s" % ("RUN_ON_GCP", config.run_on_gcp)])
-  # Set environment variables for HDL generator configs
-  for param, value in config.hdl_gen_params.items():
-    if value is not None:
-      cmd.extend(["-e", "%s=%s" % (param.upper(), value)])
-  # Set environment variables for fuzzer configs
-  for param, value in config.fuzzer_params.items():
-    if value is not None:
-      cmd.extend(["-e", "%s=%s" % (param.upper(), value)])
+  # Set environment variables for Verilator/HDL-generator/fuzzer params
+  for params in config.env_var_params:
+    for param, value in params.items():
+      if value is not None:
+        cmd.extend(["-e", "%s=%s" % (param.upper(), value)])
   # Mount volumes for output data
   cmd.extend(["-v", "%s/logs:/src/circuits/%s/logs" % \
       (exp_data_path, config.circuit)])
   cmd.extend(["-v", "%s/out:/src/circuits/%s/out" % \
       (exp_data_path, config.circuit)])
   # Set target Docker image and run
-  cmd.extend(["-t", "gcr.io/hardware-fuzzing/%s" % config.circuit])
+  cmd.extend(["-t", "gcr.io/%s/%s" % \
+      (config.gcp_params["project"], config.circuit)])
   # cmd.append("bash")
   error_str = "ERROR: container run FAILED. Terminating experiment!"
   run_cmd(cmd, error_str)
@@ -169,7 +169,8 @@ def push_docker_container_to_gcr(config):
   print(LINE_SEP)
   print("Pushing Docker image to GCR ...")
   print(LINE_SEP)
-  cmd = ["docker", "push", "gcr.io/hardware-fuzzing/%s" % config.circuit]
+  cmd = ["docker", "push", "gcr.io/%s/%s" % \
+      (config.gcp_params["project"], config.circuit)]
   error_str = "ERROR: pushing image to GCR FAILED. Terminating experiment!"
   run_cmd(cmd, error_str)
   print(color_str_green("IMAGE PUSH SUCCESSFUL -- Done!"))
@@ -229,31 +230,29 @@ def run_docker_container_on_gce(config):
   print(LINE_SEP)
   print("Launching GCE VM to fuzz %s ..." % config.circuit)
   print(LINE_SEP)
-  cmd = ["gcloud", "compute", "--project=%s" % "hardware-fuzzing", \
+  cmd = ["gcloud", "compute", "--project=%s" % config.gcp_params["project"], \
       "instances", "create-with-container", \
       config.experiment_name, "--container-image", \
-      "gcr.io/%s/%s" % ("hardware-fuzzing", config.circuit),\
-      "--container-restart-policy", "never", \
-      "--zone=%s" % "us-east4-a", \
-      "--machine-type=%s" % "n1-standard-1", \
-      "--boot-disk-size=%s" % "10GB", \
-      "--scopes=default,compute-rw,storage-rw", \
+      "gcr.io/%s/%s" % (config.gcp_params["project"], config.circuit),\
+      "--container-restart-policy", \
+      config.gcp_params["container_restart_policy"], \
+      "--zone=%s" % config.gcp_params["zone"], \
+      "--machine-type=%s" % config.gcp_params["machine_type"], \
+      "--boot-disk-size=%s" % config.gcp_params["boot_disk_size"], \
+      "--scopes=%s" % config.gcp_params["scopes"], \
       "--metadata=startup-script-url=%s" % \
-      "gs://vm-management/gce_vm_startup.sh"]
+      config.gcp_params["startup_script_url"]]
   # cmd.extend["--container-tty", "--container-stdin", "--container-arg=bash"]
   # Set environment variables for general configs
   cmd.extend(["--container-env", "%s=%s" % ("CIRCUIT", config.circuit)])
-  cmd.extend(["--container-env", "%s=%s" % ("TB", config.testbench)])
+  cmd.extend(["--container-env", "%s=%s" % ("TB_DIR", config.testbench_dir)])
   cmd.extend(["--container-env", "%s=%s" % ("FUZZER", config.fuzzer)])
   cmd.extend(["--container-env", "%s=%s" % ("RUN_ON_GCP", config.run_on_gcp)])
-  # Set environment variables for HDL generator configs
-  for param, value in config.hdl_gen_params.items():
-    if value is not None:
-      cmd.extend(["--container-env", "%s=%s" % (param.upper(), value)])
-  # Set environment variables for fuzzer configs
-  for param, value in config.fuzzer_params.items():
-    if value is not None:
-      cmd.extend(["--container-env", "%s=%s" % (param.upper(), value)])
+  # Set environment variables for Verilator/HDL-generator/fuzzer params
+  for params in config.env_var_params:
+    for param, value in params.items():
+      if value is not None:
+        cmd.extend(["--container-env", "%s=%s" % (param.upper(), value)])
   # launch container in VM instance
   error_str = "ERROR: launching VM on GCE FAILED. Terminating experiment!"
   run_cmd(cmd, error_str)

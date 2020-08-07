@@ -14,28 +14,22 @@
 # limitations under the License.
 
 # Install dependencies
-AFLGO_DEP_PACKAGES="\
-    git \
-    python3-dev \
-    python3-pip"
-apt-get install -y $AFLGO_DEP_PACKAGES
-pip3 install --upgrade pip
-pip3 install networkx
-pip3 install pydot
-pip3 install pydotplus
+AFL_INSTALL_PACKAGES="git"
+apt-get install -y $AFL_INSTALL_PACKAGES
 
-# Set Python3 as default
-ln -s $(which python3) /usr/bin/python
+# Clone AFL
+echo "Checking out AFL ..."
+cd $SRC && git clone --depth 1 https://github.com/timtrippel/AFL.git
 
-# Clone AFLGo
-echo "Checking out aflgo ..."
-cd $SRC && git clone --depth 1 https://github.com/aflgo/aflgo.git
-
-# Build AFLGo from source
-echo "Compiling aflgo ..."
+# Build AFL from source
+echo "Compiling AFL ..."
 export CC=clang
 export CXX=clang++
 export CCC=clang++
-cd aflgo && make clean all
+cd AFL && make clean all
 cd llvm_mode && make clean all
 echo " done."
+
+# Remove installation dependencies to shrink image size\
+apt-get remove --purge -y $AFL_INSTALL_PACKAGES
+apt-get autoremove -y

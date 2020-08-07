@@ -12,16 +12,14 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-# Docker image with AFLGo installed.
+# Docker image with cocotb installed.
 
-FROM hw-fuzzing/base-clang-4.0.0
+FROM gcr.io/hardware-fuzzing/base-circuit
 MAINTAINER ttrippel@google.com
 
-# Putting installation steps in a script reduces the number of intermediate
-# layers generated from the Dockerfile
-COPY checkout_build_install_aflgo.sh /root/
-RUN /root/checkout_build_install_aflgo.sh
-RUN rm /root/checkout_build_install_aflgo.sh
-
-# Set working directory
-WORKDIR $SRC
+# Install pip and cocotb
+RUN apt-get install -y python3-pip
+RUN pip3 install --upgrade pip && pip3 install cocotb
+#
+# Copy over circuit build/sim scripts
+COPY verilate_and_sim $SCRIPTS/

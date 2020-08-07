@@ -15,15 +15,9 @@
 ################################################################################
 # Compiler/Linker
 ################################################################################
-CXX     ?= g++
-VLT_CXX ?= $(CXX)
-LINK    ?= $(CXX)
-
-################################################################################
-# Switches
-################################################################################
-# SystemC output mode?  0/1 (from --sc)
-VM_SC = 0
+CXX     = clang++
+VLT_CXX = $(CXX)
+LINK    = $(CXX)
 
 ################################################################################
 # Preprocessor flags
@@ -37,20 +31,13 @@ CFG_CXXFLAGS_NO_UNUSED = \
 	-Wno-unused-variable \
 	-Wno-shadow
 
-# Add -MMD -MP if you're using a recent version of GCC.
-VK_CPPFLAGS_ALWAYS += \
-	-MMD \
+CPPFLAGS += \
 	-I$(SHARED_TB_INCS_DIR) \
 	-I$(TB_INCS_DIR) \
 	-I$(MODEL_DIR) \
 	-I$(VERILATOR_ROOT)/include \
 	-I$(VERILATOR_ROOT)/include/vltstd \
-	-DVM_COVERAGE=$(VM_COVERAGE) \
-	-DVM_SC=$(VM_SC) \
-	-DVM_TRACE=$(VM_TRACE) \
 	$(CFG_CXXFLAGS_NO_UNUSED) \
-
-CPPFLAGS += $(VK_CPPFLAGS_WALL) $(VK_CPPFLAGS_ALWAYS)
 
 ################################################################################
 # Source paths
@@ -68,12 +55,11 @@ VPATH += $(VERILATOR_ROOT)/include/vltstd
 
 # Optimization flags for non performance-critical/rarely executed code.
 # No optimization by default, which improves compilation speed.
-OPT_SLOW = -O0
+OPT_SLOW =
 
 # Optimization for performance critical/hot code. Most time is spent in these
 # routines. Optimizing by default for improved execution speed.
-#OPT_FAST = -Os
-OPT_FAST = -O0
+OPT_FAST = -Os
 
 # Optimization applied to the common run-time library used by verilated models.
 # For compatibility this is called OPT_GLOBAL even though it only applies to
@@ -85,23 +71,18 @@ OPT_GLOBAL = -Os
 # Verilator/Testbench classes
 ################################################################################
 include $(MODEL_DIR)/$(VM_PREFIX)_classes.mk
-
-VM_FAST += $(VM_CLASSES_FAST) $(VM_SUPPORT_FAST)
-VM_SLOW += $(VM_CLASSES_SLOW) $(VM_SUPPORT_SLOW)
-
-# Note VM_GLOBAL_FAST and VM_GLOBAL_SLOW holds the files required from the
-# run-time library. In practice everything is actually in VM_GLOBAL_FAST,
-# but keeping the distinction for compatibility for now.
+VM_FAST   += $(VM_CLASSES_FAST) $(VM_SUPPORT_FAST)
+VM_SLOW   += $(VM_CLASSES_SLOW) $(VM_SUPPORT_SLOW)
 VM_GLOBAL += $(VM_GLOBAL_FAST) $(VM_GLOBAL_SLOW)
 
 ################################################################################
-# Object file lists...
+# Object file lists
 ################################################################################
 VK_FAST_OBJS   = $(addprefix $(BUILD_DIR)/, $(addsuffix .o, $(VM_FAST)))
 VK_SLOW_OBJS   = $(addprefix $(BUILD_DIR)/, $(addsuffix .o, $(VM_SLOW)))
 VK_GLOBAL_OBJS = $(addprefix $(BUILD_DIR)/, $(addsuffix .o, $(VM_GLOBAL)))
-VK_USER_OBJS   = $(TB:$(TB_SRCS_DIR)/%.cpp=$(BUILD_DIR)/%.o)
-VK_USER_OBJS  += $(SHARED_TB:$(SHARED_TB_SRCS_DIR)/%.cpp=$(BUILD_DIR)/%.o)
+VK_USER_OBJS   = $(TB_SRCS:$(TB_SRCS_DIR)/%.cpp=$(BUILD_DIR)/%.o)
+VK_USER_OBJS  += $(SHARED_TB_SRCS:$(SHARED_TB_SRCS_DIR)/%.cpp=$(BUILD_DIR)/%.o)
 
 VK_ALL_OBJS = $(VK_USER_OBJS) $(VK_GLOBAL_OBJS) $(VK_FAST_OBJS) $(VK_SLOW_OBJS)
 
@@ -109,7 +90,7 @@ VK_ALL_OBJS = $(VK_USER_OBJS) $(VK_GLOBAL_OBJS) $(VK_FAST_OBJS) $(VK_SLOW_OBJS)
 # Linking rules
 ################################################################################
 $(BIN_DIR)/$(VM_PREFIX): $(VK_ALL_OBJS)
-	$(LINK) $(LDFLAGS) $(LINKFLAGS) $^ $(LIBS) -o $@
+	$(LINK) $(LDFLAGS) $(LDLIBS) $^ -o $@
 
 ################################################################################
 # Compilation rules

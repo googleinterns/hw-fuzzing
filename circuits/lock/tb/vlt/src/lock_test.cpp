@@ -78,7 +78,7 @@ void LockTest::InitializeTracing(std::string fname) {
 void LockTest::InitializeDUT() {
     dut_.clk = 0;
     dut_.reset_n = 0;
-    dut_.in = 0;
+    dut_.code = 0;
     dut_.eval();
 #if VM_TRACE
     // Dump VCD trace for current time
@@ -144,7 +144,7 @@ void LockTest::SimulateDUT() {
     // Read tests and simulate DUT
     while (test_.ReadTest(test_input) && !Verilated::gotFinish()) {
         // Load test into DUT
-        dut_.in = (test_input[0]);
+        dut_.code = (test_input[0]);
 
         // Print test read from file
         std::cout << "Loading inputs for test " << test_.get_test_num();
@@ -153,8 +153,8 @@ void LockTest::SimulateDUT() {
         std::cout << "  in = " << std::bitset<8>(test_input[0]);
         std::cout << " (0x" << std::hex << unsigned(test_input[0]) << ")";
         std::cout << std::endl;
-        std::cout << "  dut.in = " << std::bitset<8>(dut_.in);
-        std::cout << " (0x" << std::hex << unsigned(dut_.in) << ")";
+        std::cout << "  dut.code = " << std::bitset<8>(dut_.code);
+        std::cout << " (0x" << std::hex << unsigned(dut_.code) << ")";
         std::cout << std::endl;
 
         // Update correct "ground truth" state

@@ -13,16 +13,18 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+# Remove all DUT Docker images
+docker rmi -f gcr.io/hardware-fuzzing/lock
+
 # Remove all local fuzzing infrastructure Docker images
-docker rmi -f hw-fuzzing/base-circuit:latest
-#docker rmi -f hw-fuzzing/base-aflgo-fork:latest
-#docker rmi -f hw-fuzzing/base-aflgo:latest
-#docker rmi -f hw-fuzzing/base-afl-fork:latest
-#docker rmi -f hw-fuzzing/base-afl:latest
-#docker rmi -f hw-fuzzing/base-clang-4.0.0:latest
-#docker rmi -f hw-fuzzing/base-clang-10.0.0:latest
-#docker rmi -f hw-fuzzing/base-verilator:latest
-#docker rmi -f hw-fuzzing/base-image:latest
+docker rmi -f gcr.io/hardware-fuzzing/base-cocotb:latest
+docker rmi -f gcr.io/hardware-fuzzing/base-afl-term-on-crash:latest
+docker rmi -f gcr.io/hardware-fuzzing/base-afl:latest
+docker rmi -f gcr.io/hardware-fuzzing/base-circuit:latest
+#docker rmi -f gcr.io/hardware-fuzzing/base-clang-10.0.0:latest
+#docker rmi -f gcr.io/hardware-fuzzing/base-verilator:latest
+#docker rmi -f gcr.io/hardware-fuzzing/base-image:latest
+#docker rmi -f ubuntu:16:04
 
 # Cleanup Docker containers
 docker ps -a -q | xargs -I {} docker rm {};

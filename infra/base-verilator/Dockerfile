@@ -14,7 +14,7 @@
 
 # Docker image with Verilator version 4.037 installed.
 
-FROM hw-fuzzing/base-image
+FROM gcr.io/hardware-fuzzing/base-image
 MAINTAINER ttrippel@google.com
 
 # Install GCC and standard C library

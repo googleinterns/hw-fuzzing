@@ -56,7 +56,7 @@ def pull_data_from_gcs():
 def delete_existing_data_locally(exp_data_path):
   """Deletes local experiment data already exists, so it can be refreshed."""
   if glob.glob(exp_data_path):
-      shutil.rmtree(exp_data_path)
+    shutil.rmtree(exp_data_path)
 
 if __name__ == "__main__":
   pull_data_from_gcs()

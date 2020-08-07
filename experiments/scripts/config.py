@@ -43,29 +43,10 @@ class Config():
   """Loads and stores experiment configuration data."""
 
   def __init__(self, config_filename):
+    """Constructs experiment configuration object from an HJSON file."""
     self.config_filename = config_filename
 
-    # Experiment configs
-    self.experiment_name = None
-    self.circuit = None
-    self.testbench = None
-    self.fuzzer = None
-    self.run_on_gcp = None
-    self.hdl_gen_params = None
-    self.fuzzer_params = None
-
-    # Initialize experiment data paths
-    self.root_path = os.getenv("HW_FUZZING")
-
-    # Setup experiment
-    self.load_configs_from_hjson_file(config_filename)
-    self.set_testbench_filename()
-    self.print_configs()
-    self.validate_configs()
-
-  # Load experiment configurations
-  def load_configs_from_hjson_file(self, config_filename):
-    """Loads experiment configurations from an HJSON file."""
+    # Load experiment configurations
     print(LINE_SEP)
     print("Loading experiment configurations ...")
     with open(config_filename, "r") as hjson_file:
@@ -74,21 +55,28 @@ class Config():
       # Parse config dict
       self.experiment_name = cdict["experiment_name"]
       self.circuit = cdict["circuit"]
-      self.testbench = cdict["testbench"]
+      self.testbench_dir = cdict["testbench_dir"]
       self.fuzzer = cdict["fuzzer"]
       self.run_on_gcp = cdict["run_on_gcp"]
-      self.hdl_gen_params = cdict["hdl_gen_params"]
-      self.fuzzer_params = cdict["fuzzer_params"]
+      self.gcp_params = cdict["gcp_params"]
+      self.env_var_params = [cdict["verilator_params"]]
+      self.env_var_params.append(cdict["hdl_gen_params"])
+      self.env_var_params.append(cdict["fuzzer_params"])
+
+    # Initialize experiment data paths
+    self.root_path = os.getenv("HW_FUZZING")
+
+    # Validate and print configurations
+    self.validate_configs()
+    self.print_configs()
+
+  # Load experiment configurations
+  def load_configs_from_hjson_file(self, config_filename):
+    """Loads experiment configurations from an HJSON file."""
 
   # TODO(ttrippel): make sure didn't make mistakes writing config file!
   def validate_configs(self):
-    # print(color_str_red("ERROR: fuzzer instance basename too long."), \
-        # color_str_red("Terminating experiment!"))
-    # sys.exit(1)
-    return True
-
-  def set_testbench_filename(self):
-    self.testbench = os.path.join("src", self.testbench)
+    return
 
   def print_configs(self):
     """Creates a table detailing experiment configurations and prints."""
@@ -97,16 +85,16 @@ class Config():
     exp_config_table.field_names = ["Parameter", "Value"]
 
     # Add main experiment parameters
-    exp_config_table.add_row(["Experiment Name:", self.experiment_name])
-    exp_config_table.add_row(["Circuit:", self.circuit])
-    exp_config_table.add_row(["Testbench:", self.testbench])
-    exp_config_table.add_row(["Fuzzer:", self.fuzzer])
-    exp_config_table.add_row(["Run on GCP:", self.run_on_gcp])
+    exp_config_table.add_row(["Experiment Name", self.experiment_name])
+    exp_config_table.add_row(["Circuit", self.circuit])
+    exp_config_table.add_row(["Testbench Dir.", self.testbench_dir])
+    exp_config_table.add_row(["Fuzzer", self.fuzzer])
+    exp_config_table.add_row(["Run on GCP", self.run_on_gcp])
 
     # Add other parameters
-    for config in [self.hdl_gen_params, self.fuzzer_params]:
-      for param, value in config.items():
-        param = param.replace("_", " ").title() + ":"
+    for params in [self.gcp_params] + self.env_var_params:
+      for param, value in params.items():
+        param = param.replace("_", " ").title()
         exp_config_table.add_row([param, value])
 
     # Print table

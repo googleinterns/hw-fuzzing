@@ -14,7 +14,7 @@
 
 # Docker image with Clang version 10.0.0 installed.
 
-FROM hw-fuzzing/base-verilator
+FROM gcr.io/hardware-fuzzing/base-verilator
 MAINTAINER ttrippel@google.com
 
 # Putting installation steps in a script reduces the number of intermediate

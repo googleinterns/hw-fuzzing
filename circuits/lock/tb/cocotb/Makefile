@@ -1,4 +1,3 @@
-#!/usr/bin/python3
 # Copyright 2020 Google LLC
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -13,18 +12,13 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import random
-import string
+VERILOG_SOURCES  = $(addprefix ../../, $(HDL))
+TOPLEVEL         = $(CIRCUIT)
+MODULE           = $(CIRCUIT)_test
+SIM              = verilator
+TOPLEVEL_LANG    = verilog
+EXTRA_ARGS      += --coverage --compiler clang
 
-KEY_SIZE = 16
-STATE_SIZE = 16
+export COCOTB_REDUCED_LOG_FMT=1
 
-def gen_random_test():
-    key = ""
-    state = ""
-    for _ in range(KEY_SIZE):
-        key += random.choice(string.ascii_letters)
-    for _ in range(STATE_SIZE):
-        state += random.choice(string.ascii_letters)
-
-    return key + " " + state
+include $(shell cocotb-config --makefiles)/Makefile.sim

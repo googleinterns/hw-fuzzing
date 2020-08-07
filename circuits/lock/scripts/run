@@ -23,11 +23,24 @@ if [ ! -d "logs" ]; then
     mkdir -p logs
 fi
 
+# Generate HDL
 generate_hdl 2>&1 | tee logs/exp.log
 check_exit_code
-compile_for_fuzzing 2>&1 | tee -a logs/exp.log
-check_exit_code
-fuzz 2>&1 | tee -a logs/exp.log
-check_exit_code
-save_and_shutdown # if on GCP --> save data and tear down VM
+
+if [[ $FUZZER == "cocotb" ]]; then
+  # Simulate the DUT with cocotb
+  verilate_and_sim 2>&1 | tee -a logs/exp.log
+  check_exit_code
+else
+  # Compile the DUT for fuzzing
+  compile 2>&1 | tee -a logs/exp.log
+  check_exit_code
+
+  # Fuzz the DUT
+  fuzz 2>&1 | tee -a logs/exp.log
+  check_exit_code
+fi
+
+# If on GCP --> save data and tear down VM
+save_and_shutdown
 exit 0

@@ -12,13 +12,17 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-# Docker image for fuzzing circuits with AFL
+# Docker image for circuit verification
 
-FROM hw-fuzzing/base-afl
+FROM gcr.io/hardware-fuzzing/base-clang-10.0.0
 MAINTAINER ttrippel@google.com
 
+# Add Verilator to PATH
+ENV PATH="$PATH:$VERILATOR_ROOT/bin"
+
+# Copy over circuit build scripts
 ENV CIRCUITS=$SRC/circuits
 RUN mkdir $CIRCUITS
 COPY common.mk exe.mk $CIRCUITS/
-COPY testbench $CIRCUITS/testbench
-COPY compile_for_fuzzing fuzz compile_for_tracing save_and_shutdown $SCRIPTS/
+COPY tb $CIRCUITS/tb
+COPY save_and_shutdown $SCRIPTS/

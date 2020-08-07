@@ -14,16 +14,8 @@
 # limitations under the License.
 
 # Install dependencies
-AFL_DEP_PACKAGES="\
-    git \
-    python3-dev \
-    python3-pip"
-apt-get-update
-apt-get install -y $AFL_DEP_PACKAGES
-pip3 install --upgrade pip
-
-# Set Python3 as default
-ln -s $(which python3) /usr/bin/python
+AFL_INSTALL_PACKAGES="git"
+apt-get install -y $AFL_INSTALL_PACKAGES
 
 # Clone AFL
 echo "Checking out AFL ..."
@@ -37,3 +29,7 @@ export CCC=clang++
 cd AFL && make clean all
 cd llvm_mode && make clean all
 echo " done."
+
+# Remove installation dependencies to shrink image size\
+apt-get remove --purge -y $AFL_INSTALL_PACKAGES
+apt-get autoremove -y

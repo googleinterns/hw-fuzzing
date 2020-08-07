@@ -21,13 +21,11 @@ then
     echo "ERROR: Set HW_FUZZING path and try again."
 else
     # Build local fuzzing Docker infrastructure
-    #docker build --pull -t hw-fuzzing/base-image $@ $HW_FUZZING/infra/base-image
-    #docker build -t hw-fuzzing/base-verilator $@ $HW_FUZZING/infra/base-verilator
-    #docker build -t hw-fuzzing/base-clang-10.0.0 $@ $HW_FUZZING/infra/base-clang-10.0.0
-    #docker build -t hw-fuzzing/base-clang-4.0.0 $@ $HW_FUZZING/infra/base-clang-4.0.0
-    #docker build -t hw-fuzzing/base-afl $@ $HW_FUZZING/infra/base-afl
-    #docker build -t hw-fuzzing/base-afl-fork $@ $HW_FUZZING/infra/base-afl-fork
-    #docker build -t hw-fuzzing/base-aflgo $@ $HW_FUZZING/infra/base-aflgo
-    #docker build -t hw-fuzzing/base-aflgo-fork $@ $HW_FUZZING/infra/base-aflgo-fork
-    docker build -t hw-fuzzing/base-circuit $@ $HW_FUZZING/circuits
+    #docker build --pull -t gcr.io/hardware-fuzzing/base-image $@ $HW_FUZZING/infra/base-image
+    #docker build -t gcr.io/hardware-fuzzing/base-verilator $@ $HW_FUZZING/infra/base-verilator
+    #docker build -t gcr.io/hardware-fuzzing/base-clang-10.0.0 $@ $HW_FUZZING/infra/base-clang-10.0.0
+    docker build -t gcr.io/hardware-fuzzing/base-circuit $@ $HW_FUZZING/circuits
+    docker build -t gcr.io/hardware-fuzzing/base-afl $@ $HW_FUZZING/infra/base-afl
+    docker build -t gcr.io/hardware-fuzzing/base-afl-term-on-crash $@ $HW_FUZZING/infra/base-afl-term-on-crash
+    docker build -t gcr.io/hardware-fuzzing/base-cocotb $@ $HW_FUZZING/infra/base-cocotb
 fi

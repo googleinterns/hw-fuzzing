@@ -15,14 +15,10 @@
 ################################################################################
 # Circuit specific configs
 ################################################################################
-export CIRCUIT        := lock
-export LIBS           :=
-export CPPFLAGS       := -std=c++11
-export LINKFLAGS      := -std=c++11
-export SEED           := afl_seed.0.tf
-NUM_LOCK_STATES       ?= 8
-LOCK_COMP_WIDTH       ?= 8
-BACKTRACK_PROBABILITY ?= 0
+export CIRCUIT  := lock
+export LDLIBS   :=
+export CPPFLAGS := -std=c++11
+export SEED     := afl_seed.0.tf
 
 ################################################################################
 # Directories
@@ -33,20 +29,3 @@ BACKTRACK_PROBABILITY ?= 0
 # Include common build targets
 ################################################################################
 include ../common.mk
-
-################################################################################
-# HDL generation/clean targets
-################################################################################
-.PHONY: clean-hdl
-
-hdl/lock.v: hdl_generator/src/main.rs
-	@mkdir hdl; \
-	cd hdl_generator; \
-	cargo build; \
-	cargo run -- \
-		--states $(NUM_LOCK_STATES) \
-		--width $(LOCK_COMP_WIDTH) > ../hdl/$(CIRCUIT).v; \
-	cd ..
-
-clean-hdl:
-	rm -rf hdl

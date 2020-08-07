@@ -50,17 +50,19 @@ impl Generator {
 
         // create lock module with a single state register and trigger input
         let lock = c.module("lock");
-        let input = lock.input("in", self.width);
+        let input = lock.input("code", self.width);
         let state = lock.reg("state", state_reg_width);
         state.default_value(0u32);
 
         // define lock state transitions
         let mut next = state.value;
         for i in 0..(self.states - 1u32) {
-            let trigger_value = rng.gen_range(0u32, 2u32.pow(self.width));
+            let trigger_value = rng.gen_range(1u64, 2u64.pow(self.width));
             let from = lock.lit(i, state_reg_width);
             let to = lock.lit(i + 1u32, state_reg_width);
             let trigger = lock.lit(trigger_value, self.width);
+            //println!("From = {} --> To = {} on Trigger = {}",
+                     //i, i + 1, trigger_value);
             next = (state.value.eq(from) & input.eq(trigger)).mux(to, next);
         }
         state.drive_next(next);

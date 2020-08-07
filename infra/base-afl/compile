@@ -1,0 +1,95 @@
+#!/bin/bash
+# Copyright 2020 Google LLC
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#      http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+LINE_SEP="-------------------------------------------------------------------"
+
+function check_exit_code {
+  if [[ "$?" != "0" ]]; then
+    exit 1
+  fi
+}
+
+################################################################################
+################################################################################
+## Set build flags
+################################################################################
+################################################################################
+echo "Setting compiler/linker flags..."
+
+# Set fuzzer compiler
+export CXX="$SRC/AFL/afl-clang-fast++"
+export CXXFLAGS=""
+
+# Set Verilator compiler
+export VLT_CXX="clang++"
+export VLT_CXXFLAGS=""
+
+# Disable Verilator VCD tracing during fuzzing
+export DISABLE_VCD_TRACING=1
+
+# Print Fuzzer/Compiler/Linker Configurations
+echo $LINE_SEP
+echo "Fuzzer/Compiler Configurations:"
+echo "CXX=$CXX"
+echo "VLT_CXX=$VLT_CXX"
+echo "CXXFLAGS=$CXXFLAGS"
+echo "VLT_CXXFLAGS=$VLT_CXXFLAGS"
+echo "DISABLE_VCD_TRACING=$DISABLE_VCD_TRACING"
+echo "Done!"
+
+################################################################################
+################################################################################
+## Install test bench dependencies
+################################################################################
+################################################################################
+echo $LINE_SEP
+echo "Installing dependencies for testbench ..."
+if [[ ! -f tb_deps.sh ]]; then
+  echo "No dependencies to install."
+else
+  tb_deps.sh
+  echo "Installing: $TB_DEPS"
+  apt-get install -y $TB_DEPS
+  check_exit_code
+fi
+echo "Done!"
+
+################################################################################
+################################################################################
+## Verilate HDL and Compile/Instrument SW Model
+################################################################################
+################################################################################
+echo $LINE_SEP
+echo "Verilating/Compiling/Instrumenting the DUT ..."
+make \
+  CXX=$CXX \
+  VLT_CXX=$VLT_CXX \
+  CXXFLAGS=$CXXFLAGS \
+  VLT_CXXFLAGS=$VLT_CXXFLAGS \
+  OPT_SLOW=$OPT_SLOW \
+  OPT_FAST=$OPT_FAST \
+  OPT_GLOBAL=$OPT_GLOBAL \
+  TB_DIR=$TB_DIR
+check_exit_code
+echo "Done!"
+
+################################################################################
+################################################################################
+## Done
+################################################################################
+################################################################################
+echo $LINE_SEP
+echo -e "\e[1;32mBUILD & INSTRUMENTATION SUCCESSFUL -- Done!\e[0m"
+exit 0

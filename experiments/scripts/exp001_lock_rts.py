@@ -32,19 +32,39 @@ from run_experiment import run_experiment
 BASE_CONFIG_DICT = {
     "experiment_name": None,
     "circuit": "lock",
-    "testbench": "lock_test.cpp",
-    "fuzzer": "afl",
+    "testbench_dir": "tb/vlt",
+    "fuzzer": "cocotb",
     "run_on_gcp": "1",
     "hdl_gen_params": {},
+    "gcp_params": {
+        "project": "hardware-fuzzing",
+        "data_bucket": "fuzzing-data",
+        "container_restart_policy": "never",
+        "zone": "us-east4-a",
+        "machine_type": "n1-standard-1",
+        "boot_disk_size": "10GB",
+        "scopes": "default,compute-rw,storage-rw",
+        "startup_script_url": "gs://vm-management/gce_vm_startup.sh",
+    },
+    "verilator_params": {
+        "opt_slow": "-O0",
+        "opt_fast": "-Os",
+        "opt_global": "-Os",
+    },
     "fuzzer_params": {
         "num_instances": 1,
         "mode": "s",
         "duration_mins": None,
     },
 }
-NUM_STATES = [2, 4, 8, 16, 32, 64, 128, 256]
-COMP_WIDTHS = [1, 2, 4, 8, 16, 32]
-RUNS = range(0, 1)
+
+NUM_STATES = [2, 4, 8, 16, 32, 64]
+COMP_WIDTHS = [1, 2, 4, 8]
+RUNS = range(0, 20)
+
+# NUM_STATES = [2]
+# COMP_WIDTHS = [2]
+# RUNS = range(0, 1)
 
 # Macros
 LINE_SEP = "*******************************************************************"
@@ -61,7 +81,7 @@ def run_cmd(cmd, error_str):
 
 
 def main():
-  num_experiments = len(NUM_STATES) * len(COMP_WIDTHS)
+  num_experiments = len(NUM_STATES) * len(COMP_WIDTHS) * len(RUNS)
   print(LINE_SEP)
   print(LINE_SEP)
   print(LINE_SEP)
@@ -74,7 +94,7 @@ def main():
       for width in COMP_WIDTHS:
         # craft config dictionary
         cdict = copy.deepcopy(BASE_CONFIG_DICT)
-        experiment_name = "exp001-lock-runtime-%dstates-%dwidth-%d" % \
+        experiment_name = "exp001-lock-runtime-cocotb-%dstates-%dwidth-%d" % \
             (states, width, run)
         cdict["experiment_name"] = experiment_name
         cdict["hdl_gen_params"]["num_lock_states"] = states
