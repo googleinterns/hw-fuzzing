@@ -1,0 +1,96 @@
+#!/bin/bash
+# Copyright 2020 Google LLC
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#      http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+function check_exit_code {
+    if [[ "$?" != "0" ]]; then
+        exit 1
+    fi
+}
+
+################################################################################
+################################################################################
+## Fuzz the CORE
+## TODO: test AFLGo with new infrastructure
+################################################################################
+################################################################################
+if [ ! -d "out" ]; then
+    mkdir -p out
+fi
+if [[ $FUZZER == "afl" || $FUZZER == "aflgo" ]]; then
+    for (( num=1; num <= $NUM_INSTANCES; num++ )); do
+        # Set fuzzer and related options
+        if [[ $FUZZER == "aflgo" ]]; then
+            FUZZER_BIN="$SRC/aflgo/afl-fuzz"
+            FUZZER_OPTIONS="-z exp -c ${TIME_TO_EXPLOITATION_MINS}m"
+        else
+            FUZZER_BIN="$SRC/AFL/afl-fuzz"
+            FUZZER_OPTIONS=""
+        fi
+
+        # Set fuzzer mode (Master or Secondary)
+        if [[ $num -eq 1 && $MODE == "m" ]]; then
+            FUZZER_OPTIONS="$FUZZER_OPTIONS -M"
+        else
+            FUZZER_OPTIONS="$FUZZER_OPTIONS -S"
+        fi
+
+        # Set log filenames
+        STDERR_LOG="logs/${FUZZER}_${num}.err.log"
+        STDOUT_LOG="logs/${FUZZER}_${num}.out.log"
+
+        # Launch fuzzer
+        if [[ -z ${DURATION_MINS-} ]]; then
+            $FUZZER_BIN \
+                -i seeds \
+                -o out \
+                $FUZZER_OPTIONS \
+                ${FUZZER}_${num} \
+                bin/V$CIRCUIT @@ \
+                2> $STDERR_LOG \
+                1> $STDOUT_LOG &
+        else
+            timeout --foreground ${DURATION_MINS}m\
+                $FUZZER_BIN \
+                -i seeds \
+                -o out \
+                $FUZZER_OPTIONS \
+                ${FUZZER}_${num} \
+                bin/V$CIRCUIT @@ \
+                2> $STDERR_LOG \
+                1> $STDOUT_LOG &
+        fi
+        check_exit_code
+
+        # Set process ID of recently launched fuzzer
+        FUZZER_PID=$!
+        echo "Launched fuzzer instance $num (PID: $FUZZER_PID)"
+
+        # Trap SIGINT to kill all fuzzer processes on ctrl-c
+        trap "kill $FUZZER_PID" SIGINT
+    done
+else
+    echo -e "\e[1;31mAborting ... unsupported fuzzer: $FUZZER.\e[0m"
+    exit 1
+fi
+
+# Wait for all fuzzers to complete
+wait
+
+# Change permission on all files to allow access outside of container
+find out -type d -exec chmod 777 {} \;
+find out -type f -exec chmod 644 {} \;
+
+echo -e "\e[1;32mFUZZING SUCCESSFUL -- Done!\e[0m"
+exit 0
