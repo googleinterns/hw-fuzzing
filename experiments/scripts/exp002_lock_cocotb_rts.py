@@ -33,14 +33,14 @@ BASE_CONFIG_DICT = {
     "experiment_name": None,
     "circuit": "lock",
     "testbench_dir": "tb/vlt",
-    "fuzzer": "afl-term-on-crash",
+    "fuzzer": "cocotb",
     "run_on_gcp": "1",
     "hdl_gen_params": {},
     "gcp_params": {
         "project": "hardware-fuzzing",
         "data_bucket": "fuzzing-data",
         "container_restart_policy": "never",
-        "zone": "us-east4-a",
+        "zone": "us-east1-b",
         "machine_type": "n1-standard-2",
         "boot_disk_size": "10GB",
         "scopes": "default,compute-rw,storage-rw",
@@ -52,19 +52,16 @@ BASE_CONFIG_DICT = {
         "opt_global": "-O3",
     },
     "fuzzer_params": {
-        "num_instances": 1,
-        "mode": "s",
-        "duration_mins": None,
     },
 }
 
-# NUM_STATES = [2, 4, 8, 16, 32, 64]
-# COMP_WIDTHS = [1, 2, 4, 8]
-# RUNS = range(0, 20)
+NUM_STATES = [2, 4, 8, 16, 32, 64]
+COMP_WIDTHS = [1, 2, 4, 8]
+RUNS = range(0, 20)
 
-NUM_STATES = [16]
-COMP_WIDTHS = [1]
-RUNS = [14]
+# NUM_STATES = [2]
+# COMP_WIDTHS = [2]
+# RUNS = range(0, 1)
 
 # Macros
 LINE_SEP = "*******************************************************************"
@@ -94,7 +91,7 @@ def main():
       for width in COMP_WIDTHS:
         # craft config dictionary
         cdict = copy.deepcopy(BASE_CONFIG_DICT)
-        experiment_name = "exp003-lock-runtime-afl-%dstates-%dwidth-%d" % \
+        experiment_name = "exp004-lock-runtime-cocotb-%dstates-%dwidth-%d" % \
             (states, width, run)
         cdict["experiment_name"] = experiment_name
         cdict["hdl_gen_params"]["num_lock_states"] = states

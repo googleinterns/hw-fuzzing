@@ -42,14 +42,15 @@ def color_str_yellow(s):
 class Config():
   """Loads and stores experiment configuration data."""
 
-  def __init__(self, config_filename):
+  def __init__(self, args):
     """Constructs experiment configuration object from an HJSON file."""
-    self.config_filename = config_filename
+    self.args = args
+    self.config_filename = args.config_filename
 
     # Load experiment configurations
     print(LINE_SEP)
     print("Loading experiment configurations ...")
-    with open(config_filename, "r") as hjson_file:
+    with open(self.config_filename, "r") as hjson_file:
       # Load HJSON file
       cdict = hjson.load(hjson_file)
       # Parse config dict
@@ -65,6 +66,10 @@ class Config():
 
     # Initialize experiment data paths
     self.root_path = os.getenv("HW_FUZZING")
+
+    # Initialize docker image name:
+    self.docker_image = "gcr.io/%s/%s-%s" % \
+        (self.gcp_params["project"], self.fuzzer, self.circuit)
 
     # Validate and print configurations
     self.validate_configs()

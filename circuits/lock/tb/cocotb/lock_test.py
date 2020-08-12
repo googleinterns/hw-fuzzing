@@ -13,9 +13,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import random
 import os
-
+import random
 import cocotb
 from cocotb.clock import Clock
 from cocotb.triggers import FallingEdge
@@ -31,7 +30,7 @@ async def reset_dut(reset_n, duration_ns):
 
 
 @cocotb.test()
-async def lock_test(dut, data_in=None):
+async def lock_test(dut):
   """Randomly generates input code sequences to try to unlock the lock."""
 
   # Create and start the clock

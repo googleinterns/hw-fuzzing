@@ -4,10 +4,10 @@
   circuit: lock
   testbench_dir: tb/vlt
   // Fuzzer Options: afl, afl-term-on-crash, cocotb
-  fuzzer: cocotb
+  /*fuzzer: cocotb*/
   /*fuzzer: afl*/
-  /*fuzzer: afl-term-on-crash*/
-  run_on_gcp: 0
+  fuzzer: afl-term-on-crash
+  run_on_gcp: 1
 
   // GCP Parameters (if any)
   gcp_params: {
@@ -15,7 +15,7 @@
     data_bucket: fuzzing-data
     container_restart_policy: never
     zone: us-east4-a
-    machine_type: n1-standard-1
+    machine_type: n1-standard-2
     boot_disk_size: 10GB
     scopes: default,compute-rw,storage-rw
     startup_script_url: "gs://vm-management/gce_vm_startup.sh"
@@ -23,9 +23,9 @@
 
   // Verilator Parameters
   verilator_params: {
-    opt_slow: -O0
-    opt_fast: -Os
-    opt_global: -Os
+    opt_slow: -O3
+    opt_fast: -O3
+    opt_global: -O3
   }
 
   // HDL Generation Parameters (if any)

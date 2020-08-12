@@ -1,54 +1,39 @@
+// Copyright 2020 Google LLC
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//      http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
 module lock(
-    input wire reset_n,
-    input wire clk,
+  input wire reset_n,
+  input wire clk,
+  input wire [7:0] code,
+  output reg [1:0] state,
+  output wire unlocked
+);
 
-    input wire [3:0] code,
-    output wire [1:0] state,
-    output wire unlocked
-    );
+assign unlocked = state == 2'b11 ? 1'b1 : 1'b0;
 
-    reg [1:0] __reg_state_0;
-    wire [1:0] __reg_state_0_next;
-
-    always @(posedge clk, negedge reset_n) begin
-        if (~reset_n) begin
-            __reg_state_0 <= 2'h0;
-        end
-        else begin
-            __reg_state_0 <= __reg_state_0_next;
-        end
-    end
-
-    wire __temp_0;
-    wire __temp_1;
-    wire __temp_2;
-    wire __temp_3;
-    wire __temp_4;
-    wire __temp_5;
-    wire __temp_6;
-    wire __temp_7;
-    wire __temp_8;
-    wire __temp_9;
-    wire [1:0] __temp_10;
-    wire [1:0] __temp_11;
-    wire [1:0] __temp_12;
-
-    assign state = __reg_state_0;
-    assign __temp_0 = __reg_state_0 == 2'h3;
-    assign unlocked = __temp_0;
-    assign __temp_1 = __reg_state_0 == 2'h2;
-    assign __temp_2 = code == 4'h3;
-    assign __temp_3 = __temp_1 & __temp_2;
-    assign __temp_4 = __reg_state_0 == 2'h1;
-    assign __temp_5 = code == 4'h4;
-    assign __temp_6 = __temp_4 & __temp_5;
-    assign __temp_7 = __reg_state_0 == 2'h0;
-    assign __temp_8 = code == 4'h6;
-    assign __temp_9 = __temp_7 & __temp_8;
-    assign __temp_10 = __temp_9 ? 2'h1 : __reg_state_0;
-    assign __temp_11 = __temp_6 ? 2'h2 : __temp_10;
-    assign __temp_12 = __temp_3 ? 2'h3 : __temp_11;
-    assign __reg_state_0_next = __temp_12;
+always @(posedge clk) begin
+  if (~reset_n) begin
+    state <= 2'b00;
+  end
+  else begin
+    case(state)
+      2'b00   : state <= code == 8'haa ? 2'b01 : 2'b00;
+      2'b01   : state <= code == 8'hbb ? 2'b10 : 2'b01;
+      2'b10   : state <= code == 8'hcc ? 2'b11 : 2'b10;
+      default : state <= state;
+    endcase
+  end
+end
 
 endmodule
-

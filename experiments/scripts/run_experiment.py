@@ -14,6 +14,7 @@
 # limitations under the License.
 
 # Standard modules
+import argparse
 import glob
 import os
 import shutil
@@ -30,9 +31,8 @@ from config import color_str_yellow
 from config import Config
 
 # Macros
-NUM_ARGS = 1
 LINE_SEP = "==================================================================="
-MAX_NUM_VM_INSTANCES = 50
+MAX_NUM_VM_INSTANCES = 36  # this is max default quota for us-east4-a zone
 VM_LAUNCH_WAIT_TIME_S = 30
 
 
@@ -59,14 +59,24 @@ def check_for_data_locally(config):
   exp_data_path = "%s/experiments/data/%s" % \
       (config.root_path, config.experiment_name)
   if glob.glob(exp_data_path):
-    ovw = input(color_str_yellow( \
-        "WARNING: experiment data exists. Overwrite? [Yn]"))
-    if ovw in {"yes", "y", "Y", "YES", "Yes", ""}:
+    if config.args.yes:
       shutil.rmtree(exp_data_path)
     else:
-      abort_str = "ABORT: re-run with different experiment name."
-      print(color_str_red(abort_str))
-      sys.exit(1)
+      ovw = input(color_str_yellow( \
+          "WARNING: experiment data exists. Overwrite? [Yn]"))
+      if ovw in {"yes", "y", "Y", "YES", "Yes", ""}:
+        shutil.rmtree(exp_data_path)
+      else:
+        abort_str = "ABORT: re-run with different experiment name."
+        print(color_str_red(abort_str))
+        sys.exit(1)
+
+
+def delete_data_in_gcs(config):
+  sub_cmd = ["gsutil", "rm", "gs://%s/%s/**" % \
+      (config.gcp_params["data_bucket"], config.experiment_name)]
+  error_str = "ERROR: deleting existing data. Terminating Experiment!"
+  run_cmd(sub_cmd, error_str)
 
 
 def check_for_data_in_gcs(config):
@@ -77,17 +87,17 @@ def check_for_data_in_gcs(config):
     subprocess.check_call(cmd)
   except subprocess.CalledProcessError:
     return
-  ovw = input(color_str_yellow( \
-      "WARNING: experiment data exists in GCS. Overwrite? [Yn]"))
-  if ovw in {"yes", "y", "Y", "YES", "Yes", ""}:
-    sub_cmd = ["gsutil", "rm", "gs://%s/%s/**" % \
-        (config.gcp_params["data_bucket"], config.experiment_name)]
-    error_str = "ERROR: deleting existing data. Terminating Experiment!"
-    run_cmd(sub_cmd, error_str)
+  if config.args.yes:
+    delete_data_in_gcs(config)
   else:
-    abort_str = "ABORT: re-run with different experiment name."
-    print(color_str_red(abort_str))
-    sys.exit(1)
+    ovw = input(color_str_yellow( \
+        "WARNING: experiment data exists in GCS. Overwrite? [Yn]"))
+    if ovw in {"yes", "y", "Y", "YES", "Yes", ""}:
+      delete_data_in_gcs(config)
+    else:
+      abort_str = "ABORT: re-run with different experiment name."
+      print(color_str_red(abort_str))
+      sys.exit(1)
 
 
 def build_docker_image(config):
@@ -97,7 +107,7 @@ def build_docker_image(config):
   print(LINE_SEP)
   cmd = ["docker", "build", \
       "--build-arg", "FUZZER=%s" % config.fuzzer, \
-      "-t", "gcr.io/%s/%s" % (config.gcp_params["project"], config.circuit), \
+      "-t", config.docker_image, \
       "%s/circuits/%s" % (config.root_path, config.circuit)]
   error_str = "ERROR: image build FAILED. Terminating experiment!"
   run_cmd(cmd, error_str)
@@ -157,23 +167,48 @@ def run_docker_container_locally(config, exp_data_path):
   cmd.extend(["-v", "%s/out:/src/circuits/%s/out" % \
       (exp_data_path, config.circuit)])
   # Set target Docker image and run
-  cmd.extend(["-t", "gcr.io/%s/%s" % \
-      (config.gcp_params["project"], config.circuit)])
+  cmd.extend(["-t", config.docker_image])
   # cmd.append("bash")
   error_str = "ERROR: container run FAILED. Terminating experiment!"
   run_cmd(cmd, error_str)
   print(color_str_green("CONTAINER RUN SUCCESSFUL -- Done!"))
 
 
-def push_docker_container_to_gcr(config):
+def check_if_docker_image_exists_in_gcr(config):
+  """Checks if docker image exists in GCR already."""
+  print(LINE_SEP)
+  print("Checking if Docker image exists in GCR already ...")
+  print(LINE_SEP)
+  cmd = ["gcloud", "container", "images", "list", \
+      "--repository=gcr.io/%s" % config.gcp_params["project"]]
+  proc = subprocess.Popen(\
+      cmd, \
+      stdin=subprocess.PIPE, \
+      stdout=subprocess.PIPE, \
+      stderr=subprocess.STDOUT, \
+      close_fds=True)
+  line = proc.stdout.readline()  # first line is a header
+  while True:
+    line = proc.stdout.readline().decode("utf-8").rstrip()
+    if not line:
+      break
+    if line == config.docker_image:
+      return True
+  return False
+
+
+def push_docker_image_to_gcr(config):
+  """Pushes docker image to GCR if it does not exist there yet."""
   print(LINE_SEP)
   print("Pushing Docker image to GCR ...")
   print(LINE_SEP)
-  cmd = ["docker", "push", "gcr.io/%s/%s" % \
-      (config.gcp_params["project"], config.circuit)]
-  error_str = "ERROR: pushing image to GCR FAILED. Terminating experiment!"
-  run_cmd(cmd, error_str)
-  print(color_str_green("IMAGE PUSH SUCCESSFUL -- Done!"))
+  if config.args.update or not check_if_docker_image_exists_in_gcr(config):
+    cmd = ["docker", "push", config.docker_image]
+    error_str = "ERROR: pushing image to GCR FAILED. Terminating experiment!"
+    run_cmd(cmd, error_str)
+    print(color_str_green("IMAGE PUSH SUCCESSFUL -- Done!"))
+  else:
+    print(color_str_yellow("IMAGE ALREADY EXISTS IN GCR -- Done!"))
 
 
 def push_vm_management_scripts_to_gcs(config):
@@ -187,12 +222,13 @@ def push_vm_management_scripts_to_gcs(config):
   print(color_str_green("COPY SUCCESSFUL -- Done!"))
 
 
-def check_num_active_vm_instances():
+def check_num_active_vm_instances(config):
   """Checks number of active VM instances on GCE as a $$$ safety measure."""
   print(LINE_SEP)
   print("Checking number of active VMs on GCE ...")
   print(LINE_SEP)
-  cmd = ["gcloud", "compute", "instances", "list"]
+  cmd = ["gcloud", "compute", "instances", "list", \
+      "--zones=%s" % config.gcp_params["zone"]]
   proc = subprocess.Popen(\
       cmd, \
       stdin=subprocess.PIPE, \
@@ -221,7 +257,7 @@ def run_docker_container_on_gce(config):
   launch_vm = False
   while not launch_vm:
     # if above under $$$ threshold, create VM instance, else wait
-    if check_num_active_vm_instances() < MAX_NUM_VM_INSTANCES:
+    if check_num_active_vm_instances(config) < MAX_NUM_VM_INSTANCES:
       launch_vm = True
     else:
       time.sleep(VM_LAUNCH_WAIT_TIME_S)  # wait 10 seconds before trying again
@@ -231,9 +267,8 @@ def run_docker_container_on_gce(config):
   print("Launching GCE VM to fuzz %s ..." % config.circuit)
   print(LINE_SEP)
   cmd = ["gcloud", "compute", "--project=%s" % config.gcp_params["project"], \
-      "instances", "create-with-container", \
-      config.experiment_name, "--container-image", \
-      "gcr.io/%s/%s" % (config.gcp_params["project"], config.circuit),\
+      "instances", "create-with-container", config.experiment_name, \
+      "--container-image", config.docker_image, \
       "--container-restart-policy", \
       config.gcp_params["container_restart_policy"], \
       "--zone=%s" % config.gcp_params["zone"], \
@@ -260,16 +295,22 @@ def run_docker_container_on_gce(config):
 
 
 # Main entry point
-def run_experiment(args):
+def run_experiment(argv):
   """Runs fuzzing experiment with provided configuration filename."""
 
   # Parse cmd args
-  if len(args) != NUM_ARGS:
-    print("Usage: [python3] ./run_experiment.py <config filename>")
-    sys.exit(1)
+  module_description = "Hardware Fuzzing Pipeline"
+  parser = argparse.ArgumentParser(description=module_description)
+  parser.add_argument("-y", "--yes", action="store_true", \
+      help="Yes to all prompts.")
+  parser.add_argument("-u", "--update", action="store_true", \
+      help="Update Docker image in GCR.")
+  parser.add_argument("config_filename", metavar="config.hjson", \
+      help="Configuration file in the HJSON format.")
+  args = parser.parse_args(argv)
 
   # Load experiment configurations
-  config = Config(args[0])
+  config = Config(args)
 
   # Check if experiment data already exists
   if config.run_on_gcp == 0:
@@ -285,10 +326,10 @@ def run_experiment(args):
     exp_data_path = create_local_experiment_data_dir(config)
     run_docker_container_locally(config, exp_data_path)
   else:
-    push_docker_container_to_gcr(config)
+    push_docker_image_to_gcr(config)
     push_vm_management_scripts_to_gcs(config)
     run_docker_container_on_gce(config)
 
 if __name__ == "__main__":
   signal.signal(signal.SIGINT, sigint_handler)
-  run_experiment(sys.argv[1:])
+  run_experiment(sys.argv)

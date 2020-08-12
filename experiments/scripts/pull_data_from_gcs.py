@@ -15,11 +15,8 @@
 
 import glob
 import os
-import shutil
-from subprocess import Popen, PIPE, STDOUT
+import subprocess
 import sys
-
-# from google.cloud import storage
 
 from config import color_str_red
 from config import color_str_yellow
@@ -31,7 +28,11 @@ GCS_BUCKET = "fuzzing-data"
 def pull_data_from_gcs():
   """Pulls down fuzzer data from GCS to local machine."""
   ls_cmd = ["gsutil", "ls", "gs://%s" % GCS_BUCKET]
-  proc = Popen(ls_cmd, stdin=PIPE, stdout=PIPE, stderr=STDOUT, close_fds=True)
+  proc = subprocess.Popen(ls_cmd, \
+      stdin=subprocess.PIPE, \
+      stdout=subprocess.PIPE, \
+      stderr=subprocess.STDOUT, \
+      close_fds=True)
   while True:
     line = proc.stdout.readline()
     if not line:
@@ -39,24 +40,29 @@ def pull_data_from_gcs():
     src = line.decode("utf-8").rstrip("/\n")
     dst = os.path.join(os.getenv("HW_FUZZING"), "experiments", "data")
     full_dst = os.path.join(dst, src.lstrip("gs://fuzzing-data"))
-    delete_existing_data_locally(full_dst)
-    cp_cmd = ["gsutil", "cp", "-r", src, dst]
-    print("Pulling down fuzzing data from %s ..." % src)
-    p = Popen(cp_cmd, stdin=PIPE, stdout=PIPE, stderr=STDOUT, close_fds=True)
-    if p.returncode:
-      print(p.stdout.read())
-      line = p.stdout.readline().decode("utf-8")
-      while line:
-        line = p.stdout.readline()
-        print(line)
-      print(color_str_red("ERROR: GCS data copy FAILED."))
-      sys.exit(1)
+    if not data_exists_locally(full_dst):
+      cp_cmd = ["gsutil", "cp", "-r", src, dst]
+      print("Pulling down fuzzing data from %s ..." % src)
+      p = subprocess.Popen(cp_cmd, \
+          stdin=subprocess.PIPE, \
+          stdout=subprocess.PIPE, \
+          stderr=subprocess.STDOUT, \
+          close_fds=True)
+      if p.returncode:
+        print(p.stdout.read())
+        line = p.stdout.readline().decode("utf-8")
+        while line:
+          line = p.stdout.readline()
+          print(line)
+        print(color_str_red("ERROR: GCS data copy FAILED."))
+        sys.exit(1)
 
 
-def delete_existing_data_locally(exp_data_path):
-  """Deletes local experiment data already exists, so it can be refreshed."""
+def data_exists_locally(exp_data_path):
+  """Checks if local experiment data already exists."""
   if glob.glob(exp_data_path):
-    shutil.rmtree(exp_data_path)
+    return True
+  return False
 
 if __name__ == "__main__":
   pull_data_from_gcs()
