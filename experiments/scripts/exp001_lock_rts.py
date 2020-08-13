@@ -62,9 +62,9 @@ BASE_CONFIG_DICT = {
 # COMP_WIDTHS = [1, 2, 4, 8]
 # RUNS = range(0, 20)
 
-NUM_STATES = [16]
-COMP_WIDTHS = [1]
-RUNS = [14]
+NUM_STATES = [32]
+COMP_WIDTHS = [4]
+RUNS = [10]
 
 # Macros
 LINE_SEP = "*******************************************************************"
@@ -108,7 +108,7 @@ def main():
           hjson.dump(cdict, fp)
 
         # launch experiment
-        run_experiment(["-y", hjson_file_path])
+        run_experiment([hjson_file_path])
 
         # cleanup config file
         os.remove(hjson_file_path)

@@ -105,7 +105,7 @@ def main():
           hjson.dump(cdict, fp)
 
         # launch experiment
-        run_experiment(["-y", hjson_file_path])
+        run_experiment([hjson_file_path])
 
         # cleanup config file
         os.remove(hjson_file_path)

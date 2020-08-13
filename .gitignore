@@ -34,6 +34,7 @@ Cargo.lock
 
 # Plots
 *.pdf
+!experiments/plots/pdf/*.pdf
 
 # Allow tracking experiment config files
 !circuits/double_counter/configs/*.json
