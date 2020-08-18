@@ -12,13 +12,13 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "verilator_test.h"
+#include "verilator_tb.h"
 
 #include <iostream>
 
 // Constructor: initialize Verilator, and open a VCD trace and
 // the testbench input file
-VerilatorTest::VerilatorTest(uint32_t port_size, int argc, char** argv)
+VerilatorTb::VerilatorTb(uint32_t port_size, int argc, char** argv)
     : test_num_(0),
       input_file_name_(argv[1]),
       input_file_stream_(NULL),
@@ -29,7 +29,7 @@ VerilatorTest::VerilatorTest(uint32_t port_size, int argc, char** argv)
 
 // Destructor: close testbench input and VCD files, report coverage,
 // and destroy model
-VerilatorTest::~VerilatorTest() {
+VerilatorTb::~VerilatorTb() {
     // Close testbench input file stream
     CloseTestFile();
 
@@ -41,12 +41,12 @@ VerilatorTest::~VerilatorTest() {
 }
 
 // test_num_ accessor
-uint32_t VerilatorTest::get_test_num() {
+uint32_t VerilatorTb::get_test_num() {
     return test_num_;
 }
 
 // Initialize Verilator settings
-void VerilatorTest::InitializeVerilator(int argc, char** argv) {
+void VerilatorTb::InitializeVerilator(int argc, char** argv) {
     // Set debug level, 0 is off, 9 is highest presently used
     // May be overridden by commandArgs
     Verilated::debug(0);
@@ -61,7 +61,7 @@ void VerilatorTest::InitializeVerilator(int argc, char** argv) {
 }
 
 // Open input file stream for reading
-void VerilatorTest::OpenTestFile() {
+void VerilatorTb::OpenTestFile() {
     input_file_stream_ = new std::ifstream(input_file_name_, std::ios::binary);
     if (!*input_file_stream_) {
         std::cerr << "ERROR: cannot open testbench input file: ";
@@ -71,7 +71,7 @@ void VerilatorTest::OpenTestFile() {
 }
 
 // Read num_bytes from input file stream into buffer
-bool VerilatorTest::ReadTest(uint8_t* buffer) {
+bool VerilatorTb::ReadTest(uint8_t* buffer) {
     if (!input_file_stream_->eof()) {
         // Read file as a byte stream
         input_file_stream_->read((char*) buffer, kPortSize_);
@@ -86,7 +86,7 @@ bool VerilatorTest::ReadTest(uint8_t* buffer) {
 }
 
 // Close input file stream (if it's open)
-void VerilatorTest::CloseTestFile() {
+void VerilatorTb::CloseTestFile() {
     if (input_file_stream_->is_open()) {
         input_file_stream_->close();
         delete input_file_stream_;

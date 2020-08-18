@@ -12,20 +12,20 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef LOCK_TEST_H_
-#define LOCK_TEST_H_
+#ifndef LOCK_TB_H_
+#define LOCK_TB_H_
 
-#include "verilator_test.h"
+#include "verilator_tb.h"
 #include "Vlock.h"
 
 // DUT parameters
 #define INPUT_PORT_SIZE_BYTES 1
 #define NUM_RESET_PERIODS 1
 
-class LockTest {
+class LockTb {
  public:
-    explicit LockTest(int argc, char** argv);
-    ~LockTest();
+    explicit LockTb(int argc, char** argv);
+    ~LockTb();
 
     // DUT drivers
     void ResetDUT();
@@ -40,7 +40,7 @@ class LockTest {
 
     // Verilator SW model of the DUT
     Vlock dut_;
-    VerilatorTest test_;
+    VerilatorTb test_;
 
     // Correct "ground truth" state
     // N/A

@@ -30,7 +30,7 @@ async def reset_dut(reset_n, duration_ns):
 
 
 @cocotb.test()
-async def lock_test(dut):
+async def lock_tb(dut):
   """Randomly generates input code sequences to try to unlock the lock."""
 
   # Create and start the clock

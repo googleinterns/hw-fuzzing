@@ -12,13 +12,13 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "lock_test.h"
+#include "lock_tb.h"
 
 #include <bitset>
 #include <iostream>
 
 // Constructor
-LockTest::LockTest(int argc, char** argv)
+LockTb::LockTb(int argc, char** argv)
     : num_checks_(0),
       main_time_(0),
       dut_(),
@@ -30,7 +30,6 @@ LockTest::LockTest(int argc, char** argv)
 #endif
 {
 #if VM_TRACE
-    // Initialize VCD tracing
     InitializeTracing(argv[1]);
 #endif
 
@@ -39,7 +38,7 @@ LockTest::LockTest(int argc, char** argv)
 }
 
 // Destructor
-LockTest::~LockTest() {
+LockTb::~LockTb() {
 #if VM_TRACE
     // Close VCD trace if opened
     if (tracing_file_pointer_) {
@@ -52,7 +51,7 @@ LockTest::~LockTest() {
 
 #if VM_TRACE
 // Enable Verilator VCD tracing
-void LockTest::InitializeTracing(std::string fname) {
+void LockTb::InitializeTracing(std::string fname) {
     // If verilator was invoked with --trace argument enable VCD tracing
     std::cout << "Tracing enabled." << std::endl;
 
@@ -75,7 +74,7 @@ void LockTest::InitializeTracing(std::string fname) {
 #endif
 
 // Initialize DUT inputs
-void LockTest::InitializeDUT() {
+void LockTb::InitializeDUT() {
     dut_.clk = 0;
     dut_.reset_n = 0;
     dut_.code = 0;
@@ -92,7 +91,7 @@ void LockTest::InitializeDUT() {
 // Toggle clock for num_toggles half clock periods.
 // Model is evaluated AFTER clock state is toggled,
 // and regardless of current clock state.
-void LockTest::ToggleClock(uint32_t num_toggles) {
+void LockTb::ToggleClock(uint32_t num_toggles) {
     for (uint32_t i = 0; i < num_toggles; i++) {
         // Toggle main clock
         if (dut_.clk) {
@@ -117,7 +116,7 @@ void LockTest::ToggleClock(uint32_t num_toggles) {
 }
 
 // Reset the DUT
-void LockTest::ResetDUT() {
+void LockTb::ResetDUT() {
     // Print reset status
     std::cout << "Resetting the DUT (time: " << unsigned(main_time_);
     std::cout << ") ..." << std::endl;
@@ -137,7 +136,7 @@ void LockTest::ResetDUT() {
 }
 
 // Simulate the DUT with testbench input file
-void LockTest::SimulateDUT() {
+void LockTb::SimulateDUT() {
     // Create buffer for test data
     uint8_t test_input[INPUT_PORT_SIZE_BYTES] = {0};
 
@@ -196,7 +195,7 @@ int main(int argc, char** argv, char** env) {
     }
 
     // Instantiate testbench
-    LockTest tb(argc, argv);
+    LockTb tb(argc, argv);
 
     // Reset the DUT
     tb.ResetDUT();

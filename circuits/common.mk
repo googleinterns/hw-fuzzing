@@ -69,18 +69,18 @@ $(MODEL_DIR)/V%.cpp: $(HDL_DIR)/%.v
 .PHONY: clean cocotb sim
 
 cocotb: $(HDL)
-	make CXX=clang++ LINK=clang++ -C tb/cocotb
+	make -C $(TB_DIR)
 
 sim: $(BIN_DIR)/$(VM_PREFIX)
 	./$(BIN_DIR)/$(VM_PREFIX) seeds/$(SEED)
 
 clean:
-	rm -rf $(BIN_DIR)
-	rm -rf $(BUILD_DIR)
-	rm -rf $(MODEL_DIR)
-	rm -f *.vcd
-	rm -rf __pycache__
-	rm -rf tb/cocotb/sim_build
-	rm -rf tb/cocotb/__pycache__
-	rm -f tb/cocotb/results.xml
-	rm -f tb/cocotb/coverage.dat
+	@rm -rf $(BIN_DIR)
+	@rm -rf $(BUILD_DIR)
+	@rm -rf $(MODEL_DIR)
+	@rm -f *.vcd
+	@rm -rf __pycache__
+	@rm -rf tb/cocotb/$(BUILD_DIR)
+	@rm -rf tb/cocotb/__pycache__
+	@rm -f tb/cocotb/results.xml
+	@rm -f tb/cocotb/coverage.dat

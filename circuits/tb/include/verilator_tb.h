@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef VERILATOR_TEST_H_
-#define VERILATOR_TEST_H_
+#ifndef VERILATOR_TB_H_
+#define VERILATOR_TB_H_
 
 #include "verilated.h"
 #if VM_TRACE
@@ -23,10 +23,10 @@
 #include <fstream>
 #include <string>
 
-class VerilatorTest {
+class VerilatorTb {
  public:
-     explicit VerilatorTest(uint32_t port_size, int argc, char** argv);
-    ~VerilatorTest();
+     explicit VerilatorTb(uint32_t port_size, int argc, char** argv);
+    ~VerilatorTb();
 
     // Test input file handlers
     bool ReadTest(uint8_t* buffer);
