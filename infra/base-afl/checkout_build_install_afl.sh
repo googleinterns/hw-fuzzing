@@ -19,15 +19,15 @@ apt-get install -y $AFL_INSTALL_PACKAGES
 
 # Clone AFL
 echo "Checking out AFL ..."
-cd $SRC && git clone --depth 1 https://github.com/google/AFL.git
+cd $SRC && git clone --depth 1 https://github.com/timtrippel/AFL.git
 
 # Build AFL from source
 echo "Compiling AFL ..."
 export CC=clang
 export CXX=clang++
 export CCC=clang++
-cd AFL && make clean all
-cd llvm_mode && make clean all
+cd AFL && make all
+cd llvm_mode && make all
 echo " done."
 
 # Remove installation dependencies to shrink image size\

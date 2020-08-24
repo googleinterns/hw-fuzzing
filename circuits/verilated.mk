@@ -10,9 +10,9 @@
 ######################################################################
 
 PERL = /usr/bin/perl
-CXX ?= g++
-FUZZER_CXX ?= g++
-LINK ?= g++
+CXX = g++
+VLT_CXX = $(CXX)
+LINK = $(CXX)
 AR = ar
 RANLIB = ranlib
 OBJCACHE ?= 
@@ -25,7 +25,9 @@ CFG_CXXFLAGS_STD_NEWEST = -std=gnu++14
 # Select oldest language (for Verilator internal testing only)
 CFG_CXXFLAGS_STD_OLDEST = -std=c++03
 # Compiler flags to use to turn off unused and generated code warnings, such as -Wno-div-by-zero
-CFG_CXXFLAGS_NO_UNUSED =  -faligned-new -fcf-protection=none -Wno-bool-operation -Wno-sign-compare -Wno-uninitialized -Wno-unused-but-set-variable -Wno-unused-parameter -Wno-unused-variable -Wno-shadow
+# HW-FUZZING: -faligned-new does not work with C++11 std which cocotb uses
+#CFG_CXXFLAGS_NO_UNUSED =  -faligned-new -fcf-protection=none -Wno-bool-operation -Wno-sign-compare -Wno-uninitialized -Wno-unused-but-set-variable -Wno-unused-parameter -Wno-unused-variable -Wno-shadow
+CFG_CXXFLAGS_NO_UNUSED = -fcf-protection=none -Wno-bool-operation -Wno-sign-compare -Wno-uninitialized -Wno-unused-but-set-variable -Wno-unused-parameter -Wno-unused-variable -Wno-shadow
 # Compiler flags that turn on extra warnings
 CFG_CXXFLAGS_WEXTRA =  -Wextra -Wfloat-conversion -Wlogical-op
 # Linker libraries for multithreading
@@ -92,15 +94,15 @@ LDLIBS   += $(VM_USER_LDLIBS)
 
 # Optimization flags for non performance-critical/rarely executed code.
 # No optimization by default, which improves compilation speed.
-OPT_SLOW ?=
+OPT_SLOW =
 # Optimization for performance critical/hot code. Most time is spent in these
 # routines. Optimizing by default for improved execution speed.
-OPT_FAST ?= -Os
+OPT_FAST = -Os
 # Optimization applied to the common run-time library used by verilated models.
 # For compatibility this is called OPT_GLOBAL even though it only applies to
 # files in the run-time library. Normally there should be no need for the user
 # to change this as the library is small, but can have significant speed impact.
-OPT_GLOBAL ?= -Os
+OPT_GLOBAL = -Os
 
 #######################################################################
 ##### SystemC builds
@@ -201,9 +203,25 @@ else
   VK_OBJS += $(VK_FAST_OBJS) $(VK_SLOW_OBJS)
 endif
 
-$(VM_PREFIX)__ALL.a: $(VK_OBJS)
-	$(AR) -cr $@ $^
-	$(RANLIB) $@
+# When archiving just objects (.o), single $(AR) run is enough.
+# When merging objects (.o) and archives (.a), the following step is taken.
+#   1. create a temporary archive ($*__tmp.a) which contains only .o
+#   2. create a thin archive that refers all archives including $*__tmp.a
+#   3. convert the thin archive to the ordinal archive
+%.a:
+	if test $(words $(filter %.a,$^)) -eq 0; then \
+		$(AR) -cr $@ $^; \
+		$(RANLIB) $@; \
+	else \
+		$(RM) -f $*__tmp.a; \
+		$(AR) -cr $*__tmp.a  $(filter-out %.a,$^); \
+		$(AR) -cqT $@  $*__tmp.a $(filter %.a,$^); \
+		printf "create $@\n addlib $@\n save\\n end" | $(AR) -M; \
+		$(RM) -f $*__tmp.a; \
+	fi
+
+$(VM_PREFIX)__ALL.a: $(VK_OBJS) $(VM_HIER_LIBS)
+
 
 ######################################################################
 ### Compile rules
@@ -218,7 +236,8 @@ $(VK_SLOW_OBJS): %.o: %.cpp
 	$(OBJCACHE) $(CXX) $(CXXFLAGS) $(CPPFLAGS) $(OPT_SLOW) -c -o $@ $<
 
 $(VK_GLOBAL_OBJS): %.o: %.cpp
-	$(OBJCACHE) $(FUZZER_CXX) $(FUZZER_CXX_FLAGS) $(CXXFLAGS) $(CPPFLAGS) $(OPT_GLOBAL) -c -o $@ $<
+	$(OBJCACHE) $(VLT_CXX) $(VLT_CXXFLAGS) $(CPPFLAGS) $(OPT_GLOBAL) -c -o $@ $<
+	#$(OBJCACHE) $(CXX) $(CXXFLAGS) $(CPPFLAGS) $(OPT_GLOBAL) -c -o $@ $<
 endif
 
 #Default rule embedded in make:

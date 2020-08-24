@@ -16,7 +16,7 @@
 # Directories
 ################################################################################
 HDL_DIR                   ?= hdl
-TB_DIR                    := tb/vlt
+TB_DIR                    := tb/$(TB_TYPE)/$(TB)
 export TB_SRCS_DIR        := $(TB_DIR)/src
 export TB_INCS_DIR        := $(TB_DIR)/include
 export SHARED_TB_SRCS_DIR := ../tb/src
@@ -55,10 +55,10 @@ endif
 ################################################################################
 # Compilation rules
 ################################################################################
-$(BIN_DIR)/$(VM_PREFIX): $(MODEL_SRCS) $(TB_SRCS) $(SHARED_TB_SRCS)
+$(BIN_DIR)/$(CIRCUIT): $(MODEL_SRCS) $(TB_SRCS) $(SHARED_TB_SRCS)
 	@mkdir -p $(BUILD_DIR); \
 	mkdir -p $(BIN_DIR); \
-	make -f ../exe.mk
+	$(MAKE) -f ../exe.mk
 
 $(MODEL_DIR)/V%.cpp: $(HDL_DIR)/%.v
 	$(VERILATOR_ROOT)/bin/verilator $(VFLAGS) $(HDL)
@@ -66,13 +66,16 @@ $(MODEL_DIR)/V%.cpp: $(HDL_DIR)/%.v
 ################################################################################
 # Utility targets
 ################################################################################
-.PHONY: clean cocotb sim
+.PHONY: clean cocotb-build cocotb-sim sim
 
-cocotb: $(HDL)
-	make -C $(TB_DIR)
+cocotb-build: $(HDL)
+	$(MAKE) -C $(TB_DIR) $(BUILD_DIR)/$(CIRCUIT)
 
-sim: $(BIN_DIR)/$(VM_PREFIX)
-	./$(BIN_DIR)/$(VM_PREFIX) seeds/$(SEED)
+cocotb-sim: $(HDL)
+	$(MAKE) -C $(TB_DIR) results.xml
+
+sim: $(BIN_DIR)/$(CIRCUIT)
+	./$(BIN_DIR)/$(CIRCUIT) seeds/$(SEED)
 
 clean:
 	@rm -rf $(BIN_DIR)
@@ -80,7 +83,7 @@ clean:
 	@rm -rf $(MODEL_DIR)
 	@rm -f *.vcd
 	@rm -rf __pycache__
-	@rm -rf tb/cocotb/$(BUILD_DIR)
-	@rm -rf tb/cocotb/__pycache__
-	@rm -f tb/cocotb/results.xml
-	@rm -f tb/cocotb/coverage.dat
+	@rm -rf tb/cocotb/*/$(BUILD_DIR)
+	@rm -rf tb/cocotb/*/__pycache__
+	@rm -f tb/cocotb/*/results.xml
+	@rm -f tb/cocotb/*/coverage.dat

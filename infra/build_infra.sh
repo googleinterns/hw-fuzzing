@@ -22,10 +22,12 @@ then
 else
     # Build local fuzzing Docker infrastructure
     #docker build --pull -t gcr.io/hardware-fuzzing/base-image $@ $HW_FUZZING/infra/base-image
-    #docker build -t gcr.io/hardware-fuzzing/base-verilator $@ $HW_FUZZING/infra/base-verilator
     #docker build -t gcr.io/hardware-fuzzing/base-clang-10.0.0 $@ $HW_FUZZING/infra/base-clang-10.0.0
-    docker build -t gcr.io/hardware-fuzzing/base-circuit $@ $HW_FUZZING/circuits
+    docker build -t gcr.io/hardware-fuzzing/base-verilator $@ $HW_FUZZING/infra/base-verilator
+    docker build -t gcr.io/hardware-fuzzing/base-sim $@ $HW_FUZZING/circuits
     docker build -t gcr.io/hardware-fuzzing/base-afl $@ $HW_FUZZING/infra/base-afl
+    cp $HW_FUZZING/infra/base-afl/compile-cpp $HW_FUZZING/infra/base-afl-term-on-crash/
+    cp $HW_FUZZING/infra/base-afl/compile-cocotb $HW_FUZZING/infra/base-afl-term-on-crash/
+    cp $HW_FUZZING/infra/base-afl/fuzz $HW_FUZZING/infra/base-afl-term-on-crash/
     docker build -t gcr.io/hardware-fuzzing/base-afl-term-on-crash $@ $HW_FUZZING/infra/base-afl-term-on-crash
-    docker build -t gcr.io/hardware-fuzzing/base-cocotb $@ $HW_FUZZING/infra/base-cocotb
 fi

@@ -21,13 +21,15 @@ VLT_INSTALL_PACKAGES="\
     bison"
 apt-get install -y $VLT_INSTALL_PACKAGES
 
-# Build Verilator from source
-cd $SRC && git clone https://git.veripool.org/git/verilator
+# Build Verilator v 4.040 from source
+VLT_GITHUB_URL=https://github.com/verilator/verilator.git
+cd $SRC && git clone $VLT_GITHUB_URL
 cd verilator
+git checkout v4.040
 autoconf
 export VERILATOR_ROOT=`pwd`
 ./configure
-make
+make -j 8
 
 # Remove installation dependencies to shrink image size
 apt-get remove --purge -y $VLT_INSTALL_PACKAGES

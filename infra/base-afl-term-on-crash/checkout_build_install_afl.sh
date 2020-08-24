@@ -26,8 +26,8 @@ echo "Compiling AFL ..."
 export CC=clang
 export CXX=clang++
 export CCC=clang++
-cd AFL && make clean all
-cd llvm_mode && make clean all
+cd AFL && make all
+cd llvm_mode && make all
 echo " done."
 
 # Remove installation dependencies to shrink image size\

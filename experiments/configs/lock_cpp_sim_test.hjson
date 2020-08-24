@@ -1,13 +1,14 @@
 {
   // Experiment Parameters
-  experiment_name: exp000-lock-test
+  experiment_name: exp000-lock-cpp-sim-test
   circuit: lock
-  testbench_dir: tb/vlt
-  // Fuzzer Options: afl, afl-term-on-crash, cocotb
-  /*fuzzer: cocotb*/
-  /*fuzzer: afl*/
-  fuzzer: afl-term-on-crash
-  run_on_gcp: 1
+  // Options: [cpp, cocotb]
+  tb_type: cpp
+  // Options: [default]
+  tb: default
+  // Options: [afl, afl-term-on-crash, sim]
+  fuzzer: sim
+  run_on_gcp: 0
 
   // GCP Parameters (if any)
   gcp_params: {
@@ -34,13 +35,7 @@
     lock_comp_width: 4
   }
 
-  // AFL - Fuzzer Parameters
+  // Simulation Only - No Fuzzer Parameters
   fuzzer_params: {
-    num_instances: 1
-    mode: s
-    duration_mins: null
   }
-  // cocotb - Fuzzer Parameters
-  // fuzzer_params: {
-  // }
 }

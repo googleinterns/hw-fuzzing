@@ -13,12 +13,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-mkdir -p $DUT/hdl
-
-# generate lock circuit with passed parameters
-cd $DUT/hdl_generator
-cargo build
-cargo run -- \
-    --states $NUM_LOCK_STATES \
-    --width $LOCK_COMP_WIDTH > $DUT/hdl/$CIRCUIT.v
-exit 0
+function check_exit_code {
+    if [[ "$?" != "0" ]]; then
+        exit 1
+    fi
+}

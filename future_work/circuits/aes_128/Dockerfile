@@ -13,11 +13,12 @@
 # limitations under the License.
 
 # Docker image for fuzzing various lock circuits with AFL
-ARG FUZZER=sim
+ARG FUZZER=cocotb
 FROM gcr.io/hardware-fuzzing/base-${FUZZER}
 MAINTAINER ttrippel@google.com
 
 # Install Rust compiler/build system for HDL generator
+RUN apt-get install -y curl
 RUN curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y
 ENV PATH="$PATH:/root/.cargo/bin"
 
@@ -27,13 +28,14 @@ RUN mkdir $DUT
 
 # Copy in HDL and testbench
 COPY hdl_generator $DUT/hdl_generator
-RUN mv $DUT/hdl_generator/generate-hdl $SCRIPTS/
 #COPY hdl $DUT/hdl
 COPY tb $DUT/tb
 COPY seeds $DUT/seeds
+#COPY tb_deps.sh $DUT/
 
 # Copy in build scripts
 COPY Makefile $DUT/
+COPY scripts/generate_hdl scripts/run $SCRIPTS/
 
 WORKDIR $DUT
 CMD ["run"]

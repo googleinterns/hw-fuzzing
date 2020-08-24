@@ -5,7 +5,7 @@
 # You may obtain a copy of the License at
 #
 #      http://www.apache.org/licenses/LICENSE-2.0
-#
+
 # Unless required by applicable law or agreed to in writing, software
 # distributed under the License is distributed on an "AS IS" BASIS,
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -14,7 +14,7 @@
 
 # Docker image with Clang version 10.0.0 installed.
 
-FROM gcr.io/hardware-fuzzing/base-verilator
+FROM gcr.io/hardware-fuzzing/base-image
 MAINTAINER ttrippel@google.com
 
 # Putting installation steps in a script reduces the number of intermediate
@@ -22,4 +22,3 @@ MAINTAINER ttrippel@google.com
 COPY checkout_build_install_llvm.sh /root/
 RUN /root/checkout_build_install_llvm.sh
 RUN rm /root/checkout_build_install_llvm.sh
-

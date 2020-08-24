@@ -14,15 +14,20 @@
 
 # Docker image for circuit verification
 
-FROM gcr.io/hardware-fuzzing/base-clang-10.0.0
+FROM gcr.io/hardware-fuzzing/base-verilator
 MAINTAINER ttrippel@google.com
 
-# Add Verilator to PATH
-ENV PATH="$PATH:$VERILATOR_ROOT/bin"
-
-# Copy over circuit build scripts
+# Setup directory structure
 ENV CIRCUITS=$SRC/circuits
 RUN mkdir $CIRCUITS
+
+# Install cocotb version 1.4.0 & replace default Verilator makefile with custom
+RUN python3.8 -m pip install cocotb==1.4.0
+RUN rm $VERILATOR_ROOT/include/verilated.mk
+COPY verilated.mk $VERILATOR_ROOT/include/
+
+# Copy over hardware fuzzing build scripts and common test bench code
 COPY common.mk exe.mk $CIRCUITS/
 COPY tb $CIRCUITS/tb
-COPY save_and_shutdown $SCRIPTS/
+COPY scripts/cpp-verilator-sim scripts/cocotb-verilator-sim $SCRIPTS/
+COPY scripts/gcp-shutdown-vm scripts/check-exit-code scripts/run $SCRIPTS/

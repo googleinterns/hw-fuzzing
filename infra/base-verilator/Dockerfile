@@ -12,30 +12,17 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-# Docker image with Verilator version 4.037 installed.
+# Docker image for with Verilator v4.040 installed
 
-FROM gcr.io/hardware-fuzzing/base-image
+FROM gcr.io/hardware-fuzzing/base-clang-10.0.0
 MAINTAINER ttrippel@google.com
-
-# Install GCC and standard C library
-RUN apt-get install -y \
-    libc6-dev \
-    binutils \
-    libgcc-5-dev \
-    g++ \
-    perl \
-    python3 \
-    make \
-    libfl-dev \
-    zlibc \
-    zlib1g \
-    zlib1g-dev
 
 # Putting installation steps in a script reduces the number of intermediate
 # layers generated from the Dockerfile.
 COPY checkout_build_install_verilator.sh /root/
 RUN /root/checkout_build_install_verilator.sh
 RUN rm /root/checkout_build_install_verilator.sh
-
-# Setup the environment.
 ENV VERILATOR_ROOT "$SRC/verilator"
+
+# Add Verilator to PATH
+ENV PATH="$PATH:$VERILATOR_ROOT/bin"

@@ -13,12 +13,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-function check_exit_code {
-  if [[ "$?" != "0" ]]; then
-    exit 1
-  fi
-}
-
 ################################################################################
 ################################################################################
 ## Make directory to store fuzzer output
@@ -54,7 +48,7 @@ for (( num=1; num <= $NUM_INSTANCES; num++ )); do
       -o out \
       $FUZZER_OPTIONS \
       afl_${MODE}_${num} \
-      bin/V$CIRCUIT @@ \
+      $BIN_DIR/$CIRCUIT @@ \
       2> $STDERR_LOG \
       1> $STDOUT_LOG &
   else
@@ -64,11 +58,11 @@ for (( num=1; num <= $NUM_INSTANCES; num++ )); do
       -o out \
       $FUZZER_OPTIONS \
       afl_${MODE}_${num} \
-      bin/V$CIRCUIT @@ \
+      $BIN_DIR/$CIRCUIT @@ \
       2> $STDERR_LOG \
       1> $STDOUT_LOG &
   fi
-  check_exit_code
+  check-exit-code
 
   # Set process ID of recently launched fuzzer
   FUZZER_PID=$!

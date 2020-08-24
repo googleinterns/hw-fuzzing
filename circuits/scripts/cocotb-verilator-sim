@@ -15,12 +15,6 @@
 
 LINE_SEP="-------------------------------------------------------------------"
 
-function check_exit_code {
-  if [[ "$?" != "0" ]]; then
-    exit 1
-  fi
-}
-
 ################################################################################
 ################################################################################
 ## Make directory to store simulation output
@@ -32,19 +26,44 @@ fi
 
 ################################################################################
 ################################################################################
-## Build/Simulated the CORE
+## Install test bench dependencies
 ################################################################################
 ################################################################################
-make OPT_SLOW=$OPT_SLOW OPT_FAST=$OPT_FAST OPT_GLOBAL=$OPT_GLOBAL cocotb
-check_exit_code
+echo $LINE_SEP
+echo "Installing dependencies for testbench ..."
+if [[ ! -f tb/$TB_TYPE/$TB/requirements.txt ]]; then
+  echo "No dependencies to install."
+else
+  python3.8 -m pip install -r tb/$TB_TYPE/$TB/requirements.txt
+  check-exit-code
+fi
+echo "Done!"
+
+################################################################################
+################################################################################
+## Build and execute the SW model of the circuit
+################################################################################
+################################################################################
+echo $LINE_SEP
+echo "Verilating/Compiling/Instrumenting/Simulating the DUT ..."
+make clean
+make \
+  CXX=clang++ \
+  OPT_SLOW=$OPT_SLOW \
+  OPT_FAST=$OPT_FAST \
+  OPT_GLOBAL=$OPT_GLOBAL \
+  TB_TYPE=$TB_TYPE \
+  TB=$TB \
+  cocotb-sim
+check-exit-code
 
 ################################################################################
 ################################################################################
 ## Copy simulation results to out directory
 ################################################################################
 ################################################################################
-cp tb/cocotb/results.xml out/
-cp tb/cocotb/coverage.dat out/
+cp tb/cocotb/$TB/results.xml out/
+cp tb/cocotb/$TB/coverage.dat out/
 find out -type f -exec chmod 644 {} \;
 
 ################################################################################

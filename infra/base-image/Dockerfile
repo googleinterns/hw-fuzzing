@@ -19,8 +19,37 @@ MAINTAINER ttrippel@google.com
 ENV DEBIAN_FRONTEND noninteractive
 RUN apt-get update && apt-get upgrade -y && apt-get autoremove -y
 
+# Setup directory structure
 ENV SCRIPTS=/scripts
 ENV SRC=/src
 ENV PATH="$PATH:/scripts"
-
 RUN mkdir -p $SCRIPTS $SRC && chmod a+rwx $SCRIPTS $SRC
+
+# Install GCC, standard C library, make, perl, and python3
+RUN apt-get install -y \
+    curl \
+    libc6-dev \
+    binutils \
+    libgcc-5-dev \
+    g++ \
+    perl \
+    make \
+    libfl-dev \
+    zlibc \
+    zlib1g \
+    zlib1g-dev
+
+# Install python3.8
+RUN apt-get install -y software-properties-common && \
+      add-apt-repository -y ppa:deadsnakes/ppa && \
+      apt-get update
+RUN apt-get install -y \
+      python3.8 \
+      python3.8-dev \
+      python3.8-distutils
+
+# Install pip
+RUN curl https://bootstrap.pypa.io/get-pip.py -o $SRC/get-pip.py
+RUN python3.8 $SRC/get-pip.py && \
+      python3.8 -m pip install --upgrade pip && \
+      rm $SRC/get-pip.py

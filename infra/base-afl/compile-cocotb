@@ -13,76 +13,75 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-################################################################################
-################################################################################
-## Make directory to store fuzzer output
-################################################################################
-################################################################################
-if [ ! -d "out" ]; then
-  mkdir -p out
-fi
+LINE_SEP="-------------------------------------------------------------------"
 
 ################################################################################
 ################################################################################
-## Fuzz the CORE
+## Set build flags
 ################################################################################
 ################################################################################
-FUZZER_BIN="$SRC/AFL/afl-fuzz"
-FUZZER_OPTIONS=""
-for (( num=1; num <= $NUM_INSTANCES; num++ )); do
-  # Set fuzzer mode (Master or Secondary)
-  if [[ $num -eq 1 && $MODE == "m" ]]; then
-    FUZZER_OPTIONS="$FUZZER_OPTIONS -M"
-  else
-    FUZZER_OPTIONS="$FUZZER_OPTIONS -S"
-  fi
+echo "Setting compiler/linker flags..."
 
-  # Set log filenames
-  STDERR_LOG="logs/afl_${MODE}_${num}.err.log"
-  STDOUT_LOG="logs/afl_${MODE}_${num}.out.log"
+# Set fuzzer compiler
+export CXX="$SRC/AFL/afl-clang-fast++"
+export CXXFLAGS=""
 
-  # Launch fuzzer
-  if [[ -z ${DURATION_MINS-} ]]; then
-    $FUZZER_BIN \
-      -i seeds \
-      -o out \
-      $FUZZER_OPTIONS \
-      afl_${MODE}_${num} \
-      $BIN_DIR/$CIRCUIT @@ \
-      2> $STDERR_LOG \
-      1> $STDOUT_LOG &
-  else
-    timeout --foreground ${DURATION_MINS}m\
-      $FUZZER_BIN \
-      -i seeds \
-      -o out \
-      $FUZZER_OPTIONS \
-      afl_${MODE}_${num} \
-      $BIN_DIR/$CIRCUIT @@ \
-      2> $STDERR_LOG \
-      1> $STDOUT_LOG &
-  fi
+# Set Verilator compiler
+export VLT_CXX="clang++"
+export VLT_CXXFLAGS=""
+
+# Print Fuzzer/Compiler/Linker Configurations
+echo $LINE_SEP
+echo "Fuzzer/Compiler Configurations:"
+echo "CXX=$CXX"
+echo "VLT_CXX=$VLT_CXX"
+echo "CXXFLAGS=$CXXFLAGS"
+echo "VLT_CXXFLAGS=$VLT_CXXFLAGS"
+echo "Done!"
+
+################################################################################
+################################################################################
+## Install test bench dependencies
+################################################################################
+################################################################################
+echo $LINE_SEP
+echo "Installing dependencies for testbench ..."
+if [[ ! -f tb/$TB_TYPE/$TB/requirements.txt ]]; then
+  echo "No dependencies to install."
+else
+  python3.8 -m pip install -r tb/$TB_TYPE/$TB/requirements.txt
   check-exit-code
+fi
+echo "Done!"
 
-  # Set process ID of recently launched fuzzer
-  FUZZER_PID=$!
-  echo "Launched fuzzer instance $num (PID: $FUZZER_PID)"
-
-  # Trap SIGINT to kill all fuzzer processes on ctrl-c
-  trap "kill $FUZZER_PID" SIGINT
-done
-
-# Wait for all fuzzers to complete
-wait
-
-# Change permission on all files to allow access outside of container
-find out -type d -exec chmod 777 {} \;
-find out -type f -exec chmod 644 {} \;
+################################################################################
+################################################################################
+## Verilate HDL and Compile/Instrument SW Model
+################################################################################
+################################################################################
+echo $LINE_SEP
+echo "Verilating/Compiling/Instrumenting the DUT ..."
+make clean
+make \
+  CXX=$CXX \
+  VLT_CXX=$VLT_CXX \
+  CXXFLAGS=$CXXFLAGS \
+  VLT_CXXFLAGS=$VLT_CXXFLAGS \
+  OPT_SLOW=$OPT_SLOW \
+  OPT_FAST=$OPT_FAST \
+  OPT_GLOBAL=$OPT_GLOBAL \
+  TB_TYPE=$TB_TYPE \
+  TB=$TB \
+  DISABLE_COVERAGE=1 \
+  cocotb-build
+check-exit-code
+echo "Done!"
 
 ################################################################################
 ################################################################################
 ## Done
 ################################################################################
 ################################################################################
-echo -e "\e[1;32mFUZZING SUCCESSFUL -- Done!\e[0m"
+echo $LINE_SEP
+echo -e "\e[1;32mBUILD & INSTRUMENTATION SUCCESSFUL -- Done!\e[0m"
 exit 0

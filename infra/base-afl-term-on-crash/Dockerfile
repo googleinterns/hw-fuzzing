@@ -14,7 +14,7 @@
 
 # Docker image with AFL that terminates on first crash installed.
 
-FROM gcr.io/hardware-fuzzing/base-circuit
+FROM gcr.io/hardware-fuzzing/base-sim
 MAINTAINER ttrippel@google.com
 
 # Putting installation steps in a script reduces the number of intermediate
@@ -22,6 +22,6 @@ MAINTAINER ttrippel@google.com
 COPY checkout_build_install_afl.sh /root/
 RUN /root/checkout_build_install_afl.sh
 RUN rm /root/checkout_build_install_afl.sh
-#
+
 # Copy over circuit build/fuzz scripts
-COPY compile fuzz $SCRIPTS/
+COPY compile-cpp compile-cocotb fuzz $SCRIPTS/

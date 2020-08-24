@@ -1,4 +1,4 @@
-#!/usr/bin/python3
+#!/usr/bin/python3.8
 # Copyright 2020 Google LLC
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -56,7 +56,8 @@ class Config():
       # Parse config dict
       self.experiment_name = cdict["experiment_name"]
       self.circuit = cdict["circuit"]
-      self.testbench_dir = cdict["testbench_dir"]
+      self.tb_type = cdict["tb_type"]
+      self.tb = cdict["tb"]
       self.fuzzer = cdict["fuzzer"]
       self.run_on_gcp = cdict["run_on_gcp"]
       self.gcp_params = cdict["gcp_params"]
@@ -81,6 +82,10 @@ class Config():
 
   # TODO(ttrippel): make sure didn't make mistakes writing config file!
   def validate_configs(self):
+    VALID_TB_TYPES = ["cpp", "cocotb"]
+    VALID_FUZZERS = ["afl", "afl-term-on-crash", "none"]
+    VALID_VLT_OPTS = ["-O0", "-O1", "-O2", "-O3", "-Os", "-Oz"]
+    VALID_AFL_FUZZER_MODES = ["m", "s"]
     return
 
   def print_configs(self):
@@ -92,7 +97,8 @@ class Config():
     # Add main experiment parameters
     exp_config_table.add_row(["Experiment Name", self.experiment_name])
     exp_config_table.add_row(["Circuit", self.circuit])
-    exp_config_table.add_row(["Testbench Dir.", self.testbench_dir])
+    exp_config_table.add_row(["Testbench Type", self.tb_type])
+    exp_config_table.add_row(["Testbench", self.tb])
     exp_config_table.add_row(["Fuzzer", self.fuzzer])
     exp_config_table.add_row(["Run on GCP", self.run_on_gcp])
 

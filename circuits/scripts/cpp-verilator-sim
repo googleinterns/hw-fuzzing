@@ -15,39 +15,14 @@
 
 LINE_SEP="-------------------------------------------------------------------"
 
-function check_exit_code {
-  if [[ "$?" != "0" ]]; then
-    exit 1
-  fi
-}
-
 ################################################################################
 ################################################################################
-## Set build flags
+## Make directory to store simulation output
 ################################################################################
 ################################################################################
-echo "Setting compiler/linker flags..."
-
-# Set fuzzer compiler
-export CXX="$SRC/AFL/afl-clang-fast++"
-export CXXFLAGS=""
-
-# Set Verilator compiler
-export VLT_CXX="clang++"
-export VLT_CXXFLAGS=""
-
-# Disable Verilator VCD tracing during fuzzing
-export DISABLE_VCD_TRACING=1
-
-# Print Fuzzer/Compiler/Linker Configurations
-echo $LINE_SEP
-echo "Fuzzer/Compiler Configurations:"
-echo "CXX=$CXX"
-echo "VLT_CXX=$VLT_CXX"
-echo "CXXFLAGS=$CXXFLAGS"
-echo "VLT_CXXFLAGS=$VLT_CXXFLAGS"
-echo "DISABLE_VCD_TRACING=$DISABLE_VCD_TRACING"
-echo "Done!"
+if [ ! -d "out" ]; then
+  mkdir -p out
+fi
 
 ################################################################################
 ################################################################################
@@ -56,40 +31,47 @@ echo "Done!"
 ################################################################################
 echo $LINE_SEP
 echo "Installing dependencies for testbench ..."
-if [[ ! -f tb_deps.sh ]]; then
+if [[ ! -f tb/$TB_TYPE/$TB/packages.txt ]]; then
   echo "No dependencies to install."
 else
-  tb_deps.sh
-  echo "Installing: $TB_DEPS"
-  apt-get install -y $TB_DEPS
-  check_exit_code
+  cat tb/$TB_TYPE/$TB/packages.txt | xargs apt-get install -y
+  check-exit-code
 fi
 echo "Done!"
 
 ################################################################################
 ################################################################################
-## Verilate HDL and Compile/Instrument SW Model
+## Build the SW model of the circuit
 ################################################################################
 ################################################################################
 echo $LINE_SEP
 echo "Verilating/Compiling/Instrumenting the DUT ..."
+make clean
 make \
-  CXX=$CXX \
-  VLT_CXX=$VLT_CXX \
-  CXXFLAGS=$CXXFLAGS \
-  VLT_CXXFLAGS=$VLT_CXXFLAGS \
+  CXX=clang++ \
+  VLT_CXX=clang++ \
   OPT_SLOW=$OPT_SLOW \
   OPT_FAST=$OPT_FAST \
   OPT_GLOBAL=$OPT_GLOBAL \
-  TB_DIR=$TB_DIR
-check_exit_code
-echo "Done!"
+  TB_TYPE=$TB_TYPE \
+  TB=$TB \
+  DISABLE_VCD_TRACING=1
+check-exit-code
+
+################################################################################
+################################################################################
+## Simulate the circuit
+################################################################################
+################################################################################
+echo $LINE_SEP
+echo "Simulating the DUT ..."
+make TB_TYPE=$TB_TYPE TB=$TB sim
 
 ################################################################################
 ################################################################################
 ## Done
 ################################################################################
 ################################################################################
-echo $LINE_SEP
-echo -e "\e[1;32mBUILD & INSTRUMENTATION SUCCESSFUL -- Done!\e[0m"
+echo -e "\e[1;32mSIMULATION SUCCESSFUL -- Done!\e[0m"
 exit 0
+

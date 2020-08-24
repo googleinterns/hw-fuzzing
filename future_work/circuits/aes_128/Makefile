@@ -15,21 +15,15 @@
 ################################################################################
 # Core specific configs
 ################################################################################
-export DUT       := aes_128
-export LIBS      := -lcryptopp
-export CPPFLAGS  := -std=c++11
-export LINKFLAGS := -std=c++11
-
-################################################################################
-# Default number of seed tests (encryptions)
-################################################################################
-NUM_SEEDS ?= 1
-NUM_TESTS_PER_SEED ?= 5
+export DUT      := aes_128
+export LIBS     := -lcryptopp
+export CPPFLAGS := -std=c++11
+export SEED     := afl_seed.0.tf
 
 ################################################################################
 # Directories
 ################################################################################
-HDL_DIR := ../../third_party/$(DUT)# uncomment if third party IP block
+HDL_DIR := ../../third_party/$(DUT)
 
 ########## DO NOT MODIFY BELOW ##########
 

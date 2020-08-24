@@ -16,28 +16,21 @@
 ################################################################################
 # Circuit specific configs
 ################################################################################
-TOPLEVEL                = $(CIRCUIT)
-MODULE                  = $(CIRCUIT)_tb  # testbench
-SEED                    = afl_seed.0.tf
-#export NUM_LOCK_STATES ?= 4
-#export LOCK_COMP_WIDTH ?= 8
+TOPLEVEL = $(CIRCUIT)
+MODULE   = $(CIRCUIT)_tb  # testbench
 
 ################################################################################
 # Directories
 ################################################################################
-VERILOG_SOURCES = $(addprefix ../../, $(HDL))
+VERILOG_SOURCES = $(addprefix ../../../, $(HDL))
 SIM_BUILD       = $(BUILD_DIR)
 
 ################################################################################
 # Simulation settings
 ################################################################################
-export CXX               = clang++
-export FUZZER_CXX        = clang++
-export FUZZER_CXX_FLAGS  =
-export LINK              = clang++
-SIM                      = verilator
-TOPLEVEL_LANG            = verilog
-EXTRA_ARGS              += -compiler clang
+SIM            = verilator
+TOPLEVEL_LANG  = verilog
+EXTRA_ARGS    += -compiler clang
 
 ifndef DISABLE_COVERAGE
 	EXTRA_ARGS += --coverage

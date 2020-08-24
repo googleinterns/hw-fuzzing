@@ -16,6 +16,8 @@
 # Circuit specific configs
 ################################################################################
 export CIRCUIT  := lock
+export TB_TYPE  ?= cpp
+export TB       ?= default
 export LDLIBS   :=
 export CPPFLAGS := -std=c++11
 export SEED     := afl_seed.0.tf

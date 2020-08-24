@@ -1,4 +1,4 @@
-#!/usr/bin/python3
+#!/usr/bin/python3.8
 # Copyright 2020 Google LLC
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -153,7 +153,8 @@ def run_docker_container_locally(config, exp_data_path):
   cmd = ["docker", "run", "-it", "--rm", "--name", config.experiment_name]
   # Set environment variables for general configs
   cmd.extend(["-e", "%s=%s" % ("CIRCUIT", config.circuit)])
-  cmd.extend(["-e", "%s=%s" % ("TB_DIR", config.testbench_dir)])
+  cmd.extend(["-e", "%s=%s" % ("TB_TYPE", config.tb_type)])
+  cmd.extend(["-e", "%s=%s" % ("TB", config.tb)])
   cmd.extend(["-e", "%s=%s" % ("FUZZER", config.fuzzer)])
   cmd.extend(["-e", "%s=%s" % ("RUN_ON_GCP", config.run_on_gcp)])
   # Set environment variables for Verilator/HDL-generator/fuzzer params
@@ -168,6 +169,7 @@ def run_docker_container_locally(config, exp_data_path):
       (exp_data_path, config.circuit)])
   # Set target Docker image and run
   cmd.extend(["-t", config.docker_image])
+  # TODO(ttrippel): add debug flag to launch container in interactive mode
   # cmd.append("bash")
   error_str = "ERROR: container run FAILED. Terminating experiment!"
   run_cmd(cmd, error_str)
@@ -280,7 +282,8 @@ def run_docker_container_on_gce(config):
   # cmd.extend["--container-tty", "--container-stdin", "--container-arg=bash"]
   # Set environment variables for general configs
   cmd.extend(["--container-env", "%s=%s" % ("CIRCUIT", config.circuit)])
-  cmd.extend(["--container-env", "%s=%s" % ("TB_DIR", config.testbench_dir)])
+  cmd.extend(["--container-env", "%s=%s" % ("TB_TYPE", config.tb_type)])
+  cmd.extend(["--container-env", "%s=%s" % ("TB", config.tb)])
   cmd.extend(["--container-env", "%s=%s" % ("FUZZER", config.fuzzer)])
   cmd.extend(["--container-env", "%s=%s" % ("RUN_ON_GCP", config.run_on_gcp)])
   # Set environment variables for Verilator/HDL-generator/fuzzer params
@@ -308,7 +311,7 @@ def run_experiment(argv):
   parser.add_argument("config_filename", metavar="config.hjson", \
       help="Configuration file in the HJSON format.")
   args = parser.parse_args(argv)
-
+  print("HERE")
   # Load experiment configurations
   config = Config(args)
 
@@ -332,4 +335,4 @@ def run_experiment(argv):
 
 if __name__ == "__main__":
   signal.signal(signal.SIGINT, sigint_handler)
-  run_experiment(sys.argv)
+  run_experiment(sys.argv[1:])

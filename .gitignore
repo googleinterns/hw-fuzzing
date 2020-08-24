@@ -1,6 +1,6 @@
 # Experiment configs
 *.hjson
-!lock_example.hjson
+!lock_*_test.hjson
 
 # Testbench Inputs
 *.tf
@@ -9,7 +9,8 @@
 # Rust
 debug/
 target/
-Cargo.lock
+Cargo.*
+!Cargo.toml
 
 # Compiler Ouputs
 *.a
@@ -17,14 +18,17 @@ Cargo.lock
 *.o
 *.pyc
 *.txt
+!packages.txt
+!requirements.txt
 *bin/
 *bin.*/
 
 # Verilator Ouputs
-*model/
+*build/
 *logs/
 
 # Simulation Files
+*.xml
 *.vcd
 *.dat
 *.json

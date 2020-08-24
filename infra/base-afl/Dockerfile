@@ -14,7 +14,7 @@
 
 # Docker image with AFL installed.
 
-FROM gcr.io/hardware-fuzzing/base-circuit
+FROM gcr.io/hardware-fuzzing/base-sim
 MAINTAINER ttrippel@google.com
 
 # Putting installation steps in a script reduces the number of intermediate
@@ -24,4 +24,4 @@ RUN /root/checkout_build_install_afl.sh
 RUN rm /root/checkout_build_install_afl.sh
 
 # Copy over circuit build/fuzz scripts
-COPY compile fuzz $SCRIPTS/
+COPY compile-cpp compile-cocotb fuzz $SCRIPTS/

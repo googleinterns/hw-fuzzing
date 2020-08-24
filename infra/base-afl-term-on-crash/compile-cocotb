@@ -15,12 +15,6 @@
 
 LINE_SEP="-------------------------------------------------------------------"
 
-function check_exit_code {
-  if [[ "$?" != "0" ]]; then
-    exit 1
-  fi
-}
-
 ################################################################################
 ################################################################################
 ## Set build flags
@@ -36,9 +30,6 @@ export CXXFLAGS=""
 export VLT_CXX="clang++"
 export VLT_CXXFLAGS=""
 
-# Disable Verilator VCD tracing during fuzzing
-export DISABLE_VCD_TRACING=1
-
 # Print Fuzzer/Compiler/Linker Configurations
 echo $LINE_SEP
 echo "Fuzzer/Compiler Configurations:"
@@ -46,7 +37,6 @@ echo "CXX=$CXX"
 echo "VLT_CXX=$VLT_CXX"
 echo "CXXFLAGS=$CXXFLAGS"
 echo "VLT_CXXFLAGS=$VLT_CXXFLAGS"
-echo "DISABLE_VCD_TRACING=$DISABLE_VCD_TRACING"
 echo "Done!"
 
 ################################################################################
@@ -56,13 +46,11 @@ echo "Done!"
 ################################################################################
 echo $LINE_SEP
 echo "Installing dependencies for testbench ..."
-if [[ ! -f tb_deps.sh ]]; then
+if [[ ! -f tb/$TB_TYPE/$TB/requirements.txt ]]; then
   echo "No dependencies to install."
 else
-  tb_deps.sh
-  echo "Installing: $TB_DEPS"
-  apt-get install -y $TB_DEPS
-  check_exit_code
+  python3.8 -m pip install -r tb/$TB_TYPE/$TB/requirements.txt
+  check-exit-code
 fi
 echo "Done!"
 
@@ -73,6 +61,7 @@ echo "Done!"
 ################################################################################
 echo $LINE_SEP
 echo "Verilating/Compiling/Instrumenting the DUT ..."
+make clean
 make \
   CXX=$CXX \
   VLT_CXX=$VLT_CXX \
@@ -81,8 +70,11 @@ make \
   OPT_SLOW=$OPT_SLOW \
   OPT_FAST=$OPT_FAST \
   OPT_GLOBAL=$OPT_GLOBAL \
-  TB_DIR=$TB_DIR
-check_exit_code
+  TB_TYPE=$TB_TYPE \
+  TB=$TB \
+  DISABLE_COVERAGE=1 \
+  cocotb-build
+check-exit-code
 echo "Done!"
 
 ################################################################################

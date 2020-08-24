@@ -1,4 +1,4 @@
-#!/usr/bin/python3
+#!/bin/bash
 # Copyright 2020 Google LLC
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -13,18 +13,12 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import random
-import string
+mkdir -p $DUT/hdl
 
-KEY_SIZE = 16
-STATE_SIZE = 16
-
-def gen_random_test():
-    key = ""
-    state = ""
-    for _ in range(KEY_SIZE):
-        key += random.choice(string.ascii_letters)
-    for _ in range(STATE_SIZE):
-        state += random.choice(string.ascii_letters)
-
-    return key + " " + state
+# generate lock circuit with passed parameters
+cd $DUT/hdl_generator/locksmith
+cargo build
+cargo run -- \
+    --states $NUM_LOCK_STATES \
+    --width $LOCK_COMP_WIDTH > $DUT/hdl/$CIRCUIT.v
+exit 0
