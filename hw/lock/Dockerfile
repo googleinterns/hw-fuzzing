@@ -12,17 +12,28 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-# Docker image with AFL installed.
-
-FROM gcr.io/hardware-fuzzing/base-sim
+# Docker image for fuzzing various lock circuits with AFL
+ARG FUZZER=sim
+FROM gcr.io/hardware-fuzzing/base-${FUZZER}
 MAINTAINER ttrippel@google.com
 
-# Putting installation steps in a script reduces the number of intermediate
-# layers generated from the Dockerfile
-COPY checkout_build_install_afl.sh /root/
-ENV AFL_REPO_URL "https://github.com/google/AFL.git"
-RUN /root/checkout_build_install_afl.sh
-RUN rm /root/checkout_build_install_afl.sh
+# Install Rust compiler/build system for HDL generator
+RUN curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y
+ENV PATH="$PATH:/root/.cargo/bin"
 
-# Copy over circuit build/fuzz scripts
-COPY compile-cpp compile-cocotb fuzz $SCRIPTS/
+# create DUT directory
+ENV DUT=$HW/lock
+RUN mkdir $DUT
+
+# Copy in HDL and testbench
+COPY hdl_generator $DUT/hdl_generator
+RUN mv $DUT/hdl_generator/generate-hdl $SCRIPTS/
+#COPY hdl $DUT/hdl
+COPY tb $DUT/tb
+COPY seeds $DUT/seeds
+
+# Copy in build scripts
+COPY Makefile $DUT/
+
+WORKDIR $DUT
+CMD ["run"]

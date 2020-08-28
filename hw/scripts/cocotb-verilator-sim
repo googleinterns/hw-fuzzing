@@ -17,35 +17,12 @@ LINE_SEP="-------------------------------------------------------------------"
 
 ################################################################################
 ################################################################################
-## Set build flags
+## Make directory to store simulation output
 ################################################################################
 ################################################################################
-echo "Setting compiler/linker flags..."
-
-# Set fuzzer compiler
-CXX="$SRC/AFL/afl-clang-fast++"
-CXXFLAGS=""
-
-# Set Verilator compiler
-VLT_CXX="clang++"
-VLT_CXXFLAGS=""
-
-# Print Fuzzer/Compiler/Linker Configurations
-echo $LINE_SEP
-make clean
-make \
-  CXX=$CXX \
-  VLT_CXX=$VLT_CXX \
-  CXXFLAGS=$CXXFLAGS \
-  VLT_CXXFLAGS=$VLT_CXXFLAGS \
-  OPT_SLOW=$OPT_SLOW \
-  OPT_FAST=$OPT_FAST \
-  OPT_GLOBAL=$OPT_GLOBAL \
-  TB_TYPE=$TB_TYPE \
-  TB=$TB \
-  DISABLE_VCD_TRACING=1
-  debug-make
-echo "Done!"
+if [ ! -d "out" ]; then
+  mkdir -p out
+fi
 
 ################################################################################
 ################################################################################
@@ -54,40 +31,45 @@ echo "Done!"
 ################################################################################
 echo $LINE_SEP
 echo "Installing dependencies for testbench ..."
-if [[ ! -f tb/$TB_TYPE/$TB/packages.txt ]]; then
+if [[ ! -f tb/$TB_TYPE/$TB/requirements.txt ]]; then
   echo "No dependencies to install."
 else
-  cat tb/$TB_TYPE/$TB/packages.txt | xargs apt-get install -y
+  python3 -m pip install -r tb/$TB_TYPE/$TB/requirements.txt
   check-exit-code
 fi
 echo "Done!"
 
 ################################################################################
 ################################################################################
-## Verilate HDL and Compile/Instrument SW Model
+## Build and execute the SW model of the circuit
 ################################################################################
 ################################################################################
 echo $LINE_SEP
-echo "Verilating/Compiling/Instrumenting the DUT ..."
+echo "Verilating/Compiling/Instrumenting/Simulating the DUT ..."
+make clean
 make \
-  CXX=$CXX \
-  VLT_CXX=$VLT_CXX \
-  CXXFLAGS=$CXXFLAGS \
-  VLT_CXXFLAGS=$VLT_CXXFLAGS \
+  CXX=clang++ \
   OPT_SLOW=$OPT_SLOW \
   OPT_FAST=$OPT_FAST \
   OPT_GLOBAL=$OPT_GLOBAL \
   TB_TYPE=$TB_TYPE \
   TB=$TB \
-  DISABLE_VCD_TRACING=1
+  DISABLE_VCD_TRACING=1 \
+  sim
 check-exit-code
-echo "Done!"
+
+################################################################################
+################################################################################
+## Copy simulation results to out directory
+################################################################################
+################################################################################
+cp results.xml out/
+find out -type f -exec chmod 644 {} \;
 
 ################################################################################
 ################################################################################
 ## Done
 ################################################################################
 ################################################################################
-echo $LINE_SEP
-echo -e "\e[1;32mBUILD & INSTRUMENTATION SUCCESSFUL -- Done!\e[0m"
+echo -e "\e[1;32mSIMULATION SUCCESSFUL -- Done!\e[0m"
 exit 0

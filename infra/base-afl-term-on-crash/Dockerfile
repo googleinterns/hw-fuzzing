@@ -20,6 +20,7 @@ MAINTAINER ttrippel@google.com
 # Putting installation steps in a script reduces the number of intermediate
 # layers generated from the Dockerfile
 COPY checkout_build_install_afl.sh /root/
+ENV AFL_REPO_URL "https://github.com/timtrippel/AFL.git"
 RUN /root/checkout_build_install_afl.sh
 RUN rm /root/checkout_build_install_afl.sh
 

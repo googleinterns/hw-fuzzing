@@ -1,4 +1,3 @@
-#!/bin/bash -eux
 # Copyright 2020 Google LLC
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -13,24 +12,20 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-# Install dependencies
-VLT_INSTALL_PACKAGES="\
-    git \
-    autoconf \
-    flex \
-    bison"
-apt-get install -y $VLT_INSTALL_PACKAGES
+# Docker image for circuit verification
 
-# Build Verilator v 4.040 from source
-VLT_GITHUB_URL=https://github.com/verilator/verilator.git
-cd $SRC && git clone $VLT_GITHUB_URL
-cd verilator
-git checkout v4.040
-autoconf
-export VERILATOR_ROOT=`pwd`
-./configure
-make -j 4
+FROM gcr.io/hardware-fuzzing/base-verilator
+MAINTAINER ttrippel@google.com
 
-# Remove installation dependencies to shrink image size
-apt-get remove --purge -y $VLT_INSTALL_PACKAGES
-apt-get autoremove -y
+# Setup directory structure
+ENV HW=$SRC/hw
+RUN mkdir $HW
+
+# Install cocotb version 1.4.0 & replace default Verilator makefile with custom
+RUN python3 -m pip install cocotb==1.4.0
+
+# Copy over hardware fuzzing build scripts and common test bench code
+COPY common.mk exe.mk $HW/
+COPY tb $HW/tb
+COPY scripts/cpp-verilator-sim scripts/cocotb-verilator-sim $SCRIPTS/
+COPY scripts/gcp-shutdown-vm scripts/check-exit-code scripts/run $SCRIPTS/

@@ -1,4 +1,4 @@
-#!/bin/bash -eu
+#!/bin/bash -eux
 # Copyright 2020 Google LLC
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -19,7 +19,7 @@ apt-get install -y $AFL_INSTALL_PACKAGES
 
 # Clone AFL
 echo "Checking out AFL ..."
-cd $SRC && git clone --depth 1 https://github.com/timtrippel/AFL.git
+cd $SRC && git clone --depth 1 $AFL_REPO_URL
 
 # Build AFL from source
 echo "Compiling AFL ..."

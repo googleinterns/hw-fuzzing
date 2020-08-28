@@ -2,9 +2,6 @@
 *.hjson
 !lock_*_test.hjson
 
-# Testbench Inputs
-*.tf
-
 # HDL Generation Outputs
 # Rust
 debug/
@@ -24,6 +21,7 @@ Cargo.*
 *bin.*/
 
 # Verilator Ouputs
+*model/
 *build/
 *logs/
 
@@ -36,12 +34,20 @@ Cargo.*
 # Fuzzer Outputs
 *data/
 
+# Ignore copies of compile/fuzz scripts from afl-term-on-crash
+# (they are derived from the scripts in hw-fuzzing/infra/base-afl/)
+infra/base-afl-term-on-crash/compile-cpp
+infra/base-afl-term-on-crash/compile-cocotb
+infra/base-afl-term-on-crash/fuzz
+
 # Plots
 *.pdf
-!experiments/plots/pdf/*.pdf
-
-# Allow tracking experiment config files
-!circuits/double_counter/configs/*.json
+*.png
+*.svg
+*.jpg
+!docs/figures/fuzzing_hardware_like_software.png
+!docs/figures/hw_fuzzing_pipeline.png
+!docs/figures/lock_state_machine.png
 
 # MacOS Dir Files
 *.DS_Store

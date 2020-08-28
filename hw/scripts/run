@@ -1,0 +1,71 @@
+#!/bin/bash -eu
+# Copyright 2020 Google LLC
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#      http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+# Create logs dir if it does not exist
+if [ ! -d "logs" ]; then
+    mkdir -p logs
+fi
+
+# Generate HDL (if necessary)
+command -v generate-hdl >/dev/null 2>&1 && \
+  { generate-hdl 2>&1 | tee logs/exp.log; check-exit-code; }
+
+if [[ $FUZZER == "sim" ]]; then
+  if [[ $TB_TYPE == "cocotb" ]]; then
+    # Simulate the DUT with cocotb testbench
+    cocotb-verilator-sim 2>&1 | tee -a logs/exp.log
+    check-exit-code
+
+  elif [[ $TB_TYPE == "cpp" ]]; then
+    # Simulate the DUT using C++ testbench
+    cpp-verilator-sim 2>&1 | tee -a logs/exp.log
+    check-exit-code
+
+  else
+    echo "ERROR: unsupported testbench type. Aborting!" | tee -a logs/exp.log
+  fi
+elif [[ $FUZZER == "afl" || $FUZZER == "afl-term-on-crash" ]]; then
+  if [[ $TB_TYPE == "cocotb" ]]; then
+    # Compile the DUT for fuzzing
+    compile-cocotb 2>&1 | tee -a logs/exp.log
+    check-exit-code
+
+    # Fuzz the DUT
+    MODULE=${CIRCUIT}_tb \
+      TOPLEVEL=$CIRCUIT
+      TOPLEVEL_LANG=verilog
+      BIN_DIR=tb/$TB_TYPE/$TB/build fuzz 2>&1 | tee -a logs/exp.log
+    check-exit-code
+  elif [[ $TB_TYPE == "cpp" ]]; then
+    # Compile the DUT for fuzzing
+    compile-cpp 2>&1 | tee -a logs/exp.log
+    check-exit-code
+
+    # Fuzz the DUT
+    BIN_DIR=bin fuzz 2>&1 | tee -a logs/exp.log
+    check-exit-code
+  else
+    echo "ERROR: unsupported testbench type. Aborting!" | tee -a logs/exp.log
+  fi
+else
+  echo "ERROR: unsupported fuzzer. Aborting!" | tee -a logs/exp.log
+fi
+
+# If on simulating/fuzzing on GCP, save data and tear down VM
+if [[ $RUN_ON_GCP == "1" ]]; then
+  gcp-shutdown-vm
+  check-exit-code
+fi
+exit 0

@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/bin/bash -eux
 # Copyright 2020 Google LLC
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -23,9 +23,9 @@ docker rmi -f gcr.io/hardware-fuzzing/base-afl-term-on-crash:latest
 docker rmi -f gcr.io/hardware-fuzzing/base-afl:latest
 docker rmi -f gcr.io/hardware-fuzzing/base-sim:latest
 docker rmi -f gcr.io/hardware-fuzzing/base-verilator:latest
-#docker rmi -f gcr.io/hardware-fuzzing/base-clang-10.0.0:latest
-#docker rmi -f gcr.io/hardware-fuzzing/base-image:latest
-#docker rmi -f ubuntu:16.04
+docker rmi -f gcr.io/hardware-fuzzing/base-clang-10.0.0:latest
+docker rmi -f gcr.io/hardware-fuzzing/base-image:latest
+docker rmi -f ubuntu:16.04
 
 # Cleanup Docker containers
 docker ps -a -q | xargs -I {} docker rm {};

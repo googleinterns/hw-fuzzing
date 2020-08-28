@@ -1,4 +1,3 @@
-#!/bin/bash -eux
 # Copyright 2020 Google LLC
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -13,24 +12,4 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-# Install dependencies
-VLT_INSTALL_PACKAGES="\
-    git \
-    autoconf \
-    flex \
-    bison"
-apt-get install -y $VLT_INSTALL_PACKAGES
-
-# Build Verilator v 4.040 from source
-VLT_GITHUB_URL=https://github.com/verilator/verilator.git
-cd $SRC && git clone $VLT_GITHUB_URL
-cd verilator
-git checkout v4.040
-autoconf
-export VERILATOR_ROOT=`pwd`
-./configure
-make -j 4
-
-# Remove installation dependencies to shrink image size
-apt-get remove --purge -y $VLT_INSTALL_PACKAGES
-apt-get autoremove -y
+__all__ = ["pull_data_from_gcs"]

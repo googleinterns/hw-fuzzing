@@ -1,0 +1,44 @@
+{
+  // Experiment Parameters
+  experiment_name: exp000-lock-cpp-afl-test
+  circuit: lock
+  // Options: [cpp, cocotb]
+  tb_type: cpp
+  // Options: [default]
+  tb: afl
+  // Options: [afl, afl-term-on-crash, sim]
+  fuzzer: afl-term-on-crash
+  run_on_gcp: 0
+
+  // GCP Parameters (if any)
+  gcp_params: {
+    project: hardware-fuzzing
+    data_bucket: fuzzing-data
+    container_restart_policy: never
+    zone: us-east4-a
+    machine_type: n1-standard-2
+    boot_disk_size: 10GB
+    scopes: default,compute-rw,storage-rw
+    startup_script_url: "gs://vm-management/gce_vm_startup.sh"
+  }
+
+  // Verilator Parameters
+  verilator_params: {
+    opt_slow: -O3
+    opt_fast: -O3
+    opt_global: -O3
+  }
+
+  // HDL Generation Parameters (if any)
+  hdl_gen_params: {
+    num_lock_states: 4
+    lock_comp_width: 4
+  }
+
+  // AFL - Fuzzer Parameters
+  fuzzer_params: {
+    num_instances: 1
+    mode: s
+    duration_mins: null
+  }
+}

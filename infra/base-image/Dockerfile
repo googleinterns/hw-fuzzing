@@ -47,9 +47,10 @@ RUN apt-get install -y \
       python3.8 \
       python3.8-dev \
       python3.8-distutils
+RUN rm /usr/bin/python3 && ln -s /usr/bin/python3.8 /usr/bin/python3
 
 # Install pip
 RUN curl https://bootstrap.pypa.io/get-pip.py -o $SRC/get-pip.py
-RUN python3.8 $SRC/get-pip.py && \
-      python3.8 -m pip install --upgrade pip && \
+RUN python3 $SRC/get-pip.py && \
+      python3 -m pip install --upgrade pip && \
       rm $SRC/get-pip.py
