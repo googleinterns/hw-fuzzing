@@ -43,7 +43,7 @@ make \
   OPT_GLOBAL=$OPT_GLOBAL \
   TB_TYPE=$TB_TYPE \
   TB=$TB \
-  DISABLE_VCD_TRACING=1
+  DISABLE_VCD_TRACING=1 \
   debug-make
 echo "Done!"
 
