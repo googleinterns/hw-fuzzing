@@ -12,7 +12,6 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-
 """This is a cocotb testbench harness to interface with afl-fuzz.
 
 Description:
@@ -28,10 +27,10 @@ Python, any arguments must be passed as environment variables.
 
 import os
 import random
+
 import cocotb
 from cocotb.clock import Clock
-from cocotb.triggers import FallingEdge
-from cocotb.triggers import Timer
+from cocotb.triggers import FallingEdge, Timer
 
 CLK_PERIOD_NS = 10  # duration of simulation clock period
 DUT_RESET_DURATION_NS = 50  # duration to hold DUT in reset for in ns

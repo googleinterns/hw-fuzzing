@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef TB_CPP_INC_VERILATOR_TB_H_
-#define TB_CPP_INC_VERILATOR_TB_H_
+#ifndef HW_TB_CPP_INC_VERILATOR_TB_H_
+#define HW_TB_CPP_INC_VERILATOR_TB_H_
 
 #include "verilated.h"
 #if VM_TRACE
@@ -50,4 +50,4 @@ class VerilatorTb {
     void OpenTestFile();
     void CloseTestFile();
 };
-#endif  // TB_CPP_INC_VERILATOR_TB_H_
+#endif  // HW_TB_CPP_INC_VERILATOR_TB_H_

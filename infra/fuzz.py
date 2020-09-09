@@ -12,7 +12,6 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-
 """This module contains methods to fuzz hw IP block in hw/.
 
 Description:
@@ -44,10 +43,7 @@ import sys
 import time
 
 # Custom modules
-from config import color_str_green
-from config import color_str_red
-from config import color_str_yellow
-from config import Config
+from config import Config, color_str_green, color_str_red, color_str_yellow
 
 LINE_SEP = "==================================================================="
 MAX_NUM_VM_INSTANCES = 36  # this is max default quota for us-east4-a zone
@@ -74,14 +70,13 @@ def run_cmd(cmd, error_str):
 # Check if experiment data directory with same name exists
 def check_for_data_locally(config):
   """Checks if experiment data already exists locally."""
-  exp_data_path = "%s/data/%s" % \
-      (config.root_path, config.experiment_name)
+  exp_data_path = "%s/data/%s" % (config.root_path, config.experiment_name)
   if glob.glob(exp_data_path):
     if config.args.yes:
       shutil.rmtree(exp_data_path)
     else:
-      ovw = input(color_str_yellow( \
-          "WARNING: experiment data exists. Overwrite? [Yn]"))
+      ovw = input(
+          color_str_yellow("WARNING: experiment data exists. Overwrite? [Yn]"))
       if ovw in {"yes", "y", "Y", "YES", "Yes", ""}:
         shutil.rmtree(exp_data_path)
       else:
@@ -91,16 +86,22 @@ def check_for_data_locally(config):
 
 
 def delete_data_in_gcs(config):
-  sub_cmd = ["gsutil", "rm", "gs://%s/%s/**" % \
-      (config.gcp_params["data_bucket"], config.experiment_name)]
+  sub_cmd = [
+      "gsutil", "rm",
+      "gs://%s/%s/**" %
+      (config.gcp_params["data_bucket"], config.experiment_name)
+  ]
   error_str = "ERROR: deleting existing data. Terminating Experiment!"
   run_cmd(sub_cmd, error_str)
 
 
 def check_for_data_in_gcs(config):
   """Check Google Cloud Storage for existing experiment data files."""
-  cmd = ["gsutil", "-q", "stat", "gs://%s/%s/**" % \
-      (config.gcp_params["data_bucket"], config.experiment_name)]
+  cmd = [
+      "gsutil", "-q", "stat",
+      "gs://%s/%s/**" %
+      (config.gcp_params["data_bucket"], config.experiment_name)
+  ]
   try:
     subprocess.check_call(cmd)
   except subprocess.CalledProcessError:
@@ -108,8 +109,9 @@ def check_for_data_in_gcs(config):
   if config.args.yes:
     delete_data_in_gcs(config)
   else:
-    ovw = input(color_str_yellow( \
-        "WARNING: experiment data exists in GCS. Overwrite? [Yn]"))
+    ovw = input(
+        color_str_yellow(
+            "WARNING: experiment data exists in GCS. Overwrite? [Yn]"))
     if ovw in {"yes", "y", "Y", "YES", "Yes", ""}:
       delete_data_in_gcs(config)
     else:
@@ -123,10 +125,11 @@ def build_docker_image(config):
   print(LINE_SEP)
   print("Building Docker image to fuzz %s ..." % config.circuit)
   print(LINE_SEP)
-  cmd = ["docker", "build", \
-      "--build-arg", "FUZZER=%s" % config.fuzzer, \
-      "-t", config.docker_image, \
-      "%s/hw/%s" % (config.root_path, config.circuit)]
+  cmd = [
+      "docker", "build", "--build-arg",
+      "FUZZER=%s" % config.fuzzer, "-t", config.docker_image,
+      "%s/hw/%s" % (config.root_path, config.circuit)
+  ]
   error_str = "ERROR: image build FAILED. Terminating experiment!"
   run_cmd(cmd, error_str)
   print(color_str_green("IMAGE BUILD SUCCESSFUL -- Done!"))
@@ -145,17 +148,17 @@ def create_local_experiment_data_dir(config):
   os.makedirs(exp_data_path)
   os.chmod(exp_data_path, stat.S_IRWXU | stat.S_IRGRP | stat.S_IROTH)
   os.mkdir(os.path.join(exp_data_path, "out"))
-  os.chmod(os.path.join(exp_data_path, "out"), \
-      stat.S_IRWXU | stat.S_IRGRP | stat.S_IROTH)
+  os.chmod(os.path.join(exp_data_path, "out"),
+           stat.S_IRWXU | stat.S_IRGRP | stat.S_IROTH)
   os.mkdir(os.path.join(exp_data_path, "logs"))
-  os.chmod(os.path.join(exp_data_path, "logs"), \
-      stat.S_IRWXU | stat.S_IRGRP | stat.S_IROTH)
+  os.chmod(os.path.join(exp_data_path, "logs"),
+           stat.S_IRWXU | stat.S_IRGRP | stat.S_IROTH)
 
   # Copy over seeds that were used in this experiment
   seeds_dir = "%s/hw/%s/seeds" % (config.root_path, config.circuit)
   shutil.copytree(seeds_dir, os.path.join(exp_data_path, "seeds"))
-  os.chmod(os.path.join(exp_data_path, "seeds"), \
-      stat.S_IRWXU | stat.S_IRGRP | stat.S_IROTH)
+  os.chmod(os.path.join(exp_data_path, "seeds"),
+           stat.S_IRWXU | stat.S_IRGRP | stat.S_IROTH)
 
   # Copy over HJSON config file that was used
   shutil.copy2(config.config_filename, exp_data_path)
@@ -181,10 +184,9 @@ def run_docker_container_locally(config, exp_data_path):
       if value is not None:
         cmd.extend(["-e", "%s=%s" % (param.upper(), value)])
   # Mount volumes for output data
-  cmd.extend(["-v", "%s/logs:/src/hw/%s/logs" % \
-      (exp_data_path, config.circuit)])
-  cmd.extend(["-v", "%s/out:/src/hw/%s/out" % \
-      (exp_data_path, config.circuit)])
+  cmd.extend(
+      ["-v", "%s/logs:/src/hw/%s/logs" % (exp_data_path, config.circuit)])
+  cmd.extend(["-v", "%s/out:/src/hw/%s/out" % (exp_data_path, config.circuit)])
   # Set target Docker image and run
   cmd.extend(["-t", config.docker_image])
   # TODO(ttrippel): add debug flag to launch container in interactively w/ shell
@@ -199,14 +201,15 @@ def check_if_docker_image_exists_in_gcr(config):
   print(LINE_SEP)
   print("Checking if Docker image exists in GCR already ...")
   print(LINE_SEP)
-  cmd = ["gcloud", "container", "images", "list", \
-      "--repository=gcr.io/%s" % config.gcp_params["project"]]
-  proc = subprocess.Popen(\
-      cmd, \
-      stdin=subprocess.PIPE, \
-      stdout=subprocess.PIPE, \
-      stderr=subprocess.STDOUT, \
-      close_fds=True)
+  cmd = [
+      "gcloud", "container", "images", "list",
+      "--repository=gcr.io/%s" % config.gcp_params["project"]
+  ]
+  proc = subprocess.Popen(cmd,
+                          stdin=subprocess.PIPE,
+                          stdout=subprocess.PIPE,
+                          stderr=subprocess.STDOUT,
+                          close_fds=True)
   line = proc.stdout.readline()  # first line is a header
   while True:
     line = proc.stdout.readline().decode("utf-8").rstrip()
@@ -235,8 +238,11 @@ def push_vm_management_scripts_to_gcs(config):
   print(LINE_SEP)
   print("Copying VM management script to GCS ...")
   print(LINE_SEP)
-  cmd = ["gsutil", "cp", "%s/experiments/scripts/gce_vm_startup.sh" % \
-      config.root_path, "gs://%s/gce_vm_startup.sh" % "vm-management"]
+  cmd = [
+      "gsutil", "cp",
+      "%s/experiments/scripts/gce_vm_startup.sh" % config.root_path,
+      "gs://%s/gce_vm_startup.sh" % "vm-management"
+  ]
   error_str = "ERROR: pushing scripts to GCS FAILED. Terminating experiment!"
   run_cmd(cmd, error_str)
   print(color_str_green("COPY SUCCESSFUL -- Done!"))
@@ -247,14 +253,15 @@ def check_num_active_vm_instances(config):
   print(LINE_SEP)
   print("Checking number of active VMs on GCE ...")
   print(LINE_SEP)
-  cmd = ["gcloud", "compute", "instances", "list", \
-      "--zones=%s" % config.gcp_params["zone"]]
-  proc = subprocess.Popen(\
-      cmd, \
-      stdin=subprocess.PIPE, \
-      stdout=subprocess.PIPE, \
-      stderr=subprocess.STDOUT, \
-      close_fds=True)
+  cmd = [
+      "gcloud", "compute", "instances", "list",
+      "--zones=%s" % config.gcp_params["zone"]
+  ]
+  proc = subprocess.Popen(cmd,
+                          stdin=subprocess.PIPE,
+                          stdout=subprocess.PIPE,
+                          stderr=subprocess.STDOUT,
+                          close_fds=True)
   num_active_vm_instances = -1  # first line is header
   while True:
     line = proc.stdout.readline()
@@ -265,8 +272,9 @@ def check_num_active_vm_instances(config):
     print(color_str_green("%d active VM(s)" % num_active_vm_instances))
   else:
     print(color_str_red("%d active VM(s)" % num_active_vm_instances))
-    print(color_str_yellow("waiting %d seconds and trying again ..." % \
-        VM_LAUNCH_WAIT_TIME_S))
+    print(
+        color_str_yellow("waiting %d seconds and trying again ..." %
+                         VM_LAUNCH_WAIT_TIME_S))
   return num_active_vm_instances
 
 
@@ -286,18 +294,20 @@ def run_docker_container_on_gce(config):
   print(LINE_SEP)
   print("Launching GCE VM to fuzz %s ..." % config.circuit)
   print(LINE_SEP)
-  cmd = ["gcloud", "compute", "--project=%s" % config.gcp_params["project"], \
-      "instances", "create-with-container", config.experiment_name, \
-      "--container-image", config.docker_image, \
-      "--container-restart-policy", \
-      config.gcp_params["container_restart_policy"], \
-      "--zone=%s" % config.gcp_params["zone"], \
-      "--machine-type=%s" % config.gcp_params["machine_type"], \
-      "--boot-disk-size=%s" % config.gcp_params["boot_disk_size"], \
-      "--scopes=%s" % config.gcp_params["scopes"], \
-      "--metadata=startup-script-url=%s" % \
-      config.gcp_params["startup_script_url"]]
-  # TODO(ttrippel): add debug flag to launch container in interactively w/ shell
+  cmd = [
+      "gcloud", "compute",
+      "--project=%s" % config.gcp_params["project"], "instances",
+      "create-with-container", config.experiment_name, "--container-image",
+      config.docker_image, "--container-restart-policy",
+      config.gcp_params["container_restart_policy"],
+      "--zone=%s" % config.gcp_params["zone"],
+      "--machine-type=%s" % config.gcp_params["machine_type"],
+      "--boot-disk-size=%s" % config.gcp_params["boot_disk_size"],
+      "--scopes=%s" % config.gcp_params["scopes"],
+      "--metadata=startup-script-url=%s" %
+      config.gcp_params["startup_script_url"]
+  ]
+  # TODO(ttrippel): add debug flag to launch container interactively w/ shell
   # cmd.extend["--container-tty", "--container-stdin", "--container-arg=bash"]
   # Set environment variables for general configs
   cmd.extend(["--container-env", "%s=%s" % ("CIRCUIT", config.circuit)])
@@ -323,12 +333,17 @@ def fuzz(argv):
   # Parse cmd args
   module_description = "Hardware Fuzzing Pipeline"
   parser = argparse.ArgumentParser(description=module_description)
-  parser.add_argument("-y", "--yes", action="store_true", \
-      help="Yes to all prompts.")
-  parser.add_argument("-u", "--update", action="store_true", \
-      help="Update Docker image in GCR.")
-  parser.add_argument("config_filename", metavar="config.hjson", \
-      help="Configuration file in the HJSON format.")
+  parser.add_argument("-y",
+                      "--yes",
+                      action="store_true",
+                      help="Yes to all prompts.")
+  parser.add_argument("-u",
+                      "--update",
+                      action="store_true",
+                      help="Update Docker image in GCR.")
+  parser.add_argument("config_filename",
+                      metavar="config.hjson",
+                      help="Configuration file in the HJSON format.")
   args = parser.parse_args(argv)
 
   # Load experiment configurations
@@ -351,6 +366,7 @@ def fuzz(argv):
     push_docker_image_to_gcr(config)
     push_vm_management_scripts_to_gcs(config)
     run_docker_container_on_gce(config)
+
 
 if __name__ == "__main__":
   signal.signal(signal.SIGINT, sigint_handler)

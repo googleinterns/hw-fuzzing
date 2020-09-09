@@ -12,7 +12,6 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-
 """This module parses an HJSON config file defining how/what circuit to fuzz.
 
 Description:
@@ -65,7 +64,6 @@ class Config():
     root_path: Root path of hw-fuzzing repository (set as an environment var).
     docker_image: Name of the Docker image that will be built to fuzz the DUT.
   """
-
   def __init__(self, args):
     """Constructs experiment configuration object from an HJSON file."""
     self.args = args

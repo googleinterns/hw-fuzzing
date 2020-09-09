@@ -12,7 +12,6 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-
 """This is a cocotb testbench harness to interface with afl-fuzz.
 
 Description:
@@ -34,10 +33,10 @@ Python, any arguments must be passed as environment variables.
 import math
 import os
 import sys
+
 import cocotb
 from cocotb.clock import Clock
-from cocotb.triggers import FallingEdge
-from cocotb.triggers import Timer
+from cocotb.triggers import FallingEdge, Timer
 
 CLK_PERIOD_NS = 10  # duration of simulation clock period
 DUT_RESET_DURATION_NS = 50  # duration to hold DUT in reset for in ns
@@ -83,10 +82,10 @@ async def lock_tb(dut):
   # Send in random input values
   dut_input_bytes = sys.stdin.buffer.read(input_size_bytes)
   while dut_input_bytes:
-    dut_input_int = int.from_bytes(dut_input_bytes, \
-        byteorder="big", \
-        signed=False)
-    dut._log.info(f"Setting code to:")
+    dut_input_int = int.from_bytes(dut_input_bytes,
+                                   byteorder="big",
+                                   signed=False)
+    dut._log.info("Setting code to:")
     dut._log.info(f"  (bytes): {dut_input_bytes.hex()}")
     dut._log.info(f"  (int):   {dut_input_int}")
     dut.code <= dut_input_int
