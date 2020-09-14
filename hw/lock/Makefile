@@ -13,7 +13,7 @@
 # limitations under the License.
 
 ################################################################################
-# Circuit specific configs
+# Design Specific Configs
 ################################################################################
 export TOPLEVEL      := lock
 export TOPLEVEL_LANG := verilog
@@ -31,9 +31,15 @@ export NUM_LOCK_STATES ?= 4
 export LOCK_COMP_WIDTH ?= 8
 
 ################################################################################
-# Directories
+# HDL Directories
 ################################################################################
-#HDL_DIR := ../../third_party/$(TOPLEVEL)# uncomment if third party IP block
+#export HDL_INC_DIRS :=
+export HDL := hdl/lock.v
+
+################################################################################
+# Verilator Flags (optional)
+################################################################################
+#export VFLAGS :=
 
 ################################################################################
 # Include common build targets

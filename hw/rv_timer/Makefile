@@ -18,9 +18,22 @@ export SEED          := afl_seed.0.tf
 export INPUT_WIDTH ?= 8
 
 ################################################################################
-# Directories
+# HDL Directories
 ################################################################################
-HDL_DIR := ../../../opentitan/hw/ip/$(TOPLEVEL)/rtl
+export HDL_INC_DIRS := \
+	../../../opentitan/hw/ip/prim/rtl \
+	../../../opentitan/hw/ip/tlul/rtl \
+	../../../opentitan/hw/ip/$(TOPLEVEL)/rtl
+export HDL := \
+	../../../opentitan/hw/top_earlgrey/rtl/top_pkg.sv \
+	../../../opentitan/hw/ip/tlul/rtl/tlul_pkg.sv \
+	../../../opentitan/hw/ip/$(TOPLEVEL)/rtl/rv_timer_reg_pkg.sv \
+	../../../opentitan/hw/ip/$(TOPLEVEL)/rtl/rv_timer.sv
+
+################################################################################
+# Verilator Flags (optional)
+################################################################################
+export VFLAGS := -DVERILATOR
 
 ################################################################################
 # Include common build targets

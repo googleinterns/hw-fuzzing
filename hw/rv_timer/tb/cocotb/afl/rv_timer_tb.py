@@ -1,5 +1,5 @@
 #!/usr/bin/python3
-# TODO: add license
+# TODO(ttrippel): add license
 """This is a cocotb testbench harness to interface with afl-fuzz.
 
 Description:
@@ -9,23 +9,24 @@ the input port(s) of the DUT. The testbench proceeds until there are no inputs
 more inputs to provide the DUT.
 
 Assertions:
-This testbench contains a single assertion that raises an AssertionError to
-crash the program when the final lock state is reached. AFL requires program
-crashes as a feedback mechanism to know when it has reached its goal.
 
 Environment Vars:
 Since cocotb does not support passing arguments to the tests implemented in
 Python, any arguments must be passed as environment variables.
 """
 
+import logging
 import math
 import os
 import sys
 
 import cocotb
 from cocotb.clock import Clock
-from cocotb.drivers import TLULHost
-from cocotb.triggers import FallingEdge, RisingEdge, Timer
+from cocotb.triggers import RisingEdge, Timer
+
+# Import custom cocotb extension packages
+sys.path.append("/Users/ttrippel-spqr/repos/hw-fuzzing/hw/tb")
+from cocotb_ext.drivers.tlul import TLULHost
 
 CLK_PERIOD_NS = 10  # duration of simulation clock period
 DUT_RESET_DURATION_NS = 50  # duration to hold DUT in reset for in ns
@@ -34,22 +35,23 @@ DUT_RESET_DURATION_NS = 50  # duration to hold DUT in reset for in ns
 class RVTimerTB():
   def __init__(self, dut, debug=False):
     self.dut = dut
-    self.afl_in = TLULHost(dut,
-                           "afl_in",
-                           dut.clk_i,
-                           host_id=2,
-                           data_size_bytes=4)
+    self.tlul = TLULHost(dut, "", dut.clk_i)
+
+    # Set verbosity on our various interfaces
+    level = logging.DEBUG if debug else logging.WARNING
+    # self.afl_in.log.setLevel(level)
+    self.dut._log.setLevel(level)
 
     # Create a scoreboard
 
-  async def reset_dut(self, duration_ns):
-    self.dut.reset_n._log.debug("Resetting the DUT ...")
+  async def reset(self, duration_ns):
+    self.dut._log.debug("Resetting the DUT ...")
     self.dut.rst_ni <= 0
-    self.afl_in.bus.valid <= 0
+    # self.afl_in.bus.valid <= 0
     await Timer(duration_ns, units="ns")
     await RisingEdge(self.dut.clk_i)
     self.dut.rst_ni <= 1
-    self._log.debug("Reset complete!")
+    self.dut._log.debug("Reset complete!")
 
 
 @cocotb.test()
@@ -82,7 +84,7 @@ async def rv_timer_tb(dut):
   cocotb.fork(clock.start())
 
   # Reset the DUT
-  await tb.reset(dut.reset_n, DUT_RESET_DURATION_NS)
+  await tb.reset(DUT_RESET_DURATION_NS)
 
   # # Send in random input values
   # dut_input_bytes = sys.stdin.buffer.read(input_size_bytes)

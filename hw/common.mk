@@ -15,18 +15,17 @@
 ################################################################################
 # Directories
 ################################################################################
-HDL_DIR ?= hdl
-TB_DIR  := tb/$(TB_TYPE)/$(TB)
+TB_DIR := tb/$(TB_TYPE)/$(TB)
 ifeq ($(TB_TYPE), cocotb)
-	export TB_SRCS_DIR        := $(shell cocotb-config --share)/lib/verilator
-	export TB_INCS_DIR        :=
-	export SHARED_TB_SRCS_DIR :=
-	export SHARED_TB_INCS_DIR :=
+export TB_SRCS_DIR        := $(shell cocotb-config --share)/lib/verilator
+export TB_INCS_DIR        :=
+export SHARED_TB_SRCS_DIR :=
+export SHARED_TB_INCS_DIR :=
 else
-	export TB_SRCS_DIR        := $(TB_DIR)/src
-	export TB_INCS_DIR        := $(TB_DIR)/inc
-	export SHARED_TB_SRCS_DIR := ../tb/$(TB_TYPE)/src
-	export SHARED_TB_INCS_DIR := ../tb/$(TB_TYPE)/inc
+export TB_SRCS_DIR        := $(TB_DIR)/src
+export TB_INCS_DIR        := $(TB_DIR)/inc
+export SHARED_TB_SRCS_DIR := ../tb/$(TB_TYPE)/src
+export SHARED_TB_INCS_DIR := ../tb/$(TB_TYPE)/inc
 endif
 export MODEL_DIR := model
 export BUILD_DIR := build
@@ -35,13 +34,12 @@ export BIN_DIR   := bin
 ################################################################################
 # Sources/Inputs
 ################################################################################
-export HDL := $(wildcard $(HDL_DIR)/*.v)
 ifeq ($(TB_TYPE), cocotb)
-	export TB_SRCS := $(shell cocotb-config --share)/lib/verilator/verilator.cpp
-	TB_MODULE      := tb.$(TB_TYPE).$(TB).$(TOPLEVEL)_tb
+export TB_SRCS := $(shell cocotb-config --share)/lib/verilator/verilator.cpp
+TB_MODULE      := tb.$(TB_TYPE).$(TB).$(TOPLEVEL)_tb
 else
-	export TB_SRCS        := $(wildcard $(TB_SRCS_DIR)/*.cpp)
-	export SHARED_TB_SRCS := $(wildcard $(SHARED_TB_SRCS_DIR)/*.cpp)
+export TB_SRCS        := $(wildcard $(TB_SRCS_DIR)/*.cpp)
+export SHARED_TB_SRCS := $(wildcard $(SHARED_TB_SRCS_DIR)/*.cpp)
 endif
 MODEL_SRC := $(MODEL_DIR)/Vtop.cpp
 
@@ -54,21 +52,26 @@ VFLAGS += \
 	--top-module $(TOPLEVEL) \
 	--Mdir $(MODEL_DIR) \
 	--cc \
-	--compiler clang \
+	--compiler clang
 
 # Other setting for cocotb support
 ifeq ($(TB_TYPE), cocotb)
-	VFLAGS += -DCOCOTB_SIM=1 --vpi --public-flat-rw
-	LDFLAGS += -Wl,-rpath,$(shell cocotb-config --prefix)/libs
-	LDFLAGS += -L$(shell cocotb-config --prefix)/cocotb/libs
-	LDLIBS += -lcocotbvpi_verilator -lgpi -lcocotb -lgpilog -lcocotbutils
-	CPPFLAGS += "-DVL_TIME_PRECISION_STR=1ps"
-	export COCOTB_REDUCED_LOG_FMT := 1
-	export LD_LIBRARY_PATH := $(shell cocotb-config --prefix)/cocotb/libs
+VFLAGS   += -DCOCOTB_SIM=1 --vpi --public-flat-rw
+LDFLAGS  += -Wl,-rpath,$(shell cocotb-config --prefix)/cocotb/libs
+LDFLAGS  += -L$(shell cocotb-config --prefix)/cocotb/libs
+LDLIBS   += -lcocotbvpi_verilator -lgpi -lcocotb -lgpilog -lcocotbutils
+CPPFLAGS += "-DVL_TIME_PRECISION_STR=1ps"
+export COCOTB_REDUCED_LOG_FMT := 1
+export COCOTB_LOG_LEVEL       := INFO
+export LD_LIBRARY_PATH        := $(shell cocotb-config --prefix)/cocotb/libs
+endif
+
+ifdef HDL_INC_DIRS
+VFLAGS += $(addprefix -I, $(HDL_INC_DIRS))
 endif
 
 ifndef DISABLE_VCD_TRACING
-	VFLAGS += --trace
+VFLAGS += --trace
 endif
 
 ################################################################################
@@ -112,7 +115,6 @@ debug-make::
 	@echo
 	@echo TOPLEVEL: $(TOPLEVEL)
 	@echo TOPLEVEL_LANG: $(TOPLEVEL_LANG)
-	@echo HDL_DIR: $(HDL_DIR)
 	@echo HDL: $(HDL)
 	@echo TB_DIR: $(TB_DIR)
 	@echo TB_SRCS_DIR: $(TB_SRCS_DIR)

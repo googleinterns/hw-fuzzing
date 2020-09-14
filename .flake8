@@ -11,4 +11,6 @@ ignore =
   # Use 2-space indent instead of 4
   E111,
   E114
+  # Importing custom packages for now
+  E402
 
