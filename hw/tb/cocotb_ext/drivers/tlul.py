@@ -1,9 +1,11 @@
 # TODO(ttrippel): add license
 
 import struct
+from collections import OrderedDict
 from enum import IntEnum
 
 import cocotb
+import prettytable
 from cocotb.binary import BinaryValue
 from cocotb.drivers import BusDriver
 from cocotb.triggers import Event, ReadOnly, RisingEdge
@@ -66,39 +68,31 @@ class TLULHost(BusDriver):
       D_SINK:    (input)  response device ID of a configurable width
       D_USER:    (input)  extension to TL-UL spec. for OpenTitan IP cores
   """
-
-  # _signals = [
-  # "A_VALID", "A_READY", "A_OPCODE", "A_PARAM", "A_ADDRESS", "A_DATA",
-  # "A_SOURCE", "A_SIZE", "A_MASK", "D_VALID", "D_READY", "D_OPCODE",
-  # "D_ERROR", "D_PARAM", "D_SIZE", "D_DATA", "D_SOURCE", "D_SINK"
-  # ]
-
-  # _optional_signals = ["A_USER", "D_USER"]
-
   _signals = ["tl_i", "tl_o"]
 
   def __init__(self, entity, name, clock, **kwargs):
     BusDriver.__init__(self, entity, name, clock, **kwargs)
+    # TL-UL Host-to-Device signals
+    # TODO(ttrippel): make these configurable
+    self._tl_h2d_widths = OrderedDict([("a_valid", 1), ("a_opcode", 1),
+                                       ("a_param", 1), ("a_size", 2),
+                                       ("a_source", 8), ("a_address", 32),
+                                       ("a_mask", 4), ("a_data", 32),
+                                       ("a_user", 16), ("d_ready", 1)])
+
+    # TL-UL Device-to-Host signals
+    # TODO(ttrippel): make these configurable
+    self._tl_d2h_widths = OrderedDict([("d_valid", 1), ("d_opcode", 3),
+                                       ("d_param", 3), ("d_size", 2),
+                                       ("d_source", 8), ("d_sink", 1),
+                                       ("d_data", 32), ("d_user", 4),
+                                       ("d_error", 1), ("a_ready", 1)])
 
     # tl_i (TL-UL input to DEVICE, output from HOST (this driver))
-    print()
-    print("TLUL DEVICE INPUT:")
-    print(type(self.bus.tl_i))
-    print(type(self.bus.tl_i.value))
-    print(dir(self.bus.tl_i))
-    print(self.bus.tl_i.value.binstr)
-    print(len(self.bus.tl_i.value))
-    print(self.bus.tl_i.get_definition_name())
+    self._print_h2d_signals()
 
     # tl_o (TL-UL output from DEVICE, input to HOST (this driver))
-    print()
-    print("TLUL DEVICE OUTPUT:")
-    print(type(self.bus.tl_o))
-    print(type(self.bus.tl_o.value))
-    print(dir(self.bus.tl_o))
-    print(self.bus.tl_o.value.binstr)
-    print(len(self.bus.tl_o.value))
-    print(self.bus.tl_o.get_definition_name())
+    self._print_d2h_signals()
 
     # Drive some sensible default outputs (setimmediatevalue to avoid x asserts)
     a_valid = int("1", 2)
@@ -173,6 +167,34 @@ class TLULHost(BusDriver):
     tl_h2d_w3 |= d_ready
 
     return tl_h2d.pack(tl_h2d_w0, tl_h2d_w1, tl_h2d_w2, tl_h2d_w3)
+
+  def _print_h2d_signals(self):
+    """Prints current state of Host-to-Device TL-UL signals for debugging."""
+    tl_h2d_table = prettytable.PrettyTable(header=True)
+    tl_h2d_table.title = "TL-UL Host-to-Device Signals"
+    tl_h2d_table.field_names = ["Signal", "Width", "Value"]
+    idx = 0
+    for signal, width in self._tl_h2d_widths.items():
+      tl_h2d_table.add_row(
+          [signal, width, self.bus.tl_i.value.binstr[idx:idx + width]])
+      idx += width
+    tl_h2d_table.add_row(["Total Width", idx, ""])
+    tl_h2d_table.align = "l"
+    print(tl_h2d_table)
+
+  def _print_d2h_signals(self):
+    """Prints current state of Host-to-Device TL-UL signals for debugging."""
+    tl_d2h_table = prettytable.PrettyTable(header=True)
+    tl_d2h_table.title = "TL-UL Device-to-Host Signals"
+    tl_d2h_table.field_names = ["Signal", "Width", "Value"]
+    idx = 0
+    for signal, width in self._tl_d2h_widths.items():
+      tl_d2h_table.add_row(
+          [signal, width, self.bus.tl_o.value.binstr[idx:idx + width]])
+      idx += width
+    tl_d2h_table.add_row(["Total Width", idx, ""])
+    tl_d2h_table.align = "l"
+    print(tl_d2h_table)
 
   @cocotb.coroutine
   async def get(self, address: int, sync: bool = True) -> BinaryValue:

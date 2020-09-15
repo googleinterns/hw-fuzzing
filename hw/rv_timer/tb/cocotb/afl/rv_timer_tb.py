@@ -25,7 +25,7 @@ from cocotb.clock import Clock
 from cocotb.triggers import RisingEdge, Timer
 
 # Import custom cocotb extension packages
-sys.path.append("/Users/ttrippel-spqr/repos/hw-fuzzing/hw/tb")
+sys.path.append("/Users/ttrippel/repos/hw-fuzzing/hw/tb")
 from cocotb_ext.drivers.tlul import TLULHost
 
 CLK_PERIOD_NS = 10  # duration of simulation clock period
