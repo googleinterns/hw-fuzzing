@@ -1,5 +1,6 @@
 # TODO(ttrippel): add license
 
+import math
 import struct
 from collections import OrderedDict
 from enum import IntEnum
@@ -71,130 +72,132 @@ class TLULHost(BusDriver):
   _signals = ["tl_i", "tl_o"]
 
   def __init__(self, entity, name, clock, **kwargs):
+    # Initialize bus signals
     BusDriver.__init__(self, entity, name, clock, **kwargs)
-    # TL-UL Host-to-Device signals
-    # TODO(ttrippel): make these configurable
-    self._tl_h2d_widths = OrderedDict([("a_valid", 1), ("a_opcode", 1),
-                                       ("a_param", 1), ("a_size", 2),
-                                       ("a_source", 8), ("a_address", 32),
-                                       ("a_mask", 4), ("a_data", 32),
-                                       ("a_user", 16), ("d_ready", 1)])
 
-    # TL-UL Device-to-Host signals
-    # TODO(ttrippel): make these configurable
-    self._tl_d2h_widths = OrderedDict([("d_valid", 1), ("d_opcode", 3),
-                                       ("d_param", 3), ("d_size", 2),
-                                       ("d_source", 8), ("d_sink", 1),
-                                       ("d_data", 32), ("d_user", 4),
-                                       ("d_error", 1), ("a_ready", 1)])
+    # Set TL-UL Host-to-Device signal widths
+    # TODO(ttrippel): make these configurable and remove assertions
+    self._h2d_widths = OrderedDict([("a_valid", 1), ("a_opcode", 3),
+                                    ("a_param", 3), ("a_size", 2),
+                                    ("a_source", 8), ("a_address", 32),
+                                    ("a_mask", 4), ("a_data", 32),
+                                    ("a_user", 16), ("d_ready", 1)])
+    self._total_h2d_width = sum(w for s, w in self._h2d_widths.items())
+    assert self._total_h2d_width == len(self.bus.tl_i.value.binstr), \
+        "Host-to-Device signal width settings are incorrect."
 
-    # tl_i (TL-UL input to DEVICE, output from HOST (this driver))
-    self._print_h2d_signals()
-
-    # tl_o (TL-UL output from DEVICE, input to HOST (this driver))
-    self._print_d2h_signals()
+    # Set TL-UL Device-to-Host signal widths
+    # TODO(ttrippel): make these configurable and remove assertions
+    self._d2h_widths = OrderedDict([("d_valid", 1), ("d_opcode", 3),
+                                    ("d_param", 3), ("d_size", 2),
+                                    ("d_source", 8), ("d_sink", 1),
+                                    ("d_data", 32), ("d_user", 16),
+                                    ("d_error", 1), ("a_ready", 1)])
+    self._total_d2h_width = sum(w for s, w in self._d2h_widths.items())
+    assert self._total_d2h_width == len(self.bus.tl_o.value.binstr), \
+        "Device-to-Host signal width settings are incorrect."
 
     # Drive some sensible default outputs (setimmediatevalue to avoid x asserts)
-    a_valid = int("1", 2)
-    a_opcode = int(TL_A_Opcode.PutFullData)
-    a_param = int("111", 2)
-    a_size = 0
-    a_source = int("11111111", 2)
-    a_address = 0
-    a_mask = 15
-    a_data = 0
-    a_user = 0
-    d_ready = 0
-    tl_i = self.pack_tl_h2d(a_valid, a_opcode, a_param, a_size, a_source,
-                            a_address, a_mask, a_data, a_user, d_ready)
+    tl_i = self._pack_h2d_signals(a_opcode=TL_A_Opcode.Get,
+                                  a_param=int("111", 2),
+                                  a_source=int("10101010", 2),
+                                  a_address=int("deadbeaf", 16),
+                                  a_mask=15)
     self.bus.tl_i.setimmediatevalue(BinaryValue(tl_i))
-    tl_i = self.bus.tl_i.value.binstr
-    print()
-    print(tl_i)
-    assert int(tl_i[0], 2) == a_valid
-    assert int(tl_i[1:4], 2) == a_opcode
-    assert int(tl_i[4:7], 2) == a_param
-    assert int(tl_i[7:9], 2) == a_size
 
     # Mutex for each channel that we host to prevent contention
     # self.write_address_busy = Lock("%s_wabusy" % name)
     # self.read_address_busy = Lock("%s_rabusy" % name)
     # self.write_data_busy = Lock("%s_wbusy" % name)
 
-  def pack_tl_h2d(self, a_valid: int, a_opcode: int, a_param: int, a_size: int,
-                  a_source: int, a_address: int, a_mask: int, a_data: int,
-                  a_user: int, d_ready: int) -> bytes:
+    # print initial state of TL-UL signals
+    print("TL-UL bus signals initialized to:")
+    self._print_tl_signals("h2d")
+    self._print_tl_signals("d2h")
+    print()
+
+  def _pack_h2d_signals(self,
+                        a_valid: int = 0,
+                        a_opcode: int = 0,
+                        a_param: int = 0,
+                        a_size: int = 0,
+                        a_source: int = 0,
+                        a_address: int = 0,
+                        a_mask: int = 0,
+                        a_data: int = 0,
+                        a_user: int = 0,
+                        d_ready: int = 0) -> bytes:
     """Creates a packed struct for input to a TL-UL device."""
 
     # Create a packed struct of 104 bits
     # OpenTitan IP input accepts a TileLink input of 102 bits wide)
     # "=" = standard size and native endianness
     # B = unsigned char (1 byte); Q = unsigned long long (8 bytes)
-    tl_h2d = struct.Struct(">4I")
+    h2d_signals = struct.Struct(">4I")
 
     # form word 0 -- contains first 6 bits of tl_h2d_t SV struct
-    tl_h2d_w0 = 0
-    tl_h2d_w0 = a_valid
-    tl_h2d_w0 <<= 3
-    tl_h2d_w0 |= a_opcode
-    tl_h2d_w0 <<= 2
-    tl_h2d_w0 |= (a_param >> 1)
+    h2d_w0 = 0
+    h2d_w0 = a_valid
+    h2d_w0 <<= 3
+    h2d_w0 |= a_opcode
+    h2d_w0 <<= 2
+    h2d_w0 |= (a_param >> 1)
 
     # form word 1 -- contains next 32 bits of tl_h2d_t SV struct
-    tl_h2d_w1 = 0
-    tl_h2d_w1 |= (a_param & 1)  # grab LSB
-    tl_h2d_w1 <<= 2  # TL_SZW in OT top_pkg
-    tl_h2d_w1 |= a_size
-    tl_h2d_w1 <<= 8  # TL_AIW in OT top_pkg
-    tl_h2d_w1 |= a_source
-    tl_h2d_w1 <<= 21  # part of TL_AW in OT top_pkg
-    tl_h2d_w1 |= (a_address >> 11)
+    h2d_w1 = 0
+    h2d_w1 |= (a_param & 1)  # grab LSB
+    h2d_w1 <<= 2  # TL_SZW in OT top_pkg
+    h2d_w1 |= a_size
+    h2d_w1 <<= 8  # TL_AIW in OT top_pkg
+    h2d_w1 |= a_source
+    h2d_w1 <<= 21  # part of TL_AW in OT top_pkg
+    h2d_w1 |= (a_address >> 11)
 
     # form word 2 -- contains next 32 bits of tl_h2d_t SV struct
-    tl_h2d_w2 = 0
-    tl_h2d_w2 |= (a_address & 2047)  # grab remaining first 11 LSBs
-    tl_h2d_w2 <<= 4  # TL_DBW in OT top_pkg
-    tl_h2d_w2 |= a_mask
-    tl_h2d_w2 <<= 17  # part of TL_DW in OT top_pkg
-    tl_h2d_w2 |= (a_data >> 15)
+    h2d_w2 = 0
+    h2d_w2 |= (a_address & 2047)  # grab remaining first 11 LSBs
+    h2d_w2 <<= 4  # TL_DBW in OT top_pkg
+    h2d_w2 |= a_mask
+    h2d_w2 <<= 17  # part of TL_DW in OT top_pkg
+    h2d_w2 |= (a_data >> 15)
 
     # form word 3 -- contains next 32 bits of tl_h2d_t SV struct
-    tl_h2d_w3 = 0
-    tl_h2d_w3 |= (a_data & 32767)  # grab remaining 15 first LSBs
-    tl_h2d_w3 <<= 16  # TL_AUW in OT top_pkg
-    tl_h2d_w3 |= a_user
-    tl_h2d_w3 <<= 1
-    tl_h2d_w3 |= d_ready
+    h2d_w3 = 0
+    h2d_w3 |= (a_data & 32767)  # grab remaining 15 first LSBs
+    h2d_w3 <<= 16  # TL_AUW in OT top_pkg
+    h2d_w3 |= a_user
+    h2d_w3 <<= 1
+    h2d_w3 |= d_ready
 
-    return tl_h2d.pack(tl_h2d_w0, tl_h2d_w1, tl_h2d_w2, tl_h2d_w3)
+    # pack TL-UL Host-to-Device signals
+    return h2d_signals.pack(h2d_w0, h2d_w1, h2d_w2, h2d_w3)
 
-  def _print_h2d_signals(self):
-    """Prints current state of Host-to-Device TL-UL signals for debugging."""
-    tl_h2d_table = prettytable.PrettyTable(header=True)
-    tl_h2d_table.title = "TL-UL Host-to-Device Signals"
-    tl_h2d_table.field_names = ["Signal", "Width", "Value"]
+  def _print_tl_signals(self, signals_2_print):
+    """Prints current state of TL-UL signals for debugging."""
+    # determine which signals to print (Host-to-Device or Device-to-Host)
+    if signals_2_print == "h2d":
+      packed_signals = self.bus.tl_i
+      widths = self._h2d_widths
+      title_str = "TL-UL Host-to-Device Signals"
+    else:
+      packed_signals = self.bus.tl_o
+      widths = self._d2h_widths
+      title_str = "TL-UL Device-to-Host Signals"
+
+    # create a table and print it
+    tl_table = prettytable.PrettyTable(header=True)
+    tl_table.field_names = ["Signal", "Width", "Hex Value", "Binary Value"]
     idx = 0
-    for signal, width in self._tl_h2d_widths.items():
-      tl_h2d_table.add_row(
-          [signal, width, self.bus.tl_i.value.binstr[idx:idx + width]])
+    for signal, width in widths.items():
+      signal_binstr = packed_signals.value.binstr[idx:idx + width]
+      signal_int = int(signal_binstr, 2)
+      hex_width = math.ceil(width / 4.0)
+      tl_table.add_row(
+          [signal, width, f"{signal_int:0>{hex_width}X}", signal_binstr])
       idx += width
-    tl_h2d_table.add_row(["Total Width", idx, ""])
-    tl_h2d_table.align = "l"
-    print(tl_h2d_table)
-
-  def _print_d2h_signals(self):
-    """Prints current state of Host-to-Device TL-UL signals for debugging."""
-    tl_d2h_table = prettytable.PrettyTable(header=True)
-    tl_d2h_table.title = "TL-UL Device-to-Host Signals"
-    tl_d2h_table.field_names = ["Signal", "Width", "Value"]
-    idx = 0
-    for signal, width in self._tl_d2h_widths.items():
-      tl_d2h_table.add_row(
-          [signal, width, self.bus.tl_o.value.binstr[idx:idx + width]])
-      idx += width
-    tl_d2h_table.add_row(["Total Width", idx, ""])
-    tl_d2h_table.align = "l"
-    print(tl_d2h_table)
+    tl_table.align = "l"
+    tl_table.title = title_str + f" ({idx} bits)"
+    print(tl_table)
 
   @cocotb.coroutine
   async def get(self, address: int, sync: bool = True) -> BinaryValue:
