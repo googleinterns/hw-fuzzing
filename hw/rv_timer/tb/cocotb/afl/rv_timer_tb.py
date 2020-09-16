@@ -38,7 +38,7 @@ class RVTimerTB():
     self.tlul = TLULHost(dut, "", dut.clk_i)
 
     # Set verbosity on our various interfaces
-    level = logging.DEBUG if debug else logging.WARNING
+    level = logging.DEBUG if debug else logging.INFO
     # self.afl_in.log.setLevel(level)
     self.dut._log.setLevel(level)
 
@@ -86,13 +86,21 @@ async def rv_timer_tb(dut):
   # Reset the DUT
   await tb.reset(DUT_RESET_DURATION_NS)
 
+  # Read value of timer lower
+  timer_lower = await tb.tlul.get(2, 0, 15)
+  dut._log.info(f"Timer Lower: {timer_lower}")
+  # dut._log.info("Timer Lower: YOYOYO")
+  # print(f"Timer Lower: {timer_lower}")
+
+  # Read value of time upper
+
   # # Send in random input values
   # dut_input_bytes = sys.stdin.buffer.read(input_size_bytes)
   # while dut_input_bytes:
   # dut_input_int = int.from_bytes(dut_input_bytes,
   # byteorder="big",
   # signed=False)
-  # dut._log.info("Setting code to:")
+  # dut.__log.info("Setting code to:")
   # dut._log.info(f"  (bytes): {dut_input_bytes.hex()}")
   # dut._log.info(f"  (int):   {dut_input_int}")
   # dut.code <= dut_input_int

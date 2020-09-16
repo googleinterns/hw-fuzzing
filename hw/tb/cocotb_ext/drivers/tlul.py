@@ -77,33 +77,33 @@ class TLULHost(BusDriver):
 
     # Set TL-UL Host-to-Device signal widths
     # TODO(ttrippel): make these configurable and remove assertions
-    self._h2d_widths = OrderedDict([("a_valid", 1), ("a_opcode", 3),
-                                    ("a_param", 3), ("a_size", 2),
-                                    ("a_source", 8), ("a_address", 32),
-                                    ("a_mask", 4), ("a_data", 32),
-                                    ("a_user", 16), ("d_ready", 1)])
-    self._total_h2d_width = sum(w for s, w in self._h2d_widths.items())
-    assert self._total_h2d_width == len(self.bus.tl_i.value.binstr), \
+    self._h2d_widths = OrderedDict([("a_valid", (1, 0)), ("a_opcode", (3, 1)),
+                                    ("a_param", (3, 4)), ("a_size", (2, 7)),
+                                    ("a_source", (8, 9)),
+                                    ("a_address", (32, 17)),
+                                    ("a_mask", (4, 49)), ("a_data", (32, 53)),
+                                    ("a_user", (16, 85)),
+                                    ("d_ready", (1, 101))])
+    self._h2d_width = sum(w for s, (w, o) in self._h2d_widths.items())
+    assert self._h2d_width == len(self.bus.tl_i.value.binstr), \
         "Host-to-Device signal width settings are incorrect."
 
     # Set TL-UL Device-to-Host signal widths
     # TODO(ttrippel): make these configurable and remove assertions
-    self._d2h_widths = OrderedDict([("d_valid", 1), ("d_opcode", 3),
-                                    ("d_param", 3), ("d_size", 2),
-                                    ("d_source", 8), ("d_sink", 1),
-                                    ("d_data", 32), ("d_user", 16),
-                                    ("d_error", 1), ("a_ready", 1)])
-    self._total_d2h_width = sum(w for s, w in self._d2h_widths.items())
-    assert self._total_d2h_width == len(self.bus.tl_o.value.binstr), \
+    self._d2h_widths = OrderedDict([("d_valid", (1, 0)), ("d_opcode", (3, 1)),
+                                    ("d_param", (3, 4)), ("d_size", (2, 7)),
+                                    ("d_source", (8, 9)), ("d_sink", (1, 17)),
+                                    ("d_data", (32, 18)), ("d_user", (16, 50)),
+                                    ("d_error", (1, 66)),
+                                    ("a_ready", (1, 67))])
+    self._d2h_width = sum(w for s, (w, o) in self._d2h_widths.items())
+    assert self._d2h_width == len(self.bus.tl_o.value.binstr), \
         "Device-to-Host signal width settings are incorrect."
 
     # Drive some sensible default outputs (setimmediatevalue to avoid x asserts)
-    tl_i = self._pack_h2d_signals(a_opcode=TL_A_Opcode.Get,
-                                  a_param=int("111", 2),
-                                  a_source=int("10101010", 2),
-                                  a_address=int("deadbeaf", 16),
-                                  a_mask=15)
-    self.bus.tl_i.setimmediatevalue(BinaryValue(tl_i))
+    # tl_i = self._pack_h2d_signals(a_address=int("deadbeef", 16))
+    tl_i = self._pack_h2d_signals()
+    self.bus.tl_i.setimmediatevalue(tl_i)
 
     # Mutex for each channel that we host to prevent contention
     # self.write_address_busy = Lock("%s_wabusy" % name)
@@ -111,10 +111,15 @@ class TLULHost(BusDriver):
     # self.write_data_busy = Lock("%s_wbusy" % name)
 
     # print initial state of TL-UL signals
-    print("TL-UL bus signals initialized to:")
+    self.log.info("TL-UL bus signals initialized to:")
     self._print_tl_signals("h2d")
     self._print_tl_signals("d2h")
     print()
+
+  def _unpack_d2h_signals(self, signal: str) -> int:
+    """Unpacks Device-to-Host signals."""
+    (width, offset) = self._d2h_widths[signal]
+    return int(self.bus.tl_o.value.binstr[offset:offset + width], 2)
 
   def _pack_h2d_signals(self,
                         a_valid: int = 0,
@@ -126,10 +131,24 @@ class TLULHost(BusDriver):
                         a_mask: int = 0,
                         a_data: int = 0,
                         a_user: int = 0,
-                        d_ready: int = 0) -> bytes:
+                        d_ready: int = 0) -> BinaryValue:
     """Creates a packed struct for input to a TL-UL device."""
 
-    # Create a packed struct of 104 bits
+    # packed_h2d_signals = BinaryValue(0, n_bits=self._h2d_width)
+    # idx = 0
+    # for signal, width in self._h2d_widths.items():
+    # # packed_h2d_signals.value = packed_h2d_signals.value.integer << width
+    # packed_h2d_signals.value = (packed_h2d_signals.integer >> width) | (
+    # vars()[signal] & (2**width - 1))
+    # print(
+    # f"Signal: {signal}; Width: {width}; Value: {(vars()[signal] & (2**width - 1)):b}"
+    # )
+    # print(packed_h2d_signals.binstr)
+    # print()
+    # idx += width
+    # return packed_h2d_signals
+
+    # Create a packed struct of 10 bits
     # OpenTitan IP input accepts a TileLink input of 102 bits wide)
     # "=" = standard size and native endianness
     # B = unsigned char (1 byte); Q = unsigned long long (8 bytes)
@@ -170,7 +189,7 @@ class TLULHost(BusDriver):
     h2d_w3 |= d_ready
 
     # pack TL-UL Host-to-Device signals
-    return h2d_signals.pack(h2d_w0, h2d_w1, h2d_w2, h2d_w3)
+    return BinaryValue(h2d_signals.pack(h2d_w0, h2d_w1, h2d_w2, h2d_w3))
 
   def _print_tl_signals(self, signals_2_print):
     """Prints current state of TL-UL signals for debugging."""
@@ -188,7 +207,7 @@ class TLULHost(BusDriver):
     tl_table = prettytable.PrettyTable(header=True)
     tl_table.field_names = ["Signal", "Width", "Hex Value", "Binary Value"]
     idx = 0
-    for signal, width in widths.items():
+    for signal, (width, _) in widths.items():
       signal_binstr = packed_signals.value.binstr[idx:idx + width]
       signal_int = int(signal_binstr, 2)
       hex_width = math.ceil(width / 4.0)
@@ -197,10 +216,15 @@ class TLULHost(BusDriver):
       idx += width
     tl_table.align = "l"
     tl_table.title = title_str + f" ({idx} bits)"
-    print(tl_table)
+    self.log.info(tl_table)
+    # print(tl_table)
 
   @cocotb.coroutine
-  async def get(self, address: int, sync: bool = True) -> BinaryValue:
+  async def get(self,
+                size: int,
+                address: int,
+                mask: int,
+                sync: bool = True) -> BinaryValue:
     """Read from an address.
 
     Args:
@@ -212,4 +236,41 @@ class TLULHost(BusDriver):
     Raises:
       TLULException: ...
     """
-    return
+    if sync:
+      await RisingEdge(self.clock)
+
+    # Put ready request on the bus
+    self.bus.tl_i <= self._pack_h2d_signals(a_valid=1,
+                                            a_opcode=TL_A_Opcode.Get,
+                                            a_size=size,
+                                            a_address=address,
+                                            a_mask=mask)
+
+    # Wait until the Device is ready to receive the transmission (A_READY high)
+    while True:
+      await ReadOnly()
+      if self._unpack_d2h_signals("a_ready"):
+        break
+      await RisingEdge(self.clock)
+
+    # Clear Get request after one clock cycle from A_READY going high
+    await RisingEdge(self.clock)
+    self.bus.tl_i <= self._pack_h2d_signals(a_valid=0)
+
+    # Wait to until Device data is ready to read (D_VALID high)
+    while True:
+      await ReadOnly()
+      # TODO(ttrippel): check if need to signal D_READY high
+      if self._unpack_d2h_signals("d_valid"):
+        # get the data
+        self._print_tl_signals("d2h")
+        d_data = self._unpack_d2h_signals("d_data")
+        # d_error = self._unpack_d2h_signals("d_error")
+        # d_opcode = self._unpack_d2h_signals("d_opcode")
+        break
+      await RisingEdge(self.clock)
+
+    # check for error(s)
+    # check for correct response opcode
+    # raise TLULException if any of above occur
+    return d_data
