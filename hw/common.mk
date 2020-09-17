@@ -62,7 +62,7 @@ LDFLAGS  += -L$(shell cocotb-config --prefix)/cocotb/libs
 LDLIBS   += -lcocotbvpi_verilator -lgpi -lcocotb -lgpilog -lcocotbutils
 CPPFLAGS += "-DVL_TIME_PRECISION_STR=1ps"
 export COCOTB_REDUCED_LOG_FMT := 1
-export COCOTB_LOG_LEVEL       := DEBUG
+export COCOTB_LOG_LEVEL       := INFO
 export LD_LIBRARY_PATH        := $(shell cocotb-config --prefix)/cocotb/libs
 endif
 

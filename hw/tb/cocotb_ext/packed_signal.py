@@ -26,7 +26,7 @@ class PackedSignal():
       csig_offset += csig_width
     self._width = csig_offset
     assert self._width == len(self._parent_sig.value.binstr), \
-        "{self.parent_sig.name} signal width settings are incorrect."
+        "{self.parent_sig._name} signal width settings are incorrect."
 
   def _get_child_binstr(self, csig: Signal) -> str:
     return self._parent_sig.value.binstr[csig.offset:csig.offset + csig.width]
@@ -37,7 +37,7 @@ class PackedSignal():
   def pack(self, **kwargs) -> BinaryValue:
     binstr = "0" * self._width
     for csig_name, csig_value in kwargs.items():
-      self._log.debug(f"Packing {csig_name} into {self._parent_sig.name} ...")
+      self._log.debug(f"Packing {csig_name} into {self._parent_sig._name} ...")
       # TODO(ttrippel): check if child signal name exists
       csig = self._child_sigs[csig_name]
       # TODO(ttrippel): check that value is valid for width
@@ -47,7 +47,7 @@ class PackedSignal():
 
   def unpack(self, csig_name: str) -> BinaryValue:
     # TODO(ttrippel): check if child signal name exists
-    self._log.debug(f"Unpacking {csig_name} from {self._parent_sig.name} ...")
+    self._log.debug(f"Unpacking {csig_name} from {self._parent_sig._name} ...")
     csig = self._child_sigs[csig_name]
     return BinaryValue(self._get_child_binstr(csig))
 
@@ -63,5 +63,5 @@ class PackedSignal():
           csig_name, csig.width, f"{csig_int:0>{csig_hex_width}X}", csig_binstr
       ])
     tl_table.align = "l"
-    tl_table.title = f"{self._parent_sig.name} ({self._width} bits)"
+    tl_table.title = f"{self._parent_sig._name} ({self._width} bits)"
     return str(tl_table)
