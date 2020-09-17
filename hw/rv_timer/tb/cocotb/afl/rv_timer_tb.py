@@ -38,8 +38,8 @@ class RVTimerTB():
     self.tlul = TLULHost(dut, "", dut.clk_i)
 
     # Set verbosity on our various interfaces
-    level = logging.DEBUG if debug else logging.INFO
-    # self.afl_in.log.setLevel(level)
+    level = logging.DEBUG if debug else logging.WARNING
+    self.tlul.log.setLevel(level)
     self.dut._log.setLevel(level)
 
     # Create a scoreboard
@@ -47,7 +47,7 @@ class RVTimerTB():
   async def reset(self, duration_ns):
     self.dut._log.debug("Resetting the DUT ...")
     self.dut.rst_ni <= 0
-    # self.afl_in.bus.valid <= 0
+    self.tlul.bus.tl_i <= 0
     await Timer(duration_ns, units="ns")
     await RisingEdge(self.dut.clk_i)
     self.dut.rst_ni <= 1
@@ -77,7 +77,7 @@ async def rv_timer_tb(dut):
   dut._log.info(f"Input Port Size: {input_size_bytes}")
 
   # Instantiate TB
-  tb = RVTimerTB(dut)
+  tb = RVTimerTB(dut, debug=True)
 
   # Create and start the clock
   clock = Clock(dut.clk_i, CLK_PERIOD_NS, units="ns")
@@ -86,13 +86,33 @@ async def rv_timer_tb(dut):
   # Reset the DUT
   await tb.reset(DUT_RESET_DURATION_NS)
 
-  # Read value of timer lower
-  timer_lower = await tb.tlul.get(2, 0, 15)
-  dut._log.info(f"Timer Lower: {timer_lower}")
-  # dut._log.info("Timer Lower: YOYOYO")
-  # print(f"Timer Lower: {timer_lower}")
+  # Write to timer control register
+  CONTROL_REG_ADDR = 0x0
+  await tb.tlul.put_full(CONTROL_REG_ADDR, 0x1, 2, 0xf)
 
-  # Read value of time upper
+  # Read timer control register
+  cntl_reg_value = await tb.tlul.get(CONTROL_REG_ADDR, 2, 0xf)
+  cntl_reg_hex_width = math.ceil(len(cntl_reg_value.binstr) / 4.0)
+  cntl_reg_hex_str = f"{cntl_reg_value.integer:0>{cntl_reg_hex_width}X}"
+  dut._log.info(
+      f"Control Register: {cntl_reg_value.binstr} ({cntl_reg_hex_str})")
+
+  # Wait 5 clock periods
+  await RisingEdge(dut.clk_i)
+  await RisingEdge(dut.clk_i)
+  await RisingEdge(dut.clk_i)
+  await RisingEdge(dut.clk_i)
+  await RisingEdge(dut.clk_i)
+
+  # Read value of time 0 lower
+  TIMER_0_LOWER_REG_ADDR = 0x104
+  timer_0_lower = await tb.tlul.get(TIMER_0_LOWER_REG_ADDR, 2, 0xf)
+  dut._log.info(f"Timer-0 Lower: {timer_0_lower.binstr}")
+
+  # Read value of time 0 upper
+  TIMER_0_UPPER_REG_ADDR = 0x108
+  timer_0_upper = await tb.tlul.get(TIMER_0_UPPER_REG_ADDR, 2, 0xf)
+  dut._log.info(f"Timer-0 Upper: {timer_0_upper.binstr}")
 
   # # Send in random input values
   # dut_input_bytes = sys.stdin.buffer.read(input_size_bytes)
