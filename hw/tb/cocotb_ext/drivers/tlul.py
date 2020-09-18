@@ -25,16 +25,19 @@ TL_SZW = math.ceil(math.log2(TL_DBW))  # setting for size A_SIZE/D_SIZE
 
 
 class TLULProtocolError(Exception):
+  """TL-UL protocol error exception."""
   pass
 
 
-class _OpcodeA(IntEnum):
+class OpcodeA(IntEnum):
+  """TL-UL channel A (Host-to-Device) opcodes."""
   PutFullData = 0
   PutPartialData = 1
   Get = 4
 
 
-class _OpcodeD(IntEnum):
+class OpcodeD(IntEnum):
+  """TL-UL channel D (Device-to-Host) opcodes."""
   AccessAck = 0
   AccessAckData = 1
 
@@ -161,7 +164,7 @@ class TLULHost(BusDriver):
     d_error = self._tl_o.unpack("d_error")
 
     # raise TLULException if error occurs
-    if d_error.integer or d_opcode != _OpcodeD.AccessAck:
+    if d_error.integer or d_opcode != OpcodeD.AccessAck:
       self.log.error(self._tl_o.signal2str())
       raise TLULProtocolError("Put failed.")
 
@@ -199,7 +202,7 @@ class TLULHost(BusDriver):
     # lower_addr_nibble = address & ((1 << TL_SZW) - 1)
 
     # Send request and wait for response
-    await self._send_tlul_request(_OpcodeA.PutPartialData, address, data, size,
+    await self._send_tlul_request(OpcodeA.PutPartialData, address, data, size,
                                   mask, sync)
     await self._receive_tlul_put_response()
 
@@ -226,7 +229,7 @@ class TLULHost(BusDriver):
     # be because all IP registers are at word aligned addresses?
 
     # Send request and wait for response
-    await self._send_tlul_request(_OpcodeA.PutFullData, address, data, TL_SZW,
+    await self._send_tlul_request(OpcodeA.PutFullData, address, data, TL_SZW,
                                   2**TL_DBW - 1, sync)
     await self._receive_tlul_put_response()
 
@@ -254,7 +257,7 @@ class TLULHost(BusDriver):
     # be because all IP registers are at word aligned addresses?
 
     # Send request and wait for response
-    await self._send_tlul_request(_OpcodeA.Get, address, 0, TL_SZW,
+    await self._send_tlul_request(OpcodeA.Get, address, 0, TL_SZW,
                                   (2**TL_DBW) - 1, sync)
     await self._wait_for_device_response()
 
@@ -264,7 +267,7 @@ class TLULHost(BusDriver):
     d_error = self._tl_o.unpack("d_error")
 
     # raise TLULException if error occurs
-    if d_error.integer or d_opcode != _OpcodeD.AccessAckData:
+    if d_error.integer or d_opcode != OpcodeD.AccessAckData:
       self.log.error(self._tl_o.signal2str())
       raise TLULProtocolError("Get failed.")
 
