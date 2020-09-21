@@ -12,11 +12,11 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-"""This module parses an HJSON config file defining how/what circuit to fuzz.
+"""This module parses an HJSON config file defining how/what toplevel to fuzz.
 
 Description:
 This module implements an HJSON configuration file parser to launch fuzzing
-experiments on various circuit designs contained in this repository. It is
+experiments on various toplevel designs contained in this repository. It is
 designed to be invoked by the fuzz.py module in the root directory of this
 repository. See the tests/ directory for example HJSON configuration files.
 """
@@ -51,13 +51,13 @@ class Config():
 
   Attributes:
     experiment_name: A name to give the fuzzing experiment output directory.
-    circuit: Name of the circuit to fuzz (from hw/).
+    toplevel: Name of the toplevel to fuzz (from hw/).
     tb_type: Type of testbench [cpp | cocotb].
     tb: Testbench name [default | afl].
     fuzzer: Fuzzer to use [sim | afl | afl-term-on-crash].
     run_on_gcp: Determines whether fuzzer will be run locally or on GCP [0 | 1].
     gcp_params: GCP parameters specifying what machine to launch fuzzer on. See
-      example HJSON files in tests/.
+      example gcp_config.hjson file in root hw-fuzzing/.
     env_var_params: Other environment variables to define HDL generation,
       Verilator, and Fuzzer parameters. See example HJSON files in
       tests/.
@@ -69,30 +69,33 @@ class Config():
     self.args = args
     self.config_filename = args.config_filename
 
+    # Initialize experiment data paths
+    self.root_path = os.getenv("HW_FUZZING")
+
+    # Load GCP configurations
+    print(LINE_SEP)
+    print("Loading GCP configurations ...")
+    with open(self.root_path + "/gcp_config.hjson", "r") as hjson_file:
+      self.gcp_params = hjson.load(hjson_file)
+
     # Load experiment configurations
     print(LINE_SEP)
     print("Loading experiment configurations ...")
     with open(self.config_filename, "r") as hjson_file:
-      # Load HJSON file
       cdict = hjson.load(hjson_file)
-      # Parse config dict
       self.experiment_name = cdict["experiment_name"]
-      self.circuit = cdict["circuit"]
+      self.toplevel = cdict["toplevel"]
       self.tb_type = cdict["tb_type"]
       self.tb = cdict["tb"]
       self.fuzzer = cdict["fuzzer"]
       self.run_on_gcp = cdict["run_on_gcp"]
-      self.gcp_params = cdict["gcp_params"]
       self.env_var_params = [cdict["verilator_params"]]
       self.env_var_params.append(cdict["hdl_gen_params"])
       self.env_var_params.append(cdict["fuzzer_params"])
 
-    # Initialize experiment data paths
-    self.root_path = os.getenv("HW_FUZZING")
-
     # Initialize docker image name:
     self.docker_image = "gcr.io/%s/%s-%s" % \
-        (self.gcp_params["project"], self.fuzzer, self.circuit)
+        (self.gcp_params["project"], self.fuzzer, self.toplevel)
 
     # Validate and print configurations
     self.validate_configs()
@@ -110,7 +113,7 @@ class Config():
 
     # Add main experiment parameters
     exp_config_table.add_row(["Experiment Name", self.experiment_name])
-    exp_config_table.add_row(["Circuit", self.circuit])
+    exp_config_table.add_row(["Toplevel", self.toplevel])
     exp_config_table.add_row(["Testbench Type", self.tb_type])
     exp_config_table.add_row(["Testbench", self.tb])
     exp_config_table.add_row(["Fuzzer", self.fuzzer])

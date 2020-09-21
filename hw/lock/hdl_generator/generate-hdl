@@ -20,5 +20,5 @@ cd $DUT/hdl_generator/locksmith
 cargo build
 cargo run -- \
     --states $NUM_LOCK_STATES \
-    --width $LOCK_COMP_WIDTH > $DUT/hdl/$CIRCUIT.v
+    --width $LOCK_COMP_WIDTH > $DUT/hdl/$TOPLEVEL.v
 exit 0

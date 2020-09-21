@@ -96,7 +96,7 @@ sim: $(BIN_DIR)/$(TOPLEVEL)
 	MODULE=$(TB_MODULE) $< < seeds/$(SEED)
 else
 sim: $(BIN_DIR)/$(TOPLEVEL)
-	$< seeds/$(SEED)
+	$< < seeds/$(SEED)
 endif
 
 clean:

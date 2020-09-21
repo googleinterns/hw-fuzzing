@@ -16,9 +16,9 @@
 
 Description:
 This module contains several methods that:
-1. Parses an HJSON configuration file defining which circuit to fuzz and how to
+1. Parses an HJSON configuration file defining which toplevel to fuzz and how to
    fuzz it (i.e. HDL-generation/testbench/GCP/Verilator/fuzzer parameters).
-2. Builds a Docker image containing the DUT (circuit) HDL, the desired
+2. Builds a Docker image containing the DUT (toplevel) HDL, the desired
    testbench, fuzzer, Verilator (simulation engine), and compilation/simulation
    scripts).
 3. Checks if a data already exists/Creates a directory to store the fuzzing
@@ -88,8 +88,9 @@ def check_for_data_locally(config):
 def delete_data_in_gcs(config):
   sub_cmd = [
       "gsutil", "rm",
-      "gs://%s/%s/**" %
-      (config.gcp_params["data_bucket"], config.experiment_name)
+      "gs://%s-%s/%s/**" %
+      (config.gcp_params["project_id"], config.gcp_params["data_bucket"],
+       config.experiment_name)
   ]
   error_str = "ERROR: deleting existing data. Terminating Experiment!"
   run_cmd(sub_cmd, error_str)
@@ -99,8 +100,9 @@ def check_for_data_in_gcs(config):
   """Check Google Cloud Storage for existing experiment data files."""
   cmd = [
       "gsutil", "-q", "stat",
-      "gs://%s/%s/**" %
-      (config.gcp_params["data_bucket"], config.experiment_name)
+      "gs://%s-%s/%s/**" %
+      (config.gcp_params["project_id"], config.gcp_params["data_bucket"],
+       config.experiment_name)
   ]
   try:
     subprocess.check_call(cmd)
@@ -123,12 +125,12 @@ def check_for_data_in_gcs(config):
 def build_docker_image(config):
   """Creates docker image containing DUT to fuzz."""
   print(LINE_SEP)
-  print("Building Docker image to fuzz %s ..." % config.circuit)
+  print("Building Docker image to fuzz %s ..." % config.toplevel)
   print(LINE_SEP)
   cmd = [
       "docker", "build", "--build-arg",
       "FUZZER=%s" % config.fuzzer, "-t", config.docker_image,
-      "%s/hw/%s" % (config.root_path, config.circuit)
+      "%s/hw/%s" % (config.root_path, config.toplevel)
   ]
   error_str = "ERROR: image build FAILED. Terminating experiment!"
   run_cmd(cmd, error_str)
@@ -155,7 +157,7 @@ def create_local_experiment_data_dir(config):
            stat.S_IRWXU | stat.S_IRGRP | stat.S_IROTH)
 
   # Copy over seeds that were used in this experiment
-  seeds_dir = "%s/hw/%s/seeds" % (config.root_path, config.circuit)
+  seeds_dir = "%s/hw/%s/seeds" % (config.root_path, config.toplevel)
   shutil.copytree(seeds_dir, os.path.join(exp_data_path, "seeds"))
   os.chmod(os.path.join(exp_data_path, "seeds"),
            stat.S_IRWXU | stat.S_IRGRP | stat.S_IROTH)
@@ -169,11 +171,11 @@ def create_local_experiment_data_dir(config):
 def run_docker_container_locally(config, exp_data_path):
   """Runs a Docker container to fuzz the DUT on the local machine."""
   print(LINE_SEP)
-  print("Running Docker container to fuzz %s ..." % config.circuit)
+  print("Running Docker container to fuzz %s ..." % config.toplevel)
   print(LINE_SEP)
   cmd = ["docker", "run", "-it", "--rm", "--name", config.experiment_name]
   # Set environment variables for general configs
-  cmd.extend(["-e", "%s=%s" % ("CIRCUIT", config.circuit)])
+  cmd.extend(["-e", "%s=%s" % ("TOPLEVEL", config.toplevel)])
   cmd.extend(["-e", "%s=%s" % ("TB_TYPE", config.tb_type)])
   cmd.extend(["-e", "%s=%s" % ("TB", config.tb)])
   cmd.extend(["-e", "%s=%s" % ("FUZZER", config.fuzzer)])
@@ -185,8 +187,10 @@ def run_docker_container_locally(config, exp_data_path):
         cmd.extend(["-e", "%s=%s" % (param.upper(), value)])
   # Mount volumes for output data
   cmd.extend(
-      ["-v", "%s/logs:/src/hw/%s/logs" % (exp_data_path, config.circuit)])
-  cmd.extend(["-v", "%s/out:/src/hw/%s/out" % (exp_data_path, config.circuit)])
+      ["-v",
+       "%s/logs:/src/hw/%s/logs" % (exp_data_path, config.toplevel)])
+  cmd.extend(
+      ["-v", "%s/out:/src/hw/%s/out" % (exp_data_path, config.toplevel)])
   # Set target Docker image and run
   cmd.extend(["-t", config.docker_image])
   # TODO(ttrippel): add debug flag to launch container in interactively w/ shell
@@ -240,8 +244,10 @@ def push_vm_management_scripts_to_gcs(config):
   print(LINE_SEP)
   cmd = [
       "gsutil", "cp",
-      "%s/experiments/scripts/gce_vm_startup.sh" % config.root_path,
-      "gs://%s/gce_vm_startup.sh" % "vm-management"
+      "%s/infra/gcp/%s" % (config.root_path, config.gcp_params),
+      "gs://%s-%s/%s" % (config.gcp_params["project_id"],
+                         config.gcp_params["vm_management_bucket"],
+                         config.gcp_params["startup_script"])
   ]
   error_str = "ERROR: pushing scripts to GCS FAILED. Terminating experiment!"
   run_cmd(cmd, error_str)
@@ -292,7 +298,7 @@ def run_docker_container_on_gce(config):
 
   # Launch fuzzing container on VM
   print(LINE_SEP)
-  print("Launching GCE VM to fuzz %s ..." % config.circuit)
+  print("Launching GCE VM to fuzz %s ..." % config.toplevel)
   print(LINE_SEP)
   cmd = [
       "gcloud", "compute",
@@ -310,7 +316,7 @@ def run_docker_container_on_gce(config):
   # TODO(ttrippel): add debug flag to launch container interactively w/ shell
   # cmd.extend["--container-tty", "--container-stdin", "--container-arg=bash"]
   # Set environment variables for general configs
-  cmd.extend(["--container-env", "%s=%s" % ("CIRCUIT", config.circuit)])
+  cmd.extend(["--container-env", "%s=%s" % ("TOPLEVEL", config.toplevel)])
   cmd.extend(["--container-env", "%s=%s" % ("TB_TYPE", config.tb_type)])
   cmd.extend(["--container-env", "%s=%s" % ("TB", config.tb)])
   cmd.extend(["--container-env", "%s=%s" % ("FUZZER", config.fuzzer)])
@@ -355,10 +361,10 @@ def fuzz(argv):
   else:
     check_for_data_in_gcs(config)
 
-  # Build docker image to fuzz target circuit
+  # Build docker image to fuzz target toplevel
   build_docker_image(config)
 
-  # Run Docker container to fuzz circuit
+  # Run Docker container to fuzz toplevel
   if config.run_on_gcp == 0:
     exp_data_path = create_local_experiment_data_dir(config)
     run_docker_container_locally(config, exp_data_path)

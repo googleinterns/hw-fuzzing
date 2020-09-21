@@ -24,11 +24,13 @@ command -v generate-hdl >/dev/null 2>&1 && \
 
 if [[ $FUZZER == "sim" ]]; then
   if [[ $TB_TYPE == "cocotb" ]]; then
+
     # Simulate the DUT with cocotb testbench
     cocotb-verilator-sim 2>&1 | tee -a logs/exp.log
     check-exit-code
 
   elif [[ $TB_TYPE == "cpp" ]]; then
+
     # Simulate the DUT using C++ testbench
     cpp-verilator-sim 2>&1 | tee -a logs/exp.log
     check-exit-code
@@ -38,27 +40,25 @@ if [[ $FUZZER == "sim" ]]; then
   fi
 elif [[ $FUZZER == "afl" || $FUZZER == "afl-term-on-crash" ]]; then
   if [[ $TB_TYPE == "cocotb" ]]; then
+
     # Compile the DUT for fuzzing
     compile-cocotb 2>&1 | tee -a logs/exp.log
     check-exit-code
 
-    # Fuzz the DUT
-    MODULE=${CIRCUIT}_tb \
-      TOPLEVEL=$CIRCUIT
-      TOPLEVEL_LANG=verilog
-      BIN_DIR=tb/$TB_TYPE/$TB/build fuzz 2>&1 | tee -a logs/exp.log
-    check-exit-code
   elif [[ $TB_TYPE == "cpp" ]]; then
+
     # Compile the DUT for fuzzing
     compile-cpp 2>&1 | tee -a logs/exp.log
     check-exit-code
 
-    # Fuzz the DUT
-    BIN_DIR=bin fuzz 2>&1 | tee -a logs/exp.log
-    check-exit-code
   else
     echo "ERROR: unsupported testbench type. Aborting!" | tee -a logs/exp.log
   fi
+
+  # Fuzz the DUT
+  BIN_DIR=bin fuzz 2>&1 | tee -a logs/exp.log
+  check-exit-code
+
 else
   echo "ERROR: unsupported fuzzer. Aborting!" | tee -a logs/exp.log
 fi

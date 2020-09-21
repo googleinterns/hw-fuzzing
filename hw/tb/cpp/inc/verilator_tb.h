@@ -47,7 +47,7 @@ class VerilatorTb {
     void InitializeVerilator(int argc, char** argv);
 
     // Test input file handlers
-    void OpenTestFile();
-    void CloseTestFile();
+    //void OpenTestFile();
+    //void CloseTestFile();
 };
 #endif  // HW_TB_CPP_INC_VERILATOR_TB_H_

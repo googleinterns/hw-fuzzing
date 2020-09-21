@@ -70,9 +70,9 @@ OPT_GLOBAL = -Os
 # Verilator/Testbench classes
 ################################################################################
 include $(MODEL_DIR)/Vtop_classes.mk
-VM_FAST   += $(VM_CLASSES_FAST) $(VM_SUPPORT_FAST)
+VM_FAST   += $(VM_CLASSES_FAST)
 VM_SLOW   += $(VM_CLASSES_SLOW) $(VM_SUPPORT_SLOW)
-VM_GLOBAL += $(VM_GLOBAL_FAST) $(VM_GLOBAL_SLOW)
+VM_GLOBAL += $(VM_GLOBAL_FAST) $(VM_GLOBAL_SLOW) $(VM_SUPPORT_FAST)
 
 ################################################################################
 # Object file lists

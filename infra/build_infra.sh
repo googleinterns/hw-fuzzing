@@ -21,9 +21,9 @@ then
     echo "ERROR: Set HW_FUZZING path and try again."
 else
     # Build local fuzzing Docker infrastructure
-    docker build --pull -t gcr.io/hardware-fuzzing/base-image $@ $HW_FUZZING/infra/base-image
-    docker build -t gcr.io/hardware-fuzzing/base-clang-10.0.0 $@ $HW_FUZZING/infra/base-clang-10.0.0
-    docker build -t gcr.io/hardware-fuzzing/base-verilator $@ $HW_FUZZING/infra/base-verilator
+    #docker build --pull -t gcr.io/hardware-fuzzing/base-image $@ $HW_FUZZING/infra/base-image
+    #docker build -t gcr.io/hardware-fuzzing/base-clang-10.0.0 $@ $HW_FUZZING/infra/base-clang-10.0.0
+    #docker build -t gcr.io/hardware-fuzzing/base-verilator $@ $HW_FUZZING/infra/base-verilator
     docker build -t gcr.io/hardware-fuzzing/base-sim $@ $HW_FUZZING/hw
     docker build -t gcr.io/hardware-fuzzing/base-afl $@ $HW_FUZZING/infra/base-afl
     cp $HW_FUZZING/infra/base-afl/checkout_build_install_afl.sh $HW_FUZZING/infra/base-afl-term-on-crash/

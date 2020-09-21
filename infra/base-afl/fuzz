@@ -1,4 +1,4 @@
-#!/bin/bash -eu
+#!/bin/bash -eux
 # Copyright 2020 Google LLC
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -27,9 +27,23 @@ fi
 ## Fuzz the CORE
 ################################################################################
 ################################################################################
+export MODULE=tb.$TB_TYPE.$TB.${TOPLEVEL}_tb  # for cocotb testbenches
+export TOPLEVEL_LANG=verilog  # for cocotb testbenches
+
 FUZZER_BIN="$SRC/AFL/afl-fuzz"
 FUZZER_OPTIONS=""
 for (( num=1; num <= $NUM_INSTANCES; num++ )); do
+
+  # Set timeout (if any)
+  if [[ -n ${TIMEOUT_MS-} ]]; then
+    FUZZER_OPTIONS="$FUZZER_OPTIONS -t $TIMEOUT_MS"
+  fi
+
+  # Set memory limit (if any)
+  if [[ -n ${MEMORY_LIMIT_MB-} ]]; then
+    FUZZER_OPTIONS="$FUZZER_OPTIONS -m $MEMORY_LIMIT_MB"
+  fi
+
   # Set fuzzer mode (Master or Secondary)
   if [[ $num -eq 1 && $MODE == "m" ]]; then
     FUZZER_OPTIONS="$FUZZER_OPTIONS -M"
@@ -48,7 +62,7 @@ for (( num=1; num <= $NUM_INSTANCES; num++ )); do
       -o out \
       $FUZZER_OPTIONS \
       afl_${MODE}_${num} \
-      $BIN_DIR/$CIRCUIT @@ \
+      $BIN_DIR/$TOPLEVEL \
       2> $STDERR_LOG \
       1> $STDOUT_LOG &
   else
@@ -58,7 +72,7 @@ for (( num=1; num <= $NUM_INSTANCES; num++ )); do
       -o out \
       $FUZZER_OPTIONS \
       afl_${MODE}_${num} \
-      $BIN_DIR/$CIRCUIT @@ \
+      $BIN_DIR/$TOPLEVEL \
       2> $STDERR_LOG \
       1> $STDOUT_LOG &
   fi
