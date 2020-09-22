@@ -185,15 +185,6 @@ void LockTb::SimulateDUT() {
 
 // Testbench entry point
 int main(int argc, char** argv, char** env) {
-    // Check command line args
-    if (argc == 2) {
-        std::cout << "Input file: " << argv[1] << std::endl;
-    } else {
-        std::cerr << "Usage: " << argv[0];
-        std::cerr << " <input file name>" << std::endl;
-        exit(1);
-    }
-
     // Instantiate testbench
     LockTb tb(argc, argv);
 

@@ -20,8 +20,6 @@
 // the testbench input file
 VerilatorTb::VerilatorTb(uint32_t port_size, int argc, char** argv)
     : test_num_(0),
-      input_file_name_(argv[1]),
-      input_file_stream_(NULL),
       kPortSize_(port_size) {
     InitializeVerilator(argc, argv);
 }
@@ -58,10 +56,10 @@ void VerilatorTb::InitializeVerilator(int argc, char** argv) {
 
 // Read num_bytes from input file stream into buffer
 bool VerilatorTb::ReadTest(uint8_t* buffer) {
-    if (!input_file_stream_->eof()) {
+    if (!std::cin.eof()) {
         // Read file as a byte stream
-        input_file_stream_->read((char*) buffer, kPortSize_);
-        if (input_file_stream_->gcount() < kPortSize_) {
+        std::cin.read((char*) buffer, kPortSize_);
+        if (std::cin.gcount() < kPortSize_) {
             return false;
         }
         // Increment test number
@@ -70,12 +68,3 @@ bool VerilatorTb::ReadTest(uint8_t* buffer) {
     }
     return false;
 }
-
-//// Close input file stream (if it's open)
-//void VerilatorTb::CloseTestFile() {
-    //if (input_file_stream_->is_open()) {
-        //input_file_stream_->close();
-        //delete input_file_stream_;
-        //input_file_stream_ = NULL;
-    //}
-//}

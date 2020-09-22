@@ -20,7 +20,6 @@
     #include "verilated_vcd_c.h"
 #endif
 
-#include <fstream>
 #include <string>
 
 class VerilatorTb {
@@ -37,8 +36,6 @@ class VerilatorTb {
  private:
     // Test tracking data
     uint32_t test_num_;
-    std::string input_file_name_;
-    std::ifstream* input_file_stream_;
 
     // Input port size
     const uint32_t kPortSize_;
