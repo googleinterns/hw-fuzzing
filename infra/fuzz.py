@@ -244,7 +244,8 @@ def push_vm_management_scripts_to_gcs(config):
   print(LINE_SEP)
   cmd = [
       "gsutil", "cp",
-      "%s/infra/gcp/%s" % (config.root_path, config.gcp_params),
+      "%s/infra/gcp/%s" %
+      (config.root_path, config.gcp_params["startup_script"]),
       "gs://%s-%s/%s" % (config.gcp_params["project_id"],
                          config.gcp_params["vm_management_bucket"],
                          config.gcp_params["startup_script"])
@@ -302,7 +303,7 @@ def run_docker_container_on_gce(config):
   print(LINE_SEP)
   cmd = [
       "gcloud", "compute",
-      "--project=%s" % config.gcp_params["project"], "instances",
+      "--project=%s" % config.gcp_params["project_id"], "instances",
       "create-with-container", config.experiment_name, "--container-image",
       config.docker_image, "--container-restart-policy",
       config.gcp_params["container_restart_policy"],
@@ -310,8 +311,10 @@ def run_docker_container_on_gce(config):
       "--machine-type=%s" % config.gcp_params["machine_type"],
       "--boot-disk-size=%s" % config.gcp_params["boot_disk_size"],
       "--scopes=%s" % config.gcp_params["scopes"],
-      "--metadata=startup-script-url=%s" %
-      config.gcp_params["startup_script_url"]
+      "--metadata=startup-script-url=gs://%s-%s/%s" %
+      (config.gcp_params["project_id"],
+       config.gcp_params["vm_management_bucket"],
+       config.gcp_params["startup_script"])
   ]
   # TODO(ttrippel): add debug flag to launch container interactively w/ shell
   # cmd.extend["--container-tty", "--container-stdin", "--container-arg=bash"]

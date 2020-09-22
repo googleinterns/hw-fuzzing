@@ -1,4 +1,4 @@
-#!/bin/bash -eux
+#!/bin/bash -eu
 # Copyright 2020 Google LLC
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -24,70 +24,94 @@ fi
 
 ################################################################################
 ################################################################################
+## Set Fuzzer Options
+################################################################################
+################################################################################
+FUZZER_BIN="$SRC/AFL/afl-fuzz"
+FUZZER_OPTIONS=""
+
+# Set timeout (if any)
+if [[ -n ${TIMEOUT_MS-} ]]; then
+  FUZZER_OPTIONS="$FUZZER_OPTIONS -t $TIMEOUT_MS"
+fi
+
+# Set memory limit (if any)
+if [[ -n ${MEMORY_LIMIT_MB-} ]]; then
+  FUZZER_OPTIONS="$FUZZER_OPTIONS -m $MEMORY_LIMIT_MB"
+fi
+
+################################################################################
+################################################################################
 ## Fuzz the CORE
 ################################################################################
 ################################################################################
-export MODULE=tb.$TB_TYPE.$TB.${TOPLEVEL}_tb  # for cocotb testbenches
-export TOPLEVEL_LANG=verilog  # for cocotb testbenches
-
-FUZZER_BIN="$SRC/AFL/afl-fuzz"
-FUZZER_OPTIONS=""
-for (( num=1; num <= $NUM_INSTANCES; num++ )); do
-
-  # Set timeout (if any)
-  if [[ -n ${TIMEOUT_MS-} ]]; then
-    FUZZER_OPTIONS="$FUZZER_OPTIONS -t $TIMEOUT_MS"
-  fi
-
-  # Set memory limit (if any)
-  if [[ -n ${MEMORY_LIMIT_MB-} ]]; then
-    FUZZER_OPTIONS="$FUZZER_OPTIONS -m $MEMORY_LIMIT_MB"
-  fi
+if [[ ${INTERACTIVE_MODE} -ne 0 ]]; then
+  # Launch fuzzer in interactive mode (good for debugging)
+  echo "Launching fuzzer in INTERACTIVE mode..." | tee -a logs/exp.log
 
   # Set fuzzer mode (Master or Secondary)
-  if [[ $num -eq 1 && $MODE == "m" ]]; then
+  if [[ $MODE == "m" ]]; then
     FUZZER_OPTIONS="$FUZZER_OPTIONS -M"
   else
     FUZZER_OPTIONS="$FUZZER_OPTIONS -S"
   fi
 
-  # Set log filenames
-  STDERR_LOG="logs/afl_${MODE}_${num}.err.log"
-  STDOUT_LOG="logs/afl_${MODE}_${num}.out.log"
-
   # Launch fuzzer
-  if [[ -z ${DURATION_MINS-} ]]; then
-    $FUZZER_BIN \
-      -i seeds \
-      -o out \
-      $FUZZER_OPTIONS \
-      afl_${MODE}_${num} \
-      $BIN_DIR/$TOPLEVEL \
-      2> $STDERR_LOG \
-      1> $STDOUT_LOG &
-  else
-    timeout --foreground ${DURATION_MINS}m\
+  $FUZZER_BIN \
+    -i seeds \
+    -o out \
+    $FUZZER_OPTIONS \
+    afl_${MODE}_interactive \
+    $BIN_DIR/$TOPLEVEL
+else
+
+  # Launch fuzzer in non-interactive mode (and potentially many instances)
+  echo "Launching fuzzer in NON-INTERACTIVE mode..." | tee -a logs/exp.log
+  for (( num=1; num <= $NUM_INSTANCES; num++ )); do
+
+    # Set fuzzer mode (Master or Secondary)
+    if [[ $num -eq 1 && $MODE == "m" ]]; then
+      FUZZER_OPTIONS="$FUZZER_OPTIONS -M"
+    else
+      FUZZER_OPTIONS="$FUZZER_OPTIONS -S"
+    fi
+
+    # Set log filename
+    AFL_LOG="logs/afl_${MODE}_${num}.log"
+
+    # Launch fuzzer
+    if [[ -z ${DURATION_MINS-} ]]; then
       $FUZZER_BIN \
-      -i seeds \
-      -o out \
-      $FUZZER_OPTIONS \
-      afl_${MODE}_${num} \
-      $BIN_DIR/$TOPLEVEL \
-      2> $STDERR_LOG \
-      1> $STDOUT_LOG &
-  fi
-  check-exit-code
+        -i seeds \
+        -o out \
+        $FUZZER_OPTIONS \
+        afl_${MODE}_${num} \
+        $BIN_DIR/$TOPLEVEL \
+        2>&1 | tee -a $AFL_LOG
+    else
+      timeout --foreground ${DURATION_MINS}m\
+        $FUZZER_BIN \
+        -i seeds \
+        -o out \
+        $FUZZER_OPTIONS \
+        afl_${MODE}_${num} \
+        $BIN_DIR/$TOPLEVEL \
+        2>&1 | tee -a $AFL_LOG
+    fi
+    check-exit-code
 
-  # Set process ID of recently launched fuzzer
-  FUZZER_PID=$!
-  echo "Launched fuzzer instance $num (PID: $FUZZER_PID)"
+    # Set process ID of recently launched fuzzer
+    FUZZER_PID=$!
+    echo "Launched fuzzer instance $num (PID: $FUZZER_PID)" | \
+      tee -a logs/exp.log
 
-  # Trap SIGINT to kill all fuzzer processes on ctrl-c
-  trap "kill $FUZZER_PID" SIGINT
-done
+    # Trap SIGINT to kill all fuzzer processes on ctrl-c
+    trap "kill $FUZZER_PID" SIGINT
+  done
 
-# Wait for all fuzzers to complete
-wait
+  # Wait for all fuzzers to complete
+  wait
+fi
 
 # Change permission on all files to allow access outside of container
 find out -type d -exec chmod 777 {} \;
@@ -98,5 +122,5 @@ find out -type f -exec chmod 644 {} \;
 ## Done
 ################################################################################
 ################################################################################
-echo -e "\e[1;32mFUZZING SUCCESSFUL -- Done!\e[0m"
+echo -e "\e[1;32mFUZZING SUCCESSFUL -- Done!\e[0m" | tee -a logs/exp.log
 exit 0

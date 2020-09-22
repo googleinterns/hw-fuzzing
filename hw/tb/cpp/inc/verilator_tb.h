@@ -45,9 +45,5 @@ class VerilatorTb {
 
     // Verilator configuration driver
     void InitializeVerilator(int argc, char** argv);
-
-    // Test input file handlers
-    //void OpenTestFile();
-    //void CloseTestFile();
 };
 #endif  // HW_TB_CPP_INC_VERILATOR_TB_H_

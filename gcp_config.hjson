@@ -1,0 +1,12 @@
+{
+  project: hardware-fuzzing
+  project_id: vivid-kite-287614
+  data_bucket: fuzzing-data
+  vm_management_bucket: vm-management
+  container_restart_policy: never
+  zone: us-east4-a
+  machine_type: n1-standard-2
+  boot_disk_size: 10GB
+  scopes: default,compute-rw,storage-rw
+  startup_script: gce_vm_startup.sh
+}

@@ -41,6 +41,10 @@ if [[ $FUZZER == "sim" ]]; then
 elif [[ $FUZZER == "afl" || $FUZZER == "afl-term-on-crash" ]]; then
   if [[ $TB_TYPE == "cocotb" ]]; then
 
+    # cocotb Required Environment Vars.
+    export MODULE=tb.$TB_TYPE.$TB.${TOPLEVEL}_tb
+    export TOPLEVEL_LANG=verilog
+
     # Compile the DUT for fuzzing
     compile-cocotb 2>&1 | tee -a logs/exp.log
     check-exit-code
@@ -56,7 +60,7 @@ elif [[ $FUZZER == "afl" || $FUZZER == "afl-term-on-crash" ]]; then
   fi
 
   # Fuzz the DUT
-  BIN_DIR=bin fuzz 2>&1 | tee -a logs/exp.log
+  BIN_DIR=bin fuzz 
   check-exit-code
 
 else

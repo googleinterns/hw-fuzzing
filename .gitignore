@@ -1,6 +1,7 @@
 # Experiment configs
 *.hjson
 !lock_*_test.hjson
+!gcp_config.hjson
 
 # HDL Generation Outputs
 # Rust

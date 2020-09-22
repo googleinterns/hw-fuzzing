@@ -95,7 +95,7 @@ class Config():
 
     # Initialize docker image name:
     self.docker_image = "gcr.io/%s/%s-%s" % \
-        (self.gcp_params["project"], self.fuzzer, self.toplevel)
+        (self.gcp_params["project_id"], self.fuzzer, self.toplevel)
 
     # Validate and print configurations
     self.validate_configs()

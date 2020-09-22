@@ -24,15 +24,11 @@ VerilatorTb::VerilatorTb(uint32_t port_size, int argc, char** argv)
       input_file_stream_(NULL),
       kPortSize_(port_size) {
     InitializeVerilator(argc, argv);
-    //OpenTestFile();
 }
 
 // Destructor: close testbench input and VCD files, report coverage,
 // and destroy model
 VerilatorTb::~VerilatorTb() {
-    // Close testbench input file stream
-    //CloseTestFile();
-
     //  Coverage analysis (since test passed)
 #if VM_COVERAGE
     Verilated::mkdir("logs");
@@ -59,16 +55,6 @@ void VerilatorTb::InitializeVerilator(int argc, char** argv) {
     // This needs to be called before you create any model
     Verilated::commandArgs(argc, argv);
 }
-
-//// Open input file stream for reading
-//void VerilatorTb::OpenTestFile() {
-    //input_file_stream_ = new std::ifstream(input_file_name_, std::ios::binary);
-    //if (!*input_file_stream_) {
-        //std::cerr << "ERROR: cannot open testbench input file: ";
-        //std::cerr << input_file_name_ << std::endl;
-        //exit(1);
-    //}
-//}
 
 // Read num_bytes from input file stream into buffer
 bool VerilatorTb::ReadTest(uint8_t* buffer) {
