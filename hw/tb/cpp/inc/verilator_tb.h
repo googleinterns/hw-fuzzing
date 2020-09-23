@@ -15,32 +15,38 @@
 #ifndef HW_TB_CPP_INC_VERILATOR_TB_H_
 #define HW_TB_CPP_INC_VERILATOR_TB_H_
 
+#include "Vtop.h"
 #include "verilated.h"
 #if VM_TRACE
-    #include "verilated_vcd_c.h"
+#include "verilated_vcd_c.h"
 #endif
 
 #include <string>
 
 class VerilatorTb {
  public:
-     explicit VerilatorTb(uint32_t port_size, int argc, char** argv);
-    ~VerilatorTb();
+  explicit VerilatorTb(int argc, char** argv);  // constructor
+  ~VerilatorTb();                               // destructor
+  bool ReadBytes(uint8_t* buffer,
+                 uint32_t num_bytes);  // reads bytes from STDIN
 
-    // Test input file handlers
-    bool ReadTest(uint8_t* buffer);
+#if VM_TRACE
+  void DumpTrace();  // Dumps VCD trace at current timestamp
+#endif
 
-    // Accessors
-    uint32_t get_test_num();
+  Vtop dut;              // Verilator SW model of the DUT
+  vluint64_t main_time;  // Verilator simulation time
+  uint32_t test_num;     // number of fuzz tests run
+  uint32_t num_checks;   // number of model checks run
 
  private:
-    // Test tracking data
-    uint32_t test_num_;
+  void InitializeVerilator(int argc, char** argv);
 
-    // Input port size
-    const uint32_t kPortSize_;
-
-    // Verilator configuration driver
-    void InitializeVerilator(int argc, char** argv);
+#if VM_TRACE
+  void InitializeTracing(int argc, char** argv);
+  VerilatedVcdC* tracing_file_pointer_;  // VCD file pointer
+  std::string vcd_file_name_;            // VCD file name
+#endif
 };
+
 #endif  // HW_TB_CPP_INC_VERILATOR_TB_H_

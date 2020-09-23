@@ -12,48 +12,25 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef LOCK_TB_CPP_AFL_INC_LOCK_TB_H_
-#define LOCK_TB_CPP_AFL_INC_LOCK_TB_H_
+#ifndef HW_LOCK_TB_CPP_AFL_INC_LOCK_TB_H_
+#define HW_LOCK_TB_CPP_AFL_INC_LOCK_TB_H_
 
-#include "tb/cpp/inc/verilator_tb.h"
-#include "Vtop.h"
+#include "hw/tb/cpp/inc/verilator_tb.h"
 
 // DUT parameters
 #define INPUT_PORT_SIZE_BYTES 1
 #define NUM_RESET_PERIODS 1
 
-class LockTb {
+class LockTb : public VerilatorTb {
  public:
-    explicit LockTb(int argc, char** argv);
-    ~LockTb();
-
-    // DUT drivers
-    void ResetDUT();
-    void SimulateDUT();
+  explicit LockTb(int argc, char **argv);
+  ~LockTb();
+  void ResetDUT();
+  void SimulateDUT();
 
  private:
-    // Verification state
-    uint32_t num_checks_;
-
-    // Simulation state
-    vluint64_t main_time_;  // current simulation time (64-bit unsigned)
-
-    // Verilator SW model of the DUT
-    Vtop dut_;
-    VerilatorTb test_;
-
-    // Correct "ground truth" state
-    // N/A
-
-#if VM_TRACE
-    // VCD tracing
-    VerilatedVcdC* tracing_file_pointer_;
-    std::string vcd_file_name_;
-    void InitializeTracing(std::string fname);
-#endif
-
-    // DUT drivers
-    void InitializeDUT();
-    void ToggleClock(uint32_t num_toggles);
+  void InitializeDUT();
+  void ToggleClock(uint32_t num_toggles);
 };
-#endif  // LOCK_TB_CPP_AFL_INC_LOCK_TB_H_
+
+#endif  // HW_LOCK_TB_CPP_AFL_INC_LOCK_TB_H_

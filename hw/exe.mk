@@ -22,6 +22,8 @@ LINK    = $(CXX)
 ################################################################################
 # Preprocessor flags
 ################################################################################
+include $(MODEL_DIR)/Vtop_classes.mk
+
 # Compiler flags to use to turn off unused and generated code warnings,
 # such as -Wno-div-by-zero
 CFG_CXXFLAGS_NO_UNUSED = \
@@ -32,10 +34,12 @@ CFG_CXXFLAGS_NO_UNUSED = \
 	-Wno-shadow
 
 CPPFLAGS += \
-	-I.. \
+	-I../.. \
 	-I$(MODEL_DIR) \
 	-I$(VERILATOR_ROOT)/include \
 	-I$(VERILATOR_ROOT)/include/vltstd \
+	-DVM_COVERAGE=$(VM_COVERAGE) \
+	-DVM_TRACE=$(VM_TRACE) \
 	$(CFG_CXXFLAGS_NO_UNUSED) \
 
 ################################################################################
@@ -69,7 +73,6 @@ OPT_GLOBAL = -Os
 ################################################################################
 # Verilator/Testbench classes
 ################################################################################
-include $(MODEL_DIR)/Vtop_classes.mk
 VM_FAST   += $(VM_CLASSES_FAST)
 VM_SLOW   += $(VM_CLASSES_SLOW) $(VM_SUPPORT_SLOW)
 VM_GLOBAL += $(VM_GLOBAL_FAST) $(VM_GLOBAL_SLOW) $(VM_SUPPORT_FAST)

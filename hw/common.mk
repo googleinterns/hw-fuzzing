@@ -39,7 +39,7 @@ export TB_SRCS := $(shell cocotb-config --share)/lib/verilator/verilator.cpp
 TB_MODULE      := tb.$(TB_TYPE).$(TB).$(TOPLEVEL)_tb
 else
 export TB_SRCS        := $(wildcard $(TB_SRCS_DIR)/*.cpp)
-export SHARED_TB_SRCS := $(wildcard $(SHARED_TB_SRCS_DIR)/*.cpp)
+export SHARED_TB_SRCS := $(addprefix $(SHARED_TB_SRCS_DIR)/, $(SHARED_TB_SRCS))
 endif
 MODEL_SRC := $(MODEL_DIR)/Vtop.cpp
 
@@ -122,6 +122,7 @@ debug-make::
 	@echo SHARED_TB_SRCS_DIR: $(SHARED_TB_SRCS_DIR)
 	@echo SHARED_TB_INCS_DIR: $(SHARED_TB_INCS_DIR)
 	@echo TB_SRCS: $(TB_SRCS)
+	@echo VFLAGS: $(VFLAGS)
 	@echo CPPFLAGS: $(CPPFLAGS)
 	@echo LDFLAGS: $(LDFLAGS)
 	@echo LDLIBS: $(LDLIBS)

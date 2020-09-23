@@ -31,10 +31,11 @@ export NUM_LOCK_STATES ?= 4
 export LOCK_COMP_WIDTH ?= 8
 
 ################################################################################
-# HDL Directories
+# HDL/TB
 ################################################################################
 #export HDL_INC_DIRS :=
-export HDL := hdl/lock.v
+export HDL            := hdl/lock.v
+export SHARED_TB_SRCS := verilator_tb.cpp
 
 ################################################################################
 # Verilator Flags (optional)
