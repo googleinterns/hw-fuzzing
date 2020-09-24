@@ -2,11 +2,15 @@
 
 #include "hw/tb/cpp/inc/ot_ip_fuzz_tb.h"
 
+#include <stdlib.h>
+
 #include <iostream>
 
 // Constructor
 OTIPFuzzTb::OTIPFuzzTb(int argc, char** argv)
-    : VerilatorTb(INPUT_PORT_SIZE_BYTES, argc, argv) {
+    : VerilatorTb(argc, argv), bus_(dut.tl_h2d, dut.tl_d2h) {
+  kAddressSizeBytes = get_env(ADDRESS_SIZE_BYTES_ENV_VAR);
+  kDataSizeBytes = get_env(DATA_SIZE_BYTES_ENV_VAR);
   InitializeDUT();
 }
 
@@ -17,7 +21,7 @@ OTIPFuzzTb::~OTIPFuzzTb() {}
 void OTIPFuzzTb::InitializeDUT() {
   dut.clk_i = 0;
   dut.rst_ni = 0;
-  dut.tl_i = 0;
+  // dut.tl_i = 0;
   dut.eval();
 #if VM_TRACE
   // Dump VCD trace for current time
@@ -51,21 +55,29 @@ void OTIPFuzzTb::ToggleClock(uint32_t num_toggles) {
   }
 }
 
-uint8_t OTIPFuzzTb::GetFuzzerOpcode() {
+HWFuzzOpcode OTIPFuzzTb::GetFuzzerOpcode() {
   uint8_t opcode = 0;
-  ReadBytes(&opcode, OPCODE_SIZE_BYTES);
-  return opcode;
+  bool reached_eof = ReadBytes(&opcode, OPCODE_SIZE_BYTES);
+  if (reached_eof) {
+    return HWFuzzOpcode::kInvalid;
+  } else if (opcode < WAIT_OPCODE_THRESHOLD) {
+    return HWFuzzOpcode::kWait;
+  } else if (opcode < RW_OPCODE_THRESHOLD) {
+    return HWFuzzOpcode::kRead;
+  } else {
+    return HWFuzzOpcode::kWrite;
+  }
 }
 
-uint32_t OTIPFuzzTb::GetTLULAddress() {
-  uint32_t address = 0;
-  ReadBytes(&address, kAddressSizeBytes);
+TLULAddress OTIPFuzzTb::GetTLULAddress() {
+  TLULAddress address = {false, 0};
+  address.valid = ReadBytes(&address.address, kAddressSizeBytes);
   return address;
 }
 
-uint32_t OTIPFuzzTb::GetTLULData() {
-  uint32_t data = 0;
-  ReadBytes(&data, kDataSizeBytes);
+TLULData OTIPFuzzTb::GetTLULData() {
+  TLULData data = {false, 0};
+  data.valid = ReadBytes(&data.data, kDataSizeBytes);
   return data;
 }
 

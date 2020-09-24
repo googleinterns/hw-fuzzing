@@ -142,7 +142,7 @@ class TLULHost(BusDriver):
     if sync:
       await RisingEdge(self.clock)
 
-    # Put WRITE request on the bus
+    # Put request on the bus
     self.bus.tl_i <= self._tl_i.pack(a_valid=1,
                                      a_opcode=opcode,
                                      a_size=size,
@@ -222,7 +222,7 @@ class TLULHost(BusDriver):
     Raises:
       TLULProtocolError: If write response asserts d_error or invalid opcode.
     """
-    # TODO: add size and mask as input parameters and validate them.
+    # TODO(ttrippel): add size and mask as input parameters and validate them.
     # Note: technically, the TL-UL spec. allows for full data writes for
     # registers smaller than the bus width, but OpenTitan documentation states
     # PutFullData operations should set a_size to full data bus width. This may
@@ -248,7 +248,7 @@ class TLULHost(BusDriver):
     Raises:
       TLULProtocolError: If write response asserts d_error or invalid opcode.
     """
-    # TODO: add size and mask as input parameters and validate them.
+    # TODO(ttrippel): add size and mask as input parameters and validate them.
     # Note: technically, the TL-UL spec. allows for reads from addresses that
     # are NOT naturally aligned, and/or smaller than the data-bus width,
     # provided the size and mask values are set appropriately. However,

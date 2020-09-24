@@ -19,7 +19,7 @@ export ADDRESS_SIZE ?= 4
 export DATA_SIZE ?= 4
 
 ################################################################################
-# HDL Directories
+# HDL/TB
 ################################################################################
 export HDL_INC_DIRS := \
 	../../../opentitan/hw/ip/prim/rtl \
@@ -30,6 +30,7 @@ export HDL := \
 	../../../opentitan/hw/ip/tlul/rtl/tlul_pkg.sv \
 	../../../opentitan/hw/ip/$(TOPLEVEL)/rtl/rv_timer_reg_pkg.sv \
 	../../../opentitan/hw/ip/$(TOPLEVEL)/rtl/rv_timer.sv
+export SHARED_TB_SRCS := verilator_tb.cpp op_ip_fuzz_tb.cpp
 
 ################################################################################
 # Verilator Flags (optional)

@@ -10,16 +10,23 @@ target/
 Cargo.*
 !Cargo.toml
 
-# Compiler Ouputs
+# C Compiler Ouputs
 *.a
 *.d
 *.o
+*bin/
+*bin.*/
+
+# Python bytecode 
 *.pyc
+
+# Ctags
+tags
+
+# Text files except Python dependency lists
 *.txt
 !packages.txt
 !requirements.txt
-*bin/
-*bin.*/
 
 # Verilator Ouputs
 *model/
