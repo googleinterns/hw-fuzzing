@@ -72,11 +72,18 @@
 #define TL_D_USER_INDEX (TL_D_DATA_INDEX + TL_D_DATA_WIDTH)
 #define TL_D_ERROR_INDEX (TL_D_USER_INDEX + TL_D_USER_WIDTH)
 #define TL_A_READY_INDEX (TL_D_ERROR_INDEX + TL_D_ERROR_WIDTH)
-// -----------------------------------------------------------------------------
 
+// -----------------------------------------------------------------------------
+// Other defines
+// -----------------------------------------------------------------------------
+#define FULL_MASK ((1U << TL_DBW) - 1)
+#define OT_TL_I_WORD_SIZE_BITS 32
+#define OT_TL_O_WORD_SIZE_BITS 32
 // TODO(ttrippel): compute these from above
 #define OT_TL_I_NUM_WORDS 4
 #define OT_TL_O_NUM_WORDS 3
+
+// -----------------------------------------------------------------------------
 
 enum class OpcodeA {
   kPutFullData = 0,
@@ -89,30 +96,28 @@ enum class OpcodeD {
   kAccessAckData = 1,
 }
 
-class TLULHost {
+class TLULHost : public STDINFuzzTb {
  public:
-  explicit TLULHost(Vtop* dut, vluint8_t* clk, vluint64_t main_time,
-                    vluint32_t* tl_h2d, vluint32_t* tl_d2h);
+  TLULHost(vluint32_t* tl_h2d, vluint32_t* tl_d2h);
   ~TLULHost();
   void PutFull(uint32_t address, uint32_t data);
   void PutPartial(uint32_t address, uint32_t data, uint8_t size, uint8_t mask);
   uint32_t Get(uint32_t address);
 
  private:
-  Vtop* dut_;
-  vluint8_t* clk_;
-  vluint64_t* main_time_;
   vluint32_t* tl_h2d_;
   vluint32_t* tl_d2h_;
   void WaitForDeviceReady();
-  void ClearRequestAfterDelay(uint32_t num_clock_cycles);
-  void WaitForDeviceReady();
+  void ClearRequestAfterDelay(uint32_t num_clk_cycles);
+  void WaitForDeviceResponse();
   void SendTLULRequest(OpcodeA opcode, uint32_t address, uint32_t data,
                        uint8_t size, uint8_t mask);
   void ReceiveTLULPutResponse();
-  void set_tl_h2d_(uint32_t index, uint32_t width, uint32_t value);
-  uint32_t get_tl_d2h_(uint32_t index, uint32_t width);
-  void PrintTLSignals(uint32_t* signals, uint32_t num_bits);
+  void SetH2DSignal(uint32_t index, uint32_t width, uint32_t value);
+  void ResetH2DSignals();
+  uint32_t UnpackSignal(uint32_t* signals, uint32_t index, uint32_t width);
+  void PrintH2DSignals();
+  void PrintD2HSignals();
 }
 
 #endif  // HW_TB_CPP_INC_TLUL_HOST_H_

@@ -30,20 +30,16 @@ struct TLULData {
   uint32_t data = 0;
 }
 
-class OTIPFuzzTb : public VerilatorTb {
+class OTIPFuzzTb : public TLULHostTb {
  public:
-  explicit OTIPFuzzTb(int argc, char** argv);
+  OTIPFuzzTb(int argc, char** argv);
   ~OTIPFuzzTb();
-  void ResetDUT();
   void SimulateDUT();
 
  private:
-  void InitializeDUT();
-  void ToggleClock(uint32_t num_toggles);
   HWFuzzOpcode GetFuzzerOpcode();
   TLULAddress GetTLULAddress();
   TLULData GetTLULData();
-  TLULHost bus_;                      // TL-UL bus driver
   const uint32_t kAddressSizeBytes_;  // size of TL-UL address bus
   const uint32_t kDataSizeBytes_;     // size of TL-UL data bus
 }
