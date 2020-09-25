@@ -35,7 +35,7 @@ export LOCK_COMP_WIDTH ?= 8
 ################################################################################
 #export HDL_INC_DIRS :=
 export HDL            := hdl/lock.v
-export SHARED_TB_SRCS := verilator_tb.cpp
+export SHARED_TB_SRCS := verilator_tb.cpp stdin_fuzz_tb.cpp
 
 ################################################################################
 # Verilator Flags (optional)

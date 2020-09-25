@@ -19,10 +19,8 @@
 // Constructor: initialize Verilator, and open a VCD trace and the testbench
 // input file
 VerilatorTb::VerilatorTb(int argc, char** argv)
-    : main_time(0),
-      dut(),
-      test_num(0),
-      num_checks(0)
+    : dut_(),
+      main_time_(0)
 #if VM_TRACE
       ,
       tracing_file_pointer_(NULL),
@@ -53,45 +51,70 @@ VerilatorTb::~VerilatorTb() {
 #endif
 }
 
-// Read num_bytes from input file stream into buffer
-bool VerilatorTb::ReadBytes(uint8_t* buffer, uint32_t num_bytes) {
-  if (!std::cin.eof()) {
-    // Read file as a byte stream
-    std::cin.read((char*)buffer, num_bytes);
-    if (std::cin.gcount() < num_bytes) {
-      return false;
-    }
-    // Increment test number
-    test_num++;
-    return true;
-  }
-  return false;
+// Reset the DUT
+void VerilatorTb::ResetDUT(vluint8_t* clk, vluint8_t* rst_n,
+                           uint32_t num_clk_periods) {
+  // Print reset status
+  std::cout << "Resetting the DUT (time: " << unsigned(main_time_);
+  std::cout << ") ..." << std::endl;
+
+  // Place DUT in reset
+  *rst_n = 0;
+
+  // Toggle clock for NUM_RESET_PERIODS
+  ToggleClock(clk, (num_clk_periods * 2) + 1);
+
+  // Pull DUT out of reset
+  *rst_n = 1;
+
+  // Print reset status
+  std::cout << "Reset complete! (time = " << unsigned(main_time_);
+  std::cout << ")" << std::endl;
 }
 
 #if VM_TRACE
+// Dump VCD trace to VCD file
 void VerilatorTb::DumpTrace() {
   if (tracing_file_pointer_) {
-    tracing_file_pointer_->dump(main_time);
+    tracing_file_pointer_->dump(main_time_);
   } else {
-    std::cout << "WARNING: cannot dump VCD trace at time: " << main_time
+    std::cout << "WARNING: cannot dump VCD trace at time: " << main_time_
               << std::endl;
   }
 }
 #endif
 
-// Initialize Verilator settings
-void VerilatorTb::InitializeVerilator(int argc, char** argv) {
-  // Set debug level, 0 is off, 9 is highest presently used
-  // May be overridden by commandArgs
-  Verilated::debug(0);
+// Toggle clock for num_toggles half clock periods.
+// Model is evaluated AFTER clock state is toggled,
+// and regardless of current clock state.
+void VerilatorTb::ToggleClock(vluint8_t* clk, uint32_t num_toggles) {
+  for (uint32_t i = 0; i < num_toggles; i++) {
+    // Toggle main clock
+    if (*clk) {
+      *clk = 0;
+    } else {
+      *clk = 1;
+    }
 
-  // Randomization reset policy
-  // May be overridden by commandArgs
-  Verilated::randReset(2);
+    // Evaluate model
+    dut_.eval();
 
-  // Pass arguments so Verilated code can see them, e.g. $value$plusargs
-  // This needs to be called before you create any model
-  Verilated::commandArgs(argc, argv);
+#if VM_TRACE
+    // Dump VCD trace for current time
+    DumpTrace();
+#endif
+
+    // Increment Time
+    main_time_++;
+  }
+}
+
+// main_time_ accessor
+vluint64_t VerilatorTb::get_main_time() { return main_time_; }
+
+// main_time_ setter
+void VerilatorTb::set_main_time(vluint64_t main_time) {
+  main_time_ = main_time;
 }
 
 #if VM_TRACE
@@ -119,7 +142,22 @@ void VerilatorTb::InitializeTracing(int argc, char** argv) {
   // Turn on Verilator tracing
   Verilated::traceEverOn(true);  // Verilator must compute traced signals
   tracing_file_pointer_ = new VerilatedVcdC();
-  dut.trace(tracing_file_pointer_, 99);  // Trace 99 levels of hierarchy
+  dut_.trace(tracing_file_pointer_, 99);  // Trace 99 levels of hierarchy
   tracing_file_pointer_->open(vcd_file_name_.c_str());  // Open the dump file
 }
 #endif
+
+// Initialize Verilator settings
+void VerilatorTb::InitializeVerilator(int argc, char** argv) {
+  // Set debug level, 0 is off, 9 is highest presently used
+  // May be overridden by commandArgs
+  Verilated::debug(0);
+
+  // Randomization reset policy
+  // May be overridden by commandArgs
+  Verilated::randReset(2);
+
+  // Pass arguments so Verilated code can see them, e.g. $value$plusargs
+  // This needs to be called before you create any model
+  Verilated::commandArgs(argc, argv);
+}

@@ -15,22 +15,20 @@
 #ifndef HW_LOCK_TB_CPP_AFL_INC_LOCK_TB_H_
 #define HW_LOCK_TB_CPP_AFL_INC_LOCK_TB_H_
 
-#include "hw/tb/cpp/inc/verilator_tb.h"
+#include "hw/tb/cpp/inc/stdin_fuzz_tb.h"
 
 // DUT parameters
 #define INPUT_PORT_SIZE_BYTES 1
-#define NUM_RESET_PERIODS 1
+#define NUM_RESET_CLK_PERIODS 1
 
-class LockTb : public VerilatorTb {
+class LockTb : public STDINFuzzTb {
  public:
-  explicit LockTb(int argc, char **argv);
+  LockTb(int argc, char** argv);
   ~LockTb();
-  void ResetDUT();
   void SimulateDUT();
 
  private:
   void InitializeDUT();
-  void ToggleClock(uint32_t num_toggles);
 };
 
 #endif  // HW_LOCK_TB_CPP_AFL_INC_LOCK_TB_H_
