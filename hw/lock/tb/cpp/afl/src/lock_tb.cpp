@@ -56,7 +56,7 @@ void LockTb::SimulateDUT() {
     // Load test into DUT
     dut_.code = (test_input[0]);
 
-    // Print test read from file
+    // Print test read from file/STDIN
     std::cout << "Loading inputs for test " << get_test_num();
     std::cout << " (time = " << unsigned(get_main_time()) << ") ...";
     std::cout << std::endl;

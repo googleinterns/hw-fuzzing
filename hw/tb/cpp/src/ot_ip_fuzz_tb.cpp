@@ -4,13 +4,13 @@
 
 #include <stdlib.h>
 
+#include <iomanip>
 #include <iostream>
 
 // Constructor
-OTIPFuzzTb::OTIPFuzzTb(int argc, char** argv)
-    : VerilatorTb(argc, argv), bus_(dut.tl_h2d, dut.tl_d2h) {
-  kAddressSizeBytes = get_env(ADDRESS_SIZE_BYTES_ENV_VAR);
-  kDataSizeBytes = get_env(DATA_SIZE_BYTES_ENV_VAR);
+OTIPFuzzTb::OTIPFuzzTb(int argc, char** argv) : TLULHostTb(argc, argv) {
+  address_size_bytes_ = atoi(getenv(ADDRESS_SIZE_BYTES_ENV_VAR));
+  data_size_bytes_ = atoi(getenv(DATA_SIZE_BYTES_ENV_VAR));
   InitializeDUT();
 }
 
@@ -19,46 +19,25 @@ OTIPFuzzTb::~OTIPFuzzTb() {}
 
 // Initialize DUT inputs
 void OTIPFuzzTb::InitializeDUT() {
-  dut.clk_i = 0;
-  dut.rst_ni = 0;
-  // dut.tl_i = 0;
-  dut.eval();
+  // Set some sensible values for DUT inputs
+  dut_.clk_i = 0;
+  dut_.rst_ni = 0;
+
+  // Evaluate the Model
+  dut_.eval();
 #if VM_TRACE
   // Dump VCD trace for current time
   DumpTrace();
 #endif
-  main_time++;
-}
 
-// Toggle clock for num_toggles half clock periods.
-// Model is evaluated AFTER clock state is toggled,
-// and regardless of current clock state.
-void OTIPFuzzTb::ToggleClock(uint32_t num_toggles) {
-  for (uint32_t i = 0; i < num_toggles; i++) {
-    // Toggle main clock
-    if (dut.clk_i) {
-      dut.clk_i = 0;
-    } else {
-      dut.clk_i = 1;
-    }
-
-    // Evaluate model
-    dut.eval();
-
-#if VM_TRACE
-    // Dump VCD trace for current time
-    DumpTrace();
-#endif
-
-    // Increment Time
-    main_time++;
-  }
+  // Start time at 1 to align rising clock edges with even time values
+  set_main_time(1);
 }
 
 HWFuzzOpcode OTIPFuzzTb::GetFuzzerOpcode() {
   uint8_t opcode = 0;
-  bool reached_eof = ReadBytes(&opcode, OPCODE_SIZE_BYTES);
-  if (reached_eof) {
+  bool read_valid = ReadBytes(&opcode, OPCODE_SIZE_BYTES);
+  if (!read_valid) {
     return HWFuzzOpcode::kInvalid;
   } else if (opcode < WAIT_OPCODE_THRESHOLD) {
     return HWFuzzOpcode::kWait;
@@ -70,35 +49,79 @@ HWFuzzOpcode OTIPFuzzTb::GetFuzzerOpcode() {
 }
 
 TLULAddress OTIPFuzzTb::GetTLULAddress() {
-  TLULAddress address = {false, 0};
-  address.valid = ReadBytes(&address.address, kAddressSizeBytes);
+  TLULAddress address{false, 0};
+  address.valid = ReadBytes(reinterpret_cast<uint8_t*>(&address.address),
+                            address_size_bytes_);
   return address;
 }
 
 TLULData OTIPFuzzTb::GetTLULData() {
-  TLULData data = {false, 0};
-  data.valid = ReadBytes(&data.data, kDataSizeBytes);
+  TLULData data{false, 0};
+  data.valid =
+      ReadBytes(reinterpret_cast<uint8_t*>(&data.data), data_size_bytes_);
   return data;
 }
 
-// Reset the DUT
-void OTIPFuzzTb::ResetDUT() {
-  // Print reset status
-  std::cout << "Resetting the DUT (time: " << unsigned(main_time);
-  std::cout << ") ..." << std::endl;
+void OTIPFuzzTb::SimulateDUT() {
+  // Reset the DUT
+  ResetDUT(&dut_.clk_i, &dut_.rst_ni, NUM_RESET_CLK_PERIODS);
 
-  // Place DUT in reset
-  dut.rst_ni = 0;
+  HWFuzzOpcode fuzzer_opcode = HWFuzzOpcode::kInvalid;
+  TLULAddress rw_address{false, 0};
+  TLULAddress w_data{false, 0};
+  uint32_t r_data = 0;
 
-  // Toggle clock for NUM_RESET_PERIODS
-  ToggleClock(NUM_RESET_PERIODS * 2);
+  // Read tests from file/STDIN and simulate DUT
+  std::cout << "Running fuzzer generated tests..." << std::endl;
+  do {
+    fuzzer_opcode = GetFuzzerOpcode();
 
-  // Pull DUT out of reset
-  dut.reset_n = 1;
+    switch (fuzzer_opcode) {
+      case HWFuzzOpcode::kWait: {
+        std::cout << "(wait)" << std::endl;
+        break;
+      }
 
-  // Print reset status
-  std::cout << "Reset complete! (time = " << unsigned(main_time);
-  std::cout << ")" << std::endl;
+      case HWFuzzOpcode::kRead: {
+        rw_address = GetTLULAddress();
+        if (rw_address.valid) {
+          std::cout << "(read) -- addr: 0x" << std::setw(OT_TL_DW >> 2)
+                    << std::hex << rw_address.address << "; data: 0x"
+                    << std::setw(OT_TL_DW >> 2) << std::hex << r_data
+                    << std::endl;
+          r_data = Get(rw_address.address);
+        } else {
+          std::cout << "No more fuzzer input... ending test." << std::endl;
+        }
+        break;
+      }
+
+      case HWFuzzOpcode::kWrite: {
+        break;
+      }
+
+      default: {
+        std::cout << "ERROR: Invalid fuzzer opcode: " << (uint32_t)fuzzer_opcode
+                  << std::endl;
+        break;
+      }
+    }
+
+    // Update correct "ground truth" model state if necessary
+
+    // Toggle clock period
+    ToggleClock(&dut_.clk_i, 2);
+
+    // Print vital DUT state
+    // Verify vital DUT state
+  } while (fuzzer_opcode != HWFuzzOpcode::kInvalid && !Verilated::gotFinish());
+
+  std::cout << "Fuzz tests completed!" << std::endl;
+#if VM_TRACE
+  // Toggle half a clock period
+  ToggleClock(&dut_.clk_i, 1);
+#endif
+
+  // Final model cleanup
+  dut_.final();
 }
-
-void OTIPFuzzTb::SimulateDUT() {}
