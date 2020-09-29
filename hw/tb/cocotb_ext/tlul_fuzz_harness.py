@@ -58,7 +58,7 @@ from cocotb.triggers import RisingEdge, Timer
 sys.path.append("/Users/ttrippel/repos/hw-fuzzing/hw/tb")
 from cocotb_ext.drivers.tlul import TLULHost
 
-ENDIANNESS = "big"  # how to interpret bytes from STDIN
+ENDIANNESS = "little"  # how to interpret bytes from STDIN
 OPCODE_SIZE = 1  # number of opcode bytes to read from STDIN
 WAIT_OPCODE_THRESHOLD = 85
 RW_OPCODE_THRESHOLD = 170
@@ -122,10 +122,10 @@ class TLULFuzzHarness():
         # hw_fuzz_opcode_str = "wait"
         hw_fuzz_opcode = HWFuzzOpcode.wait
       elif fuzzer_opcode < RW_OPCODE_THRESHOLD:
-        # hw_fuzz_opcode_str = "read"
+        # hw_fuzz_opcode_str = "write"
         hw_fuzz_opcode = HWFuzzOpcode.write
       else:
-        # hw_fuzz_opcode_str = "write"
+        # hw_fuzz_opcode_str = "read"
         hw_fuzz_opcode = HWFuzzOpcode.read
       return hw_fuzz_opcode
     else:

@@ -11,7 +11,7 @@
 #define OPCODE_SIZE_BYTES 1  // number of opcode bytes to read from STDIN
 #define WAIT_OPCODE_THRESHOLD 85
 #define RW_OPCODE_THRESHOLD 170
-#define NUM_RESET_CLK_PERIODS 1
+#define NUM_RESET_CLK_PERIODS 5
 
 enum class HWFuzzOpcode {
   kInvalid = 0,

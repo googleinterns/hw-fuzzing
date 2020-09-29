@@ -51,7 +51,7 @@ async def rv_timer_tb(dut):
       tlul_address = tb.get_tlul_address()
       if tlul_address is not None:
         value = await tb.tlul.get(tlul_address)
-        dut._log.info("(read  -- addr: data) {:0>8X}: {} ({})".format(
+        dut._log.info("(read  -- addr: data) 0x{:0>8X}: {} (32b{})".format(
             tlul_address, bin2hex(value), value.binstr))
       else:
         dut._log.info("Ran out of fuzzer input bytes... ending test.")
@@ -63,8 +63,9 @@ async def rv_timer_tb(dut):
       tlul_data = tb.get_tlul_data()
       if tlul_address is not None and tlul_data is not None:
         await tb.tlul.put_full(tlul_address, tlul_data)
-        dut._log.info("(write -- addr: data) {:0>8X}: {:0>8X} {:0>32b}".format(
-            tlul_address, tlul_data, tlul_data))
+        dut._log.info(
+            "(write -- addr: data) 0x{:0>8X}: {:0>8X} (32b{:0>32b})".format(
+                tlul_address, tlul_data, tlul_data))
       else:
         dut._log.info("Ran out of fuzzer input bytes... ending test.")
         break

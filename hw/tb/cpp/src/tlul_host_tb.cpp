@@ -8,22 +8,24 @@
 TLULHostTb::TLULHostTb(int argc, char** argv) : STDINFuzzTb(argc, argv) {
   // Initialize all bus signals to 0, except set host to ready to receive data
   ResetH2DSignals();
-  SetH2DSignal(TL_D_READY_INDEX, TL_D_READY_WIDTH, 1);
+  SetH2DSignal("D_READY", 1);
+#ifdef DEBUG
+  std::cout << "Setting TL-UL host to ready!" << std::endl;
+  PrintH2DSignals();
+#endif
 }
 
 TLULHostTb::~TLULHostTb() {}
 
 uint32_t TLULHostTb::Get(uint32_t address) {
   // Send request and wait for response
-  SendTLULRequest(OpcodeA::kPutFullData, address, 0, OT_TL_SZW, FULL_MASK);
-  WaitForDeviceReady();
+  SendTLULRequest(OpcodeA::kGet, address, 0, OT_TL_SZW, FULL_MASK);
+  WaitForDeviceResponse();
 
   // Unpack reponse
-  uint32_t d_data = UnpackSignal(dut_.tl_o, TL_D_DATA_INDEX, TL_D_DATA_WIDTH);
-  uint32_t d_opcode =
-      UnpackSignal(dut_.tl_o, TL_D_OPCODE_INDEX, TL_D_OPCODE_WIDTH);
-  uint32_t d_error =
-      UnpackSignal(dut_.tl_o, TL_D_ERROR_INDEX, TL_D_ERROR_WIDTH);
+  uint32_t d_data = UnpackSignal(dut_.tl_o, "D_DATA");
+  uint32_t d_opcode = UnpackSignal(dut_.tl_o, "D_OPCODE");
+  uint32_t d_error = UnpackSignal(dut_.tl_o, "D_ERROR");
 
   // TODO(ttrippel): RAISE ERROR
   // if (d_error || d_opcode != (uint32_t)OpcodeD::kAccessAckData) {
@@ -32,145 +34,74 @@ uint32_t TLULHostTb::Get(uint32_t address) {
   return d_data;
 }
 
-uint32_t TLULHostTb::UnpackSignal(uint32_t* signals, uint32_t index,
-                                  uint32_t width) {
-  // Compute start/end word and bit indices of target value
-  uint8_t start_word_ind = index / OT_TL_O_WORD_SIZE_BITS;
-  uint8_t end_word_ind = (index + width - 1) / OT_TL_O_WORD_SIZE_BITS;
-  uint8_t start_bit_index = index - (start_word_ind * OT_TL_O_WORD_SIZE_BITS);
-  uint8_t end_bit_index =
-      index + width - 1 - (end_word_ind * OT_TL_O_WORD_SIZE_BITS);
-  uint32_t signal = 0;
-
-  // If word indices are the same, signal bits resides in the same word,
-  // otherwise, the bits straddle two words. Numeric values of individual TLUL
-  // signals are unpacked by shifting and masking.
-  if (start_word_ind == end_word_ind) {
-    signal = signals[start_word_ind] >> start_bit_index;
-    signal &= (1U << width) - 1;
-  } else if ((end_word_ind - 1) == start_word_ind) {
-    // Compute width of the low portion of the signal
-    uint8_t low_width = OT_TL_O_WORD_SIZE_BITS - start_bit_index;
-
-    // Shift THEN mask LOW subword
-    uint32_t signal_low = signals[start_word_ind] >> start_bit_index;
-    signal_low &= (1U << low_width) - 1;
-
-    //  Mask THEN shift HIGH subword
-    uint32_t high_mask = (1U << (end_bit_index + 1)) - 1;
-    uint32_t signal_high = (signals[end_word_ind] & high_mask) << low_width;
-    signal = signal_low | signal_high;
-  }
-  // TODO: RAISE ERROR
-  // else {
-  // continue;
-  //}
-
-  return signal;
-}
-
 void TLULHostTb::ClearRequestAfterDelay(uint32_t num_clk_cycles) {
   for (uint32_t i = 0; i < num_clk_cycles; i++) {
     ToggleClock(&dut_.clk_i, 2);
   }
   ResetH2DSignals();
-  SetH2DSignal(TL_D_READY_INDEX, TL_D_READY_WIDTH, 1);
+  SetH2DSignal("D_READY", 1);
 #ifdef DEBUG
   std::cout << "Clearing TL-UL request ..." << std::endl;
   PrintH2DSignals();
 #endif
 }
 
-// TODO: complete this
-void TLULHostTb::PrintD2HSignals() {
-  std::cout << "+----------------------------+" << std::endl;
-  std::cout << "|TL-UL Device-to-Host Signals|" << std::endl;
-  std::cout << "+----------------+-----------+" << std::endl;
-  std::cout << "|D_VALID         | 0x" << std::setfill('0')
-            << std::setw(OT_TL_DW >> 2) << std::hex
-            << UnpackSignal(dut_.tl_o, TL_D_VALID_INDEX, TL_D_VALID_WIDTH)
-            << "|" << std::endl;
-  std::cout << "|D_OPCODE        | 0x" << std::setfill('0')
-            << std::setw(OT_TL_DW >> 2) << std::hex
-            << UnpackSignal(dut_.tl_o, TL_D_OPCODE_INDEX, TL_D_OPCODE_WIDTH)
-            << "|" << std::endl;
-  std::cout << "|D_PARAM         | 0x" << std::setfill('0')
-            << std::setw(OT_TL_DW >> 2) << std::hex
-            << UnpackSignal(dut_.tl_o, TL_D_PARAM_INDEX, TL_D_PARAM_WIDTH)
-            << "|" << std::endl;
-  std::cout << "|D_SIZE          | 0x" << std::setfill('0')
-            << std::setw(OT_TL_DW >> 2) << std::hex
-            << UnpackSignal(dut_.tl_o, TL_D_SIZE_INDEX, TL_D_SIZE_WIDTH) << "|"
-            << std::endl;
-  std::cout << "|D_SOURCE        | 0x" << std::setfill('0')
-            << std::setw(OT_TL_DW >> 2) << std::hex
-            << UnpackSignal(dut_.tl_o, TL_D_SOURCE_INDEX, TL_D_SOURCE_WIDTH)
-            << "|" << std::endl;
-  std::cout << "|D_SINK          | 0x" << std::setfill('0')
-            << std::setw(OT_TL_DW >> 2) << std::hex
-            << UnpackSignal(dut_.tl_o, TL_D_SINK_INDEX, TL_D_SINK_WIDTH) << "|"
-            << std::endl;
-  std::cout << "|D_DATA          | 0x" << std::setfill('0')
-            << std::setw(OT_TL_DW >> 2) << std::hex
-            << UnpackSignal(dut_.tl_o, TL_D_DATA_INDEX, TL_D_DATA_WIDTH) << "|"
-            << std::endl;
-  std::cout << "|D_USER          | 0x" << std::setfill('0')
-            << std::setw(OT_TL_DW >> 2) << std::hex
-            << UnpackSignal(dut_.tl_o, TL_D_USER_INDEX, TL_D_USER_WIDTH) << "|"
-            << std::endl;
-  std::cout << "|D_ERROR         | 0x" << std::setfill('0')
-            << std::setw(OT_TL_DW >> 2) << std::hex
-            << UnpackSignal(dut_.tl_o, TL_D_ERROR_INDEX, TL_D_ERROR_WIDTH)
-            << "|" << std::endl;
-  std::cout << "|A_READY         | 0x" << std::setfill('0')
-            << std::setw(OT_TL_DW >> 2) << std::hex
-            << UnpackSignal(dut_.tl_o, TL_A_READY_INDEX, TL_A_READY_WIDTH)
-            << "|" << std::endl;
-  std::cout << "+----------------+-----------+" << std::endl;
+// Prints a row in the H2D or D2H tables
+void TLULHostTb::PrintSignalValue(uint32_t* packed_signals,
+                                  std::string signal_name) {
+  uint32_t signal_value = UnpackSignal(packed_signals, signal_name);
+  const uint32_t signal_width = signal2width_.at(signal_name);
+  std::cout << "|";
+  std::cout << std::left << std::setfill(' ') << std::setw(9) << signal_name;
+  std::cout << "|";
+  std::cout << std::right << std::setw(7) << signal_width;
+  std::cout << "|";
+  std::cout << std::setw(7) << signal2index_.at(signal_name);
+  std::cout << "|";
+  std::cout << " 0x" << std::right << std::setfill('0') << std::setw(8)
+            << std::hex << signal_value;
+  std::cout << "|";
+  std::cout << " " << std::setfill(' ') << std::setw(34 - signal_width)
+            << std::dec << "b'";
+  uint32_t current_bit = 1;
+  uint32_t current_bitmask = 1U << (signal_width - 1);
+  for (uint32_t i = 0; i < signal_width; i++) {
+    current_bit = (signal_value & current_bitmask);
+    current_bit >>= (signal_width - 1);
+    std::cout << current_bit;
+    signal_value <<= 1;
+  }
+  std::cout << "|" << std::endl;
 }
 
-// TODO: complete this
+// Prints unpacked values of Device-to-Host signals
+void TLULHostTb::PrintD2HSignals() {
+  std::cout << PACKED_SIGNAL_TABLE_BORDER_TOP << std::endl;
+  std::cout << "|                   TL-UL Device-to-Host Signals (tl_o)        "
+               "           |"
+            << std::endl;
+  std::cout << PACKED_SIGNAL_TABLE_COL_BORDER << std::endl;
+  std::cout << PACKED_SIGNAL_TABLE_COL_HEADER << std::endl;
+  std::cout << PACKED_SIGNAL_TABLE_COL_BORDER << std::endl;
+  for (uint32_t i = 0; i < d2h_signals_.size(); i++) {
+    PrintSignalValue(dut_.tl_o, d2h_signals_[i]);
+  }
+  std::cout << PACKED_SIGNAL_TABLE_COL_BORDER << std::endl;
+}
+
+// Prints unpacked values of Host-to-Device signals
 void TLULHostTb::PrintH2DSignals() {
-  std::cout << "+----------------------------+" << std::endl;
-  std::cout << "|TL-UL Host-to-Device Signals|" << std::endl;
-  std::cout << "+----------------+-----------+" << std::endl;
-  std::cout << "|A_VALID         | 0x" << std::setfill('0')
-            << std::setw(OT_TL_DW >> 2) << std::hex
-            << UnpackSignal(dut_.tl_i, TL_A_VALID_INDEX, TL_A_VALID_WIDTH)
-            << "|" << std::endl;
-  std::cout << "|A_OPCODE        | 0x" << std::setfill('0')
-            << std::setw(OT_TL_DW >> 2) << std::hex
-            << UnpackSignal(dut_.tl_i, TL_A_OPCODE_INDEX, TL_A_OPCODE_WIDTH)
-            << "|" << std::endl;
-  std::cout << "|A_PARAM         | 0x" << std::setfill('0')
-            << std::setw(OT_TL_DW >> 2) << std::hex
-            << UnpackSignal(dut_.tl_i, TL_A_PARAM_INDEX, TL_A_PARAM_WIDTH)
-            << "|" << std::endl;
-  std::cout << "|A_SIZE          | 0x" << std::setfill('0')
-            << std::setw(OT_TL_DW >> 2) << std::hex
-            << UnpackSignal(dut_.tl_i, TL_A_SIZE_INDEX, TL_A_SIZE_WIDTH) << "|"
+  std::cout << PACKED_SIGNAL_TABLE_BORDER_TOP << std::endl;
+  std::cout << "|                   TL-UL Host-to-Device Signals (tl_i)        "
+               "           |"
             << std::endl;
-  std::cout << "|A_SOURCE        | 0x" << std::setfill('0')
-            << std::setw(OT_TL_DW >> 2) << std::hex
-            << UnpackSignal(dut_.tl_i, TL_A_SOURCE_INDEX, TL_A_SOURCE_WIDTH)
-            << "|" << std::endl;
-  std::cout << "|A_ADDRESS       | 0x" << std::setfill('0')
-            << std::setw(OT_TL_DW >> 2) << std::hex
-            << UnpackSignal(dut_.tl_i, TL_A_ADDRESS_INDEX, TL_A_ADDRESS_WIDTH)
-            << "|" << std::endl;
-  std::cout << "|A_DATA          | 0x" << std::setfill('0')
-            << std::setw(OT_TL_DW >> 2) << std::hex
-            << UnpackSignal(dut_.tl_i, TL_A_DATA_INDEX, TL_A_DATA_WIDTH) << "|"
-            << std::endl;
-  std::cout << "|A_USER          | 0x" << std::setfill('0')
-            << std::setw(OT_TL_DW >> 2) << std::hex
-            << UnpackSignal(dut_.tl_i, TL_A_USER_INDEX, TL_A_USER_WIDTH) << "|"
-            << std::endl;
-  std::cout << "|D_READY         | 0x" << std::setfill('0')
-            << std::setw(OT_TL_DW >> 2) << std::hex
-            << UnpackSignal(dut_.tl_i, TL_D_READY_INDEX, TL_D_READY_WIDTH)
-            << "|" << std::endl;
-  std::cout << "+----------------+-----------+" << std::endl;
+  std::cout << PACKED_SIGNAL_TABLE_COL_BORDER << std::endl;
+  std::cout << PACKED_SIGNAL_TABLE_COL_HEADER << std::endl;
+  std::cout << PACKED_SIGNAL_TABLE_COL_BORDER << std::endl;
+  for (uint32_t i = 0; i < h2d_signals_.size(); i++) {
+    PrintSignalValue(dut_.tl_i, h2d_signals_[i]);
+  }
+  std::cout << PACKED_SIGNAL_TABLE_COL_BORDER << std::endl;
 }
 
 // Performs PutFullData TileLink transaction.
@@ -206,10 +137,8 @@ void TLULHostTb::PutPartial(uint32_t address, uint32_t data, uint32_t size,
 void TLULHostTb::ReceiveTLULPutResponse() {
   // Wait for the response, then unpack opcode and error signals
   WaitForDeviceResponse();
-  uint32_t d_opcode =
-      UnpackSignal(dut_.tl_o, TL_D_OPCODE_INDEX, TL_D_OPCODE_WIDTH);
-  uint32_t d_error =
-      UnpackSignal(dut_.tl_o, TL_D_ERROR_INDEX, TL_D_ERROR_WIDTH);
+  uint32_t d_opcode = UnpackSignal(dut_.tl_o, "D_OPCODE");
+  uint32_t d_error = UnpackSignal(dut_.tl_o, "D_ERROR");
 
   // Check if transaction failed
   // TODO(ttrippel): RAISE ERROR
@@ -230,36 +159,37 @@ void TLULHostTb::ResetH2DSignals() {
 }
 
 // Puts a TL-UL transaction request on the bus, waits for the device to signal
-// it is ready to receive the request from the host, then waits one clock cycle
-// before resetting all the host-to-device bus signals.
+// it is ready to receive the request from the host, then waits one clock
+// cycle before resetting all the host-to-device bus signals.
 void TLULHostTb::SendTLULRequest(OpcodeA opcode, uint32_t address,
                                  uint32_t data, uint32_t size, uint32_t mask) {
   // Put request on the bus
-  SetH2DSignal(TL_A_VALID_INDEX, TL_A_VALID_WIDTH, 1);
-  SetH2DSignal(TL_A_OPCODE_INDEX, TL_A_OPCODE_WIDTH, (uint32_t)opcode);
-  // SetH2DSignal(TL_A_SIZE_INDEX, TL_A_SIZE_WIDTH, size);
-  // SetH2DSignal(TL_A_ADDRESS_INDEX, TL_A_ADDRESS_WIDTH, address);
-  // SetH2DSignal(TL_A_DATA_INDEX, TL_A_DATA_WIDTH, data);
-  // SetH2DSignal(TL_A_MASK_INDEX, TL_A_MASK_WIDTH, mask);
-  // SetH2DSignal(TL_D_READY_INDEX, TL_D_READY_WIDTH, 1);
+  SetH2DSignal("A_VALID", 1);
+  SetH2DSignal("A_OPCODE", (uint32_t)opcode);
+  SetH2DSignal("A_SIZE", size);
+  SetH2DSignal("A_ADDRESS", address);
+  SetH2DSignal("A_DATA", data);
+  SetH2DSignal("A_MASK", mask);
+  SetH2DSignal("D_READY", 1);
 #ifdef DEBUG
   std::cout << "Putting TL-UL transaction on bus ..." << std::endl;
   PrintH2DSignals();
 #endif
-  exit(0);
 
   // Wait for request to be received by the device
   WaitForDeviceReady();
   ClearRequestAfterDelay(1);
 }
 
-// TODO: complete this
-void TLULHostTb::SetH2DSignal(uint32_t index, uint32_t width, uint32_t value) {
+// Sets the given TL-UL signal name with the given value
+void TLULHostTb::SetH2DSignal(std::string signal_name, uint32_t value) {
   // Compute start/end word and bit indices of target value
+  uint32_t index = signal2index_.at(signal_name);
+  uint32_t width = signal2width_.at(signal_name);
   uint8_t start_word_ind = index / OT_TL_O_WORD_SIZE_BITS;
   uint8_t end_word_ind = (index + width - 1) / OT_TL_O_WORD_SIZE_BITS;
-  uint8_t start_bit_index = index - (start_word_ind * OT_TL_O_WORD_SIZE_BITS);
-  uint8_t end_bit_index =
+  uint8_t start_bit_ind = index - (start_word_ind * OT_TL_O_WORD_SIZE_BITS);
+  uint8_t end_bit_ind =
       index + width - 1 - (end_word_ind * OT_TL_O_WORD_SIZE_BITS);
 
   // If word indices are the same, signal bits resides in the same word,
@@ -267,22 +197,22 @@ void TLULHostTb::SetH2DSignal(uint32_t index, uint32_t width, uint32_t value) {
   // packed by clearing existing value bits and setting new value bits.
   if (start_word_ind == end_word_ind) {
     // clear existing signal value
-    dut_.tl_i[start_word_ind] &= ~((1U << width) - 1) << start_bit_index;
+    dut_.tl_i[start_word_ind] &= ~(((1U << width) - 1) << start_bit_ind);
     // set new signal value
-    dut_.tl_i[start_word_ind] |= value << start_bit_index;
+    dut_.tl_i[start_word_ind] |= value << start_bit_ind;
   } else if ((end_word_ind - 1) == start_word_ind) {
     // Operate on LOWER word
     // Compute width of the low portion of the signal
-    uint8_t low_width = OT_TL_O_WORD_SIZE_BITS - start_bit_index;
+    uint8_t low_width = OT_TL_O_WORD_SIZE_BITS - start_bit_ind;
     // Clear existing signal value
-    dut_.tl_i[start_word_ind] &= ~((1U << low_width) - 1) << start_bit_index;
+    dut_.tl_i[start_word_ind] &= ~(((1U << low_width) - 1) << start_bit_ind);
     // TODO: zero out upper bits of value that are shifted past width?
-    dut_.tl_i[start_word_ind] |= value << start_bit_index;
+    dut_.tl_i[start_word_ind] |= value << start_bit_ind;
 
     // Operate on UPPER word
-    uint32_t high_mask = (1U << (end_bit_index + 1)) - 1;
+    uint32_t high_mask = (1U << (end_bit_ind + 1)) - 1;
     // Clear existing signal value
-    dut_.tl_i[end_word_ind] &= ~((1U << (end_bit_index + 1)) - 1);
+    dut_.tl_i[end_word_ind] &= ~((1U << (end_bit_ind + 1)) - 1);
     // TODO: zero out lower bits of value that are shifted past width?
     dut_.tl_i[end_word_ind] |= value >> low_width;
   } else {
@@ -290,9 +220,52 @@ void TLULHostTb::SetH2DSignal(uint32_t index, uint32_t width, uint32_t value) {
   }
 }
 
+// Unpacks the given TL-UL signal name from the pointer to the provided array
+// TODO(ttrippel): Verify that the given signal name is contained in the packed
+// signal byte array.
+uint32_t TLULHostTb::UnpackSignal(uint32_t* packed_signals,
+                                  std::string signal_name) {
+  // Compute start/end word and bit indices of target value
+  uint32_t index = signal2index_.at(signal_name);
+  uint32_t width = signal2width_.at(signal_name);
+  uint8_t start_word_ind = index / OT_TL_O_WORD_SIZE_BITS;
+  uint8_t end_word_ind = (index + width - 1) / OT_TL_O_WORD_SIZE_BITS;
+  uint8_t start_bit_ind = index - (start_word_ind * OT_TL_O_WORD_SIZE_BITS);
+  uint8_t end_bit_ind =
+      index + width - 1 - (end_word_ind * OT_TL_O_WORD_SIZE_BITS);
+  uint32_t signal = 0;
+
+  // If word indices are the same, signal bits resides in the same word,
+  // otherwise, the bits straddle two words. Numeric values of individual TLUL
+  // signals are unpacked by shifting and masking.
+  if (start_word_ind == end_word_ind) {
+    signal = packed_signals[start_word_ind] >> start_bit_ind;
+    signal &= (1U << width) - 1;
+  } else if ((end_word_ind - 1) == start_word_ind) {
+    // Compute width of the low portion of the signal
+    uint8_t low_width = OT_TL_O_WORD_SIZE_BITS - start_bit_ind;
+
+    // Shift THEN mask LOW subword
+    uint32_t signal_low = packed_signals[start_word_ind] >> start_bit_ind;
+    signal_low &= (1U << low_width) - 1;
+
+    //  Mask THEN shift HIGH subword
+    uint32_t high_mask = (1U << (end_bit_ind + 1)) - 1;
+    uint32_t signal_high = (packed_signals[end_word_ind] & high_mask)
+                           << low_width;
+    signal = signal_low | signal_high;
+  }
+  // TODO: RAISE ERROR
+  // else {
+  // continue;
+  //}
+
+  return signal;
+}
+
 // Waits for the device to be ready to receive a host transaction request.
 void TLULHostTb::WaitForDeviceReady() {
-  while (!UnpackSignal(dut_.tl_o, TL_A_READY_INDEX, TL_A_READY_WIDTH)) {
+  while (!UnpackSignal(dut_.tl_o, "A_READY")) {
     ToggleClock(&dut_.clk_i, 2);
   }
 #ifdef DEBUG
@@ -303,7 +276,7 @@ void TLULHostTb::WaitForDeviceReady() {
 
 // Waits until the device transaction response is valid.
 void TLULHostTb::WaitForDeviceResponse() {
-  while (!UnpackSignal(dut_.tl_o, TL_D_VALID_INDEX, TL_D_VALID_WIDTH)) {
+  while (!UnpackSignal(dut_.tl_o, "D_VALID")) {
     ToggleClock(&dut_.clk_i, 2);
   }
 #ifdef DEBUG

@@ -36,6 +36,7 @@ export BIN_DIR   := bin
 ################################################################################
 ifeq ($(TB_TYPE), cocotb)
 export TB_SRCS := $(shell cocotb-config --share)/lib/verilator/verilator.cpp
+export SHARED_TB_SRCS :=
 TB_MODULE      := tb.$(TB_TYPE).$(TB).$(TOPLEVEL)_tb
 else
 export TB_SRCS        := $(wildcard $(TB_SRCS_DIR)/*.cpp)
@@ -62,7 +63,7 @@ LDFLAGS  += -L$(shell cocotb-config --prefix)/cocotb/libs
 LDLIBS   += -lcocotbvpi_verilator -lgpi -lcocotb -lgpilog -lcocotbutils
 CPPFLAGS += "-DVL_TIME_PRECISION_STR=1ps"
 export COCOTB_REDUCED_LOG_FMT := 1
-export COCOTB_LOG_LEVEL       := INFO
+export COCOTB_LOG_LEVEL       := DEBUG
 export LD_LIBRARY_PATH        := $(shell cocotb-config --prefix)/cocotb/libs
 endif
 
@@ -122,6 +123,7 @@ debug-make::
 	@echo SHARED_TB_SRCS_DIR: $(SHARED_TB_SRCS_DIR)
 	@echo SHARED_TB_INCS_DIR: $(SHARED_TB_INCS_DIR)
 	@echo TB_SRCS: $(TB_SRCS)
+	@echo SHARED_TB_SRCS: $(SHARED_TB_SRCS)
 	@echo VFLAGS: $(VFLAGS)
 	@echo CPPFLAGS: $(CPPFLAGS)
 	@echo LDFLAGS: $(LDFLAGS)

@@ -55,7 +55,7 @@ VerilatorTb::~VerilatorTb() {
 void VerilatorTb::ResetDUT(vluint8_t* clk, vluint8_t* rst_n,
                            uint32_t num_clk_periods) {
   // Print reset status
-  std::cout << "Resetting the DUT (time: " << unsigned(main_time_);
+  std::cout << "Resetting the DUT (time: " << std::dec << unsigned(main_time_);
   std::cout << ") ..." << std::endl;
 
   // Place DUT in reset
@@ -68,7 +68,7 @@ void VerilatorTb::ResetDUT(vluint8_t* clk, vluint8_t* rst_n,
   *rst_n = 1;
 
   // Print reset status
-  std::cout << "Reset complete! (time = " << unsigned(main_time_);
+  std::cout << "Reset complete! (time = " << std::dec << unsigned(main_time_);
   std::cout << ")" << std::endl;
 }
 
@@ -78,8 +78,8 @@ void VerilatorTb::DumpTrace() {
   if (tracing_file_pointer_) {
     tracing_file_pointer_->dump(main_time_);
   } else {
-    std::cout << "WARNING: cannot dump VCD trace at time: " << main_time_
-              << std::endl;
+    std::cout << "WARNING: cannot dump VCD trace at time: " << std::dec
+              << main_time_ << std::endl;
   }
 }
 #endif

@@ -42,9 +42,9 @@ HWFuzzOpcode OTIPFuzzTb::GetFuzzerOpcode() {
   } else if (opcode < WAIT_OPCODE_THRESHOLD) {
     return HWFuzzOpcode::kWait;
   } else if (opcode < RW_OPCODE_THRESHOLD) {
-    return HWFuzzOpcode::kRead;
-  } else {
     return HWFuzzOpcode::kWrite;
+  } else {
+    return HWFuzzOpcode::kRead;
   }
 }
 
@@ -68,7 +68,7 @@ void OTIPFuzzTb::SimulateDUT() {
 
   HWFuzzOpcode fuzzer_opcode = HWFuzzOpcode::kInvalid;
   TLULAddress rw_address{false, 0};
-  TLULAddress w_data{false, 0};
+  TLULData w_data{false, 0};
   uint32_t r_data = 0;
 
   // Read tests from file/STDIN and simulate DUT
@@ -85,35 +85,40 @@ void OTIPFuzzTb::SimulateDUT() {
       case HWFuzzOpcode::kRead: {
         rw_address = GetTLULAddress();
         if (rw_address.valid) {
-          std::cout << "(read) -- addr: 0x" << std::setw(OT_TL_DW >> 2)
-                    << std::hex << rw_address.address << "; data: 0x"
-                    << std::setw(OT_TL_DW >> 2) << std::hex << r_data
-                    << std::endl;
           r_data = Get(rw_address.address);
-        } else {
-          std::cout << "No more fuzzer input... ending test." << std::endl;
+          std::cout << "(read) -- addr: 0x" << std::setw(OT_TL_DW >> 2)
+                    << std::setfill('0') << std::hex << rw_address.address
+                    << " --> data: 0x" << std::setw(OT_TL_DW >> 2) << std::hex
+                    << r_data << std::endl;
         }
         break;
       }
 
       case HWFuzzOpcode::kWrite: {
+        rw_address = GetTLULAddress();
+        w_data = GetTLULData();
+        if (rw_address.valid && w_data.valid) {
+          PutFull(rw_address.address, w_data.data);
+          std::cout << "(write) -- addr: 0x" << std::setw(OT_TL_DW >> 2)
+                    << std::setfill('0') << std::hex << rw_address.address
+                    << "; data: 0x" << std::setw(OT_TL_DW >> 2) << std::hex
+                    << w_data.data << std::endl;
+        }
         break;
       }
 
       default: {
-        std::cout << "ERROR: Invalid fuzzer opcode: " << (uint32_t)fuzzer_opcode
-                  << std::endl;
         break;
       }
     }
 
-    // Update correct "ground truth" model state if necessary
+    // Update projected "ground truth" model state
 
     // Toggle clock period
     ToggleClock(&dut_.clk_i, 2);
 
-    // Print vital DUT state
-    // Verify vital DUT state
+    // Verify current state matches projected state
+
   } while (fuzzer_opcode != HWFuzzOpcode::kInvalid && !Verilated::gotFinish());
 
   std::cout << "Fuzz tests completed!" << std::endl;
