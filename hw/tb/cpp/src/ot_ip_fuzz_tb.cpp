@@ -2,15 +2,11 @@
 
 #include "hw/tb/cpp/inc/ot_ip_fuzz_tb.h"
 
-#include <stdlib.h>
-
 #include <iomanip>
 #include <iostream>
 
 // Constructor
 OTIPFuzzTb::OTIPFuzzTb(int argc, char** argv) : TLULHostTb(argc, argv) {
-  address_size_bytes_ = atoi(getenv(ADDRESS_SIZE_BYTES_ENV_VAR));
-  data_size_bytes_ = atoi(getenv(DATA_SIZE_BYTES_ENV_VAR));
   InitializeDUT();
 }
 
@@ -51,14 +47,14 @@ HWFuzzOpcode OTIPFuzzTb::GetFuzzerOpcode() {
 TLULAddress OTIPFuzzTb::GetTLULAddress() {
   TLULAddress address{false, 0};
   address.valid = ReadBytes(reinterpret_cast<uint8_t*>(&address.address),
-                            address_size_bytes_);
+                            ADDRESS_SIZE_BYTES);
   return address;
 }
 
 TLULData OTIPFuzzTb::GetTLULData() {
   TLULData data{false, 0};
   data.valid =
-      ReadBytes(reinterpret_cast<uint8_t*>(&data.data), data_size_bytes_);
+      ReadBytes(reinterpret_cast<uint8_t*>(&data.data), DATA_SIZE_BYTES);
   return data;
 }
 

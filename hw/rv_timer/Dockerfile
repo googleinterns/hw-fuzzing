@@ -6,12 +6,13 @@ FROM gcr.io/hardware-fuzzing/base-${FUZZER}
 MAINTAINER ttrippel@opentitan.org
 
 # create DUT directory
-ENV DUT=$HW/lock
+ENV DUT=$HW/rv_timer
 RUN mkdir $DUT
 
 # Copy in HDL and testbench
+RUN apt-get install -y git
 RUN git clone --depth=1 https://github.com/lowRISC/opentitan.git
-COPY hdl $DUT/hdl
+RUN apt-get remove --purge -y git && apt-get autoremove -y
 COPY tb $DUT/tb
 COPY seeds $DUT/seeds
 

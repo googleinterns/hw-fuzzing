@@ -5,9 +5,9 @@
 ################################################################################
 export TOPLEVEL      := rv_timer
 export TOPLEVEL_LANG := verilog
-export TB_TYPE       ?= cocotb
+export TB_TYPE       ?= cpp
 export TB            ?= afl
-export CPPFLAGS      := -std=c++11 -g
+export CPPFLAGS      := -std=c++11
 export LDFLAGS       :=
 export LDLIBS        :=
 export SEED          := afl_seed.1.tf
@@ -15,8 +15,6 @@ export SEED          := afl_seed.1.tf
 ################################################################################
 # Simulation Environment Vars
 ################################################################################
-export ADDRESS_SIZE ?= 4
-export DATA_SIZE ?= 4
 
 ################################################################################
 # HDL/TB
