@@ -59,70 +59,76 @@ TLULData OTIPFuzzTb::GetTLULData() {
 }
 
 void OTIPFuzzTb::SimulateDUT() {
-  // Reset the DUT
-  ResetDUT(&dut_.clk_i, &dut_.rst_ni, NUM_RESET_CLK_PERIODS);
+  // Reset the DUT (check if reset completes before reaching a $finish)
+  if (!ResetDUT(&dut_.clk_i, &dut_.rst_ni, NUM_RESET_CLK_PERIODS)) {
+    HWFuzzOpcode fuzzer_opcode = HWFuzzOpcode::kInvalid;
+    TLULAddress rw_address{false, 0};
+    TLULData w_data{false, 0};
+    uint32_t r_data = 0;
 
-  HWFuzzOpcode fuzzer_opcode = HWFuzzOpcode::kInvalid;
-  TLULAddress rw_address{false, 0};
-  TLULData w_data{false, 0};
-  uint32_t r_data = 0;
+    // Read tests from file/STDIN and simulate DUT
+    std::cout << "Running fuzzer generated tests..." << std::endl;
+    do {
+      fuzzer_opcode = GetFuzzerOpcode();
 
-  // Read tests from file/STDIN and simulate DUT
-  std::cout << "Running fuzzer generated tests..." << std::endl;
-  do {
-    fuzzer_opcode = GetFuzzerOpcode();
-
-    switch (fuzzer_opcode) {
-      case HWFuzzOpcode::kWait: {
-        std::cout << "(wait)" << std::endl;
-        break;
-      }
-
-      case HWFuzzOpcode::kRead: {
-        rw_address = GetTLULAddress();
-        if (rw_address.valid) {
-          r_data = Get(rw_address.address);
-          std::cout << "(read) -- addr: 0x" << std::setw(OT_TL_DW >> 2)
-                    << std::setfill('0') << std::hex << rw_address.address
-                    << " --> data: 0x" << std::setw(OT_TL_DW >> 2) << std::hex
-                    << r_data << std::endl;
+      switch (fuzzer_opcode) {
+        case HWFuzzOpcode::kWait: {
+          std::cout << "(wait)" << std::endl;
+          break;
         }
-        break;
-      }
 
-      case HWFuzzOpcode::kWrite: {
-        rw_address = GetTLULAddress();
-        w_data = GetTLULData();
-        if (rw_address.valid && w_data.valid) {
-          PutFull(rw_address.address, w_data.data);
-          std::cout << "(write) -- addr: 0x" << std::setw(OT_TL_DW >> 2)
-                    << std::setfill('0') << std::hex << rw_address.address
-                    << "; data: 0x" << std::setw(OT_TL_DW >> 2) << std::hex
-                    << w_data.data << std::endl;
+        case HWFuzzOpcode::kRead: {
+          rw_address = GetTLULAddress();
+          if (rw_address.valid) {
+            r_data = Get(rw_address.address);
+            // TODO(ttrippel): deal with error/finish (data == 0xFFFFFFFF)
+            std::cout << "(read) -- addr: 0x" << std::setw(OT_TL_DW >> 2)
+                      << std::setfill('0') << std::hex << rw_address.address
+                      << " --> data: 0x" << std::setw(OT_TL_DW >> 2) << std::hex
+                      << r_data << std::endl;
+          }
+          break;
         }
-        break;
+
+        case HWFuzzOpcode::kWrite: {
+          rw_address = GetTLULAddress();
+          w_data = GetTLULData();
+          if (rw_address.valid && w_data.valid) {
+            PutFull(rw_address.address, w_data.data);
+            std::cout << "(write) -- addr: 0x" << std::setw(OT_TL_DW >> 2)
+                      << std::setfill('0') << std::hex << rw_address.address
+                      << "; data: 0x" << std::setw(OT_TL_DW >> 2) << std::hex
+                      << w_data.data << std::endl;
+          }
+          break;
+        }
+
+        default: {
+          break;
+        }
       }
 
-      default: {
-        break;
-      }
-    }
+      // Update projected "ground truth" model state
 
-    // Update projected "ground truth" model state
+      // Toggle clock period
+      ToggleClock(&dut_.clk_i, 2);
 
-    // Toggle clock period
-    ToggleClock(&dut_.clk_i, 2);
+      // Verify current state matches projected state
 
-    // Verify current state matches projected state
+    } while (fuzzer_opcode != HWFuzzOpcode::kInvalid &&
+             !Verilated::gotFinish());
 
-  } while (fuzzer_opcode != HWFuzzOpcode::kInvalid && !Verilated::gotFinish());
+    std::cout << "Fuzz tests completed!" << std::endl;
+  } else {
+    std::cout << "WARNING: reached $finish before end of reset." << std::endl;
+  }
 
-  std::cout << "Fuzz tests completed!" << std::endl;
 #if VM_TRACE
   // Toggle half a clock period
   ToggleClock(&dut_.clk_i, 1);
 #endif
 
   // Final model cleanup
+  std::cout << "Simulation complete!" << std::endl;
   dut_.final();
 }

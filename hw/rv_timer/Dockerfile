@@ -13,6 +13,7 @@ RUN mkdir $DUT
 RUN apt-get install -y git
 RUN git clone --depth=1 https://github.com/lowRISC/opentitan.git
 RUN apt-get remove --purge -y git && apt-get autoremove -y
+COPY hdl $DUT/hdl
 COPY tb $DUT/tb
 COPY seeds $DUT/seeds
 

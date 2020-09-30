@@ -27,16 +27,16 @@ class VerilatorTb {
  public:
   VerilatorTb(int argc, char** argv);
   ~VerilatorTb();
-  virtual void ResetDUT(vluint8_t* clk, vluint8_t* rst_n,
+  virtual bool ResetDUT(vluint8_t* clk, vluint8_t* rst_n,
                         uint32_t num_clk_periods);
+  vluint64_t get_main_time();
 
  protected:
   Vtop dut_;  // Verilator model of DUT
 #if VM_TRACE
   void DumpTrace();
 #endif
-  void ToggleClock(vluint8_t* clk, uint32_t num_toggles);
-  vluint64_t get_main_time();
+  bool ToggleClock(vluint8_t* clk, uint32_t num_toggles);
   void set_main_time(vluint64_t main_time);
 
  private:

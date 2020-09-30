@@ -52,7 +52,7 @@ VerilatorTb::~VerilatorTb() {
 }
 
 // Reset the DUT
-void VerilatorTb::ResetDUT(vluint8_t* clk, vluint8_t* rst_n,
+bool VerilatorTb::ResetDUT(vluint8_t* clk, vluint8_t* rst_n,
                            uint32_t num_clk_periods) {
   // Print reset status
   std::cout << "Resetting the DUT (time: " << std::dec << unsigned(main_time_);
@@ -62,7 +62,10 @@ void VerilatorTb::ResetDUT(vluint8_t* clk, vluint8_t* rst_n,
   *rst_n = 0;
 
   // Toggle clock for NUM_RESET_PERIODS
-  ToggleClock(clk, (num_clk_periods * 2) + 1);
+  // Check if reached end of simulation
+  if (ToggleClock(clk, (num_clk_periods * 2) + 1)) {
+    return true;
+  }
 
   // Pull DUT out of reset
   *rst_n = 1;
@@ -70,6 +73,9 @@ void VerilatorTb::ResetDUT(vluint8_t* clk, vluint8_t* rst_n,
   // Print reset status
   std::cout << "Reset complete! (time = " << std::dec << unsigned(main_time_);
   std::cout << ")" << std::endl;
+
+  // Indicate we have NOT reached a Verilog $finish statement
+  return false;
 }
 
 #if VM_TRACE
@@ -87,7 +93,7 @@ void VerilatorTb::DumpTrace() {
 // Toggle clock for num_toggles half clock periods.
 // Model is evaluated AFTER clock state is toggled,
 // and regardless of current clock state.
-void VerilatorTb::ToggleClock(vluint8_t* clk, uint32_t num_toggles) {
+bool VerilatorTb::ToggleClock(vluint8_t* clk, uint32_t num_toggles) {
   for (uint32_t i = 0; i < num_toggles; i++) {
     // Toggle main clock
     if (*clk) {
@@ -106,7 +112,14 @@ void VerilatorTb::ToggleClock(vluint8_t* clk, uint32_t num_toggles) {
 
     // Increment Time
     main_time_++;
+
+    // Check if reached end of simulation
+    if (Verilated::gotFinish()) {
+      return true;
+    }
   }
+
+  return false;
 }
 
 // main_time_ accessor

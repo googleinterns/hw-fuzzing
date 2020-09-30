@@ -19,8 +19,10 @@ TLULHostTb::~TLULHostTb() {}
 
 uint32_t TLULHostTb::Get(uint32_t address) {
   // Send request and wait for response
-  SendTLULRequest(OpcodeA::kGet, address, 0, OT_TL_SZW, FULL_MASK);
-  WaitForDeviceResponse();
+  if (SendTLULRequest(OpcodeA::kGet, address, 0, OT_TL_SZW, FULL_MASK) ||
+      WaitForDeviceResponse()) {
+    return ~0U;
+  }
 
   // Unpack reponse
   uint32_t d_data = UnpackSignal(dut_.tl_o, "D_DATA");
@@ -34,9 +36,11 @@ uint32_t TLULHostTb::Get(uint32_t address) {
   return d_data;
 }
 
-void TLULHostTb::ClearRequestAfterDelay(uint32_t num_clk_cycles) {
+bool TLULHostTb::ClearRequestAfterDelay(uint32_t num_clk_cycles) {
   for (uint32_t i = 0; i < num_clk_cycles; i++) {
-    ToggleClock(&dut_.clk_i, 2);
+    if (ToggleClock(&dut_.clk_i, 2)) {
+      return true;
+    }
   }
   ResetH2DSignals();
   SetH2DSignal("D_READY", 1);
@@ -44,6 +48,7 @@ void TLULHostTb::ClearRequestAfterDelay(uint32_t num_clk_cycles) {
   std::cout << "Clearing TL-UL request ..." << std::endl;
   PrintH2DSignals();
 #endif
+  return false;
 }
 
 // Prints a row in the H2D or D2H tables
@@ -105,7 +110,7 @@ void TLULHostTb::PrintH2DSignals() {
 }
 
 // Performs PutFullData TileLink transaction.
-void TLULHostTb::PutFull(uint32_t address, uint32_t data) {
+bool TLULHostTb::PutFull(uint32_t address, uint32_t data) {
   // TODO(ttrippel): add size and mask as input parameters and validate them.
   // Note: technically, the TL-UL spec. allows for full data writes for
   // registers smaller than the bus width, but OpenTitan documentation states
@@ -113,30 +118,39 @@ void TLULHostTb::PutFull(uint32_t address, uint32_t data) {
   // be because all IP registers are at word aligned addresses?
 
   // Send request and wait for response
-  SendTLULRequest(OpcodeA::kPutFullData, address, data, OT_TL_SZW, FULL_MASK);
-  ReceiveTLULPutResponse();
+  if (SendTLULRequest(OpcodeA::kPutFullData, address, data, OT_TL_SZW,
+                      FULL_MASK) ||
+      ReceiveTLULPutResponse()) {
+    return true;
+  }
+  return false;
 }
 
 // Performs PutPartialData TileLink transaction.
-void TLULHostTb::PutPartial(uint32_t address, uint32_t data, uint32_t size,
+bool TLULHostTb::PutPartial(uint32_t address, uint32_t data, uint32_t size,
                             uint32_t mask) {
-  // Validate size
-  if (size > OT_TL_SZW) {
-    // TODO: RAISE ERROR
-    return;
-  }
+  // TODO: Validate size
+  // if (size > OT_TL_SZW) {
+  // RAISE ERROR
+  // return false;
+  //}
 
   // TODO(ttrippel): Validate address and mask match given size of transaction
 
   // Send request and wait for response
-  SendTLULRequest(OpcodeA::kPutPartialData, address, data, size, mask);
-  ReceiveTLULPutResponse();
+  if (SendTLULRequest(OpcodeA::kPutPartialData, address, data, size, mask) ||
+      ReceiveTLULPutResponse()) {
+    return true;
+  }
+  return false;
 }
 
 // Receives a TL-UL Put or Put-Partial request reponse from a device.
-void TLULHostTb::ReceiveTLULPutResponse() {
+bool TLULHostTb::ReceiveTLULPutResponse() {
   // Wait for the response, then unpack opcode and error signals
-  WaitForDeviceResponse();
+  if (WaitForDeviceResponse()) {
+    return true;
+  }
   uint32_t d_opcode = UnpackSignal(dut_.tl_o, "D_OPCODE");
   uint32_t d_error = UnpackSignal(dut_.tl_o, "D_ERROR");
 
@@ -145,6 +159,7 @@ void TLULHostTb::ReceiveTLULPutResponse() {
   // if (d_error || d_opcode != OpcodeD::kAccessAck) {
   // continue;
   //}
+  return false;
 }
 
 // Resets all Host-to-Device signals' bits to 0
@@ -161,7 +176,7 @@ void TLULHostTb::ResetH2DSignals() {
 // Puts a TL-UL transaction request on the bus, waits for the device to signal
 // it is ready to receive the request from the host, then waits one clock
 // cycle before resetting all the host-to-device bus signals.
-void TLULHostTb::SendTLULRequest(OpcodeA opcode, uint32_t address,
+bool TLULHostTb::SendTLULRequest(OpcodeA opcode, uint32_t address,
                                  uint32_t data, uint32_t size, uint32_t mask) {
   // Put request on the bus
   SetH2DSignal("A_VALID", 1);
@@ -177,8 +192,13 @@ void TLULHostTb::SendTLULRequest(OpcodeA opcode, uint32_t address,
 #endif
 
   // Wait for request to be received by the device
-  WaitForDeviceReady();
-  ClearRequestAfterDelay(1);
+  if (WaitForDeviceReady()) {
+    return true;
+  }
+  if (ClearRequestAfterDelay(1)) {
+    return true;
+  }
+  return false;
 }
 
 // Sets the given TL-UL signal name with the given value
@@ -264,23 +284,29 @@ uint32_t TLULHostTb::UnpackSignal(uint32_t* packed_signals,
 }
 
 // Waits for the device to be ready to receive a host transaction request.
-void TLULHostTb::WaitForDeviceReady() {
+bool TLULHostTb::WaitForDeviceReady() {
   while (!UnpackSignal(dut_.tl_o, "A_READY")) {
-    ToggleClock(&dut_.clk_i, 2);
+    if (ToggleClock(&dut_.clk_i, ONE_CLK_CYCLE)) {
+      return true;
+    }
   }
 #ifdef DEBUG
   std::cout << "Device is ready!" << std::endl;
   PrintD2HSignals();
 #endif
+  return false;
 }
 
 // Waits until the device transaction response is valid.
-void TLULHostTb::WaitForDeviceResponse() {
+bool TLULHostTb::WaitForDeviceResponse() {
   while (!UnpackSignal(dut_.tl_o, "D_VALID")) {
-    ToggleClock(&dut_.clk_i, 2);
+    if (ToggleClock(&dut_.clk_i, ONE_CLK_CYCLE)) {
+      return true;
+    }
   }
 #ifdef DEBUG
   std::cout << "Device response is valid!" << std::endl;
   PrintD2HSignals();
 #endif
+  return false;
 }

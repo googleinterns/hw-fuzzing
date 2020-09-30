@@ -2,10 +2,21 @@
 
 #include "hw/lock/tb/cpp/afl/inc/lock_tb.h"
 
+// Testbench needs to be global for sc_time_stamp()
+LockTb* tb = NULL;
+
+// needs to be defined so Verilog can call $time
+double sc_time_stamp() { return tb->get_main_time(); }
+
 int main(int argc, char** argv, char** env) {
   // Instantiate testbench
-  LockTb tb(argc, argv);
+  tb = new LockTb(argc, argv);
 
   // Simulate the DUT
-  tb.SimulateDUT();
+  tb->SimulateDUT();
+
+  // Teardown
+  delete (tb);
+  tb = NULL;
+  exit(0);
 }

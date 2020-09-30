@@ -82,6 +82,7 @@
 // Other defines
 // -----------------------------------------------------------------------------
 #define FULL_MASK ((1U << OT_TL_DBW) - 1)
+#define ONE_CLK_CYCLE 2
 #define OT_TL_I_WORD_SIZE_BITS 32
 #define OT_TL_O_WORD_SIZE_BITS 32
 #define OT_TL_I_NUM_WORDS 4
@@ -127,8 +128,8 @@ class TLULHostTb : public STDINFuzzTb {
   ~TLULHostTb();
 
   // TL-UL transaction methods
-  void PutFull(uint32_t address, uint32_t data);
-  void PutPartial(uint32_t address, uint32_t data, uint32_t size,
+  bool PutFull(uint32_t address, uint32_t data);
+  bool PutPartial(uint32_t address, uint32_t data, uint32_t size,
                   uint32_t mask);
   uint32_t Get(uint32_t address);
 
@@ -188,12 +189,12 @@ class TLULHostTb : public STDINFuzzTb {
       {"A_READY", TL_A_READY_WIDTH}};
 
   // TL-UL transaction helper methods
-  void WaitForDeviceReady();
-  void ClearRequestAfterDelay(uint32_t num_clk_cycles);
-  void WaitForDeviceResponse();
-  void SendTLULRequest(OpcodeA opcode, uint32_t address, uint32_t data,
+  bool WaitForDeviceReady();
+  bool ClearRequestAfterDelay(uint32_t num_clk_cycles);
+  bool WaitForDeviceResponse();
+  bool SendTLULRequest(OpcodeA opcode, uint32_t address, uint32_t data,
                        uint32_t size, uint32_t mask);
-  void ReceiveTLULPutResponse();
+  bool ReceiveTLULPutResponse();
   void SetH2DSignal(std::string signal_name, uint32_t value);
   void ResetH2DSignals();
   uint32_t UnpackSignal(uint32_t* packed_signals, std::string signal_name);
