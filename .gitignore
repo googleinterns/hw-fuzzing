@@ -39,8 +39,9 @@ tags
 *.dat
 *.json
 
-# Fuzzer Outputs
+# Experiment Outputs/Data
 *data/
+*.csv
 
 # Ignore copies of compile/fuzz scripts from afl-term-on-crash
 # (they are derived from the scripts in hw-fuzzing/infra/base-afl/)

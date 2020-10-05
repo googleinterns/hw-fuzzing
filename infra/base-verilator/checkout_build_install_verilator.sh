@@ -27,7 +27,7 @@ cd $SRC && git clone $VLT_GITHUB_URL
 cd verilator
 git checkout v4.040
 autoconf
-export VERILATOR_ROOT=`pwd`
+export VERILATOR_ROOT=$(pwd)
 ./configure
 make -j 4
 

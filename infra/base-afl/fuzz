@@ -67,7 +67,7 @@ else
 
   # Launch fuzzer in non-interactive mode (and potentially many instances)
   echo "Launching fuzzer in NON-INTERACTIVE mode..." | tee -a logs/exp.log
-  for (( num=1; num <= $NUM_INSTANCES; num++ )); do
+  for ((num = 1; num <= $NUM_INSTANCES; num++)); do
 
     # Set fuzzer mode (Master or Secondary)
     if [[ $num -eq 1 && $MODE == "m" ]]; then
@@ -89,8 +89,7 @@ else
         $BIN_DIR/$TOPLEVEL \
         2>&1 | tee -a $AFL_LOG
     else
-      timeout --foreground ${DURATION_MINS}m\
-        $FUZZER_BIN \
+      timeout --foreground ${DURATION_MINS}m $FUZZER_BIN \
         -i seeds \
         -o out \
         $FUZZER_OPTIONS \
@@ -102,7 +101,7 @@ else
 
     # Set process ID of recently launched fuzzer
     FUZZER_PID=$!
-    echo "Launched fuzzer instance $num (PID: $FUZZER_PID)" | \
+    echo "Launched fuzzer instance $num (PID: $FUZZER_PID)" |
       tee -a logs/exp.log
 
     # Trap SIGINT to kill all fuzzer processes on ctrl-c

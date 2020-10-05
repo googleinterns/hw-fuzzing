@@ -28,6 +28,6 @@ docker rmi -f gcr.io/hardware-fuzzing/base-image:latest
 docker rmi -f ubuntu:16.04
 
 # Cleanup Docker containers
-docker ps -a -q | xargs -I {} docker rm {};
-docker images -q -f dangling=true | xargs -I {} docker rmi -f {};
-docker volume ls -qf dangling=true | xargs -I {} docker volume rm {};
+docker ps -a -q | xargs -I {} docker rm {}
+docker images -q -f dangling=true | xargs -I {} docker rmi -f {}
+docker volume ls -qf dangling=true | xargs -I {} docker volume rm {}

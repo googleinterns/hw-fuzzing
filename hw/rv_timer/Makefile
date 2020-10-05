@@ -10,7 +10,7 @@ export TB            ?= afl
 export CPPFLAGS      := -std=c++11
 export LDFLAGS       :=
 export LDLIBS        :=
-export SEED          := afl_seed.1.tf
+export SEED          ?= afl_seed.1.tf
 
 ################################################################################
 # Simulation Environment Vars
@@ -27,7 +27,8 @@ export HDL := \
 	../../../opentitan/hw/top_earlgrey/rtl/top_pkg.sv \
 	../../../opentitan/hw/ip/tlul/rtl/tlul_pkg.sv \
 	../../../opentitan/hw/ip/$(TOPLEVEL)/rtl/rv_timer_reg_pkg.sv \
-	../../../opentitan/hw/ip/$(TOPLEVEL)/rtl/rv_timer.sv
+	hdl/rv_timer.sv
+	#../../../opentitan/hw/ip/$(TOPLEVEL)/rtl/rv_timer.sv
 export SHARED_TB_SRCS := \
 	verilator_tb.cpp \
 	stdin_fuzz_tb.cpp \
@@ -37,7 +38,7 @@ export SHARED_TB_SRCS := \
 ################################################################################
 # Verilator Flags (optional)
 ################################################################################
-#export VFLAGS := -DVERILATOR
+export VFLAGS := --assert -UVERILATOR
 
 ################################################################################
 # Include common build targets

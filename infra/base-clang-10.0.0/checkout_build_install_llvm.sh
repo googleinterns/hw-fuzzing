@@ -60,9 +60,9 @@ mv libcxxabi-10.0.0.src libcxxabi
 mkdir -p /tmp/llvm
 cd /tmp/llvm
 cmake -G "Ninja" \
-      -DLIBCXX_ENABLE_SHARED=OFF -DLIBCXX_ENABLE_STATIC_ABI_LIBRARY=ON \
-      -DCMAKE_BUILD_TYPE=Release -DLLVM_TARGETS_TO_BUILD="X86" \
-      -DLLVM_BINUTILS_INCDIR=/usr/include $SRC/llvm
+  -DLIBCXX_ENABLE_SHARED=OFF -DLIBCXX_ENABLE_STATIC_ABI_LIBRARY=ON \
+  -DCMAKE_BUILD_TYPE=Release -DLLVM_TARGETS_TO_BUILD="X86" \
+  -DLLVM_BINUTILS_INCDIR=/usr/include $SRC/llvm
 ninja -j 4
 ninja install
 rm -rf /tmp/llvm
