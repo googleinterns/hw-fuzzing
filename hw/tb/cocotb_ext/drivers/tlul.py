@@ -1,4 +1,16 @@
-# TODO(ttrippel): add license
+# Copyright 2020 Timothy Trippel
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#      http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
 
 import math
 from collections import OrderedDict
@@ -20,8 +32,8 @@ TL_DUW = 16  # width of device user bits (TL-UL extension)
 TL_DBW = TL_DW >> 3  # number of data bytes in transaction (mask size in # bits)
 TL_SZW = math.ceil(math.log2(TL_DBW))  # setting for size A_SIZE/D_SIZE
 
-# TODO(ttrippel): support burt transactions (OpenTitan does not support burst
-# transactions so they've been left out for this implementation.
+# TODO(ttrippel): support burst transactions (OpenTitan does not support burst
+# transactions so they've been left out for this implementation.)
 
 
 class TLULProtocolError(Exception):

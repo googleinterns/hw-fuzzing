@@ -13,9 +13,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-# TODO: Set path to hw-fuzzing in .bashrc
-#export HW_FUZZING=/path/to/hw-fuzzing
-
 if [ -z ${HW_FUZZING+x} ]; then
   echo "ERROR: Set HW_FUZZING path and try again."
 else

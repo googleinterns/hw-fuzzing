@@ -126,25 +126,11 @@ module rv_timer (
   ////////////////
   // Assertions //
   ////////////////
-  logic [31:0] timer_lower;
-  logic [31:0] timer_upper;
-  assign timer_lower = u_reg.reg2hw.timer_v_lower0;
-  assign timer_upper = u_reg.reg2hw.timer_v_upper0;
-  //assert property (@(posedge clk_i) timer_lower != 32'hF) else
-  //assert property (@(posedge clk_i) timer_lower != 32'hA) else
-  //assert property (@(posedge clk_i) u_reg.reg2hw.timer_v_lower0 != 32'hA) else
-  //assert property (@(posedge clk_i) timer_upper == 32'h0 |-> timer_lower != 32'hA) else
-  //assert property (@(posedge clk_i) (timer_upper == 32'h0) |-> timer_lower != 32'hA) else
-  //assert property (@(posedge clk_i) disable iff ((!rst_ni) !== '0) (timer_lower != 32'hA)) else
-  //assert property (@(posedge clk_i) disable iff ((!rst_ni) !== '0) timer_upper == 32'h0 |-> timer_lower != 32'hA) else
-  //assert property (@(posedge clk_i) disable iff ((!rst_ni) !== '0) (timer_upper == 32'h0 |-> timer_lower != 32'hA)) else
-  //begin
-    //$error("BUG FOUND!");
-  //end
-  `ASSERT(FuzzBugTest, timer_lower != 32'hA)
-  //`ASSERT(FuzzBugTest, timer_upper == 32'h0 |-> timer_lower != 32'h7)
-  //`ASSERT_KNOWN(TlODValidKnown, tl_o.d_valid)
-  //`ASSERT_KNOWN(TlOAReadyKnown, tl_o.a_ready)
-  //`ASSERT_KNOWN(IntrTimerExpired00Known, intr_timer_expired_0_0_o)
+  //`ASSERT(FuzzBugTest, u_reg.reg2hw.timer_v_lower0 != 32'hF)
+  `ASSERT(FuzzBugTest, u_reg.reg2hw.timer_v_lower0 != 32'hA)
+  //`ASSERT(FuzzBugTest, (u_reg.reg2hw.timer_v_lower0 != 32'hA))
+  `ASSERT_KNOWN(TlODValidKnown, tl_o.d_valid)
+  `ASSERT_KNOWN(TlOAReadyKnown, tl_o.a_ready)
+  `ASSERT_KNOWN(IntrTimerExpired00Known, intr_timer_expired_0_0_o)
 
 endmodule

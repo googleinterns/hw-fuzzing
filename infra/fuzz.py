@@ -193,7 +193,7 @@ def run_docker_container_locally(config, exp_data_path):
       ["-v", "%s/out:/src/hw/%s/out" % (exp_data_path, config.toplevel)])
   # Set target Docker image and run
   cmd.extend(["-t", config.docker_image])
-  # TODO(ttrippel): add debug flag to launch container in interactively w/ shell
+  # TODO(ttrippel): add debug flag to launch container interactively w/ shell
   # cmd.append("bash")
   error_str = "ERROR: container run FAILED. Terminating experiment!"
   run_cmd(cmd, error_str)
