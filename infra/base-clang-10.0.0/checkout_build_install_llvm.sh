@@ -15,7 +15,6 @@
 
 # Install dependencies
 LLVM_DEP_PACKAGES="\
-    build-essential \
     cmake \
     ninja-build \
     python2.7 \
@@ -66,11 +65,6 @@ cmake -G "Ninja" \
 ninja -j 4
 ninja install
 rm -rf /tmp/llvm
-
-# Install LLVMgold into bfd-plugins
-mkdir /usr/lib/bfd-plugins
-cp /usr/local/lib/libLTO.so /usr/lib/bfd-plugins
-cp /usr/local/lib/LLVMgold.so /usr/lib/bfd-plugins
 
 # Cleanup
 cd /

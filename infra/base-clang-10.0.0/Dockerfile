@@ -14,11 +14,15 @@
 
 # Docker image with Clang version 10.0.0 installed.
 
-FROM gcr.io/hardware-fuzzing/base-image
-MAINTAINER ttrippel@google.com
+FROM hw-fuzzing/base-image
+MAINTAINER trippel@umich.edu
 
 # Putting installation steps in a script reduces the number of intermediate
 # layers generated from the Dockerfile.
 COPY checkout_build_install_llvm.sh /root/
 RUN /root/checkout_build_install_llvm.sh
 RUN rm /root/checkout_build_install_llvm.sh
+
+# Install LLVMgold into bfd-plugins
+RUN cp /usr/local/lib/libLTO.so /usr/lib/bfd-plugins
+RUN cp /usr/local/lib/LLVMgold.so /usr/lib/bfd-plugins

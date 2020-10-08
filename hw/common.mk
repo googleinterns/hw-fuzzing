@@ -50,7 +50,7 @@ MODEL_SRC := $(MODEL_DIR)/Vtop.cpp
 VFLAGS += \
 	-Wno-fatal \
 	--prefix Vtop \
-	--top-module $(TOPLEVEL) \
+	--top-module $(TOPLEVEL)_tb \
 	--Mdir $(MODEL_DIR) \
 	--cc \
 	--compiler clang

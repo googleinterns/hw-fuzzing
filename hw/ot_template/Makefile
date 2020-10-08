@@ -19,14 +19,14 @@ endif
 ################################################################################
 # Circuit specific configs
 ################################################################################
-export TOPLEVEL      := rv_timer
+export TOPLEVEL      := # OpenTitan IP Toplevel
 export TOPLEVEL_LANG := verilog
 export TB_TYPE       ?= cpp
 export TB            ?= afl
 export CPPFLAGS      := -std=c++11
 export LDFLAGS       :=
 export LDLIBS        :=
-export SEED          ?= afl_seed.1.tf
+export SEED          ?= afl_seed.0.tf
 
 ################################################################################
 # Simulation Environment Vars
@@ -44,7 +44,7 @@ export HDL := \
 	$(OPENTITAN_ROOT)/hw/top_earlgrey/rtl/top_pkg.sv \
 	$(OPENTITAN_ROOT)/hw/ip/tlul/rtl/tlul_pkg.sv \
 	$(OPENTITAN_ROOT)/hw/ip/$(TOPLEVEL)/rtl/$(TOPLEVEL)_reg_pkg.sv \
-	hdl/rv_timer_tb.sv
+	hdl/#<OpenTitan IP Toplevel>_tb.sv
 export SHARED_TB_SRCS := \
 	verilator_tb.cpp \
 	stdin_fuzz_tb.cpp \

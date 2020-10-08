@@ -14,8 +14,8 @@
 
 # Docker image for circuit verification
 
-FROM gcr.io/hardware-fuzzing/base-verilator
-MAINTAINER ttrippel@google.com
+FROM hw-fuzzing/base-verilator
+MAINTAINER trippel@umich.edu
 
 # Setup directory structure
 ENV HW=$SRC/hw

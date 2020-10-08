@@ -14,8 +14,8 @@
 
 # Docker image for with Verilator v4.040 installed
 
-FROM gcr.io/hardware-fuzzing/base-clang-10.0.0
-MAINTAINER ttrippel@google.com
+FROM hw-fuzzing/base-clang-10.0.0
+MAINTAINER trippel@umich.edu
 
 # Putting installation steps in a script reduces the number of intermediate
 # layers generated from the Dockerfile.

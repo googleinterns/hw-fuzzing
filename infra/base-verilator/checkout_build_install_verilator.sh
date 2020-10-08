@@ -21,11 +21,12 @@ VLT_INSTALL_PACKAGES="\
     bison"
 apt-get install -y $VLT_INSTALL_PACKAGES
 
-# Build Verilator v 4.040 from source
+# Build latest version of Verilator from source
 VLT_GITHUB_URL=https://github.com/verilator/verilator.git
 cd $SRC && git clone $VLT_GITHUB_URL
 cd verilator
-git checkout v4.040
+# Use last verified commit on Oct. 8, 2020
+git checkout 7be343fd7c885359ac29e50e9732509caf64637d
 autoconf
 export VERILATOR_ROOT=$(pwd)
 ./configure

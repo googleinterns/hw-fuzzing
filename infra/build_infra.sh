@@ -13,20 +13,22 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+DOCKER_IMAGE_BASENAME="hw-fuzzing"
+
 if [ -z ${HW_FUZZING+x} ]; then
   echo "ERROR: Set HW_FUZZING path and try again."
 else
   # Build local fuzzing Docker infrastructure
-  docker build --pull -t gcr.io/hardware-fuzzing/base-image $@ $HW_FUZZING/infra/base-image
-  docker build -t gcr.io/hardware-fuzzing/base-clang-10.0.0 $@ $HW_FUZZING/infra/base-clang-10.0.0
-  docker build -t gcr.io/hardware-fuzzing/base-verilator $@ $HW_FUZZING/infra/base-verilator
-  docker build -t gcr.io/hardware-fuzzing/base-sim $@ $HW_FUZZING/hw
-  docker build -t gcr.io/hardware-fuzzing/base-afl $@ $HW_FUZZING/infra/base-afl
+  docker build --pull -t $DOCKER_IMAGE_BASENAME/base-image $@ $HW_FUZZING/infra/base-image
+  docker build -t $DOCKER_IMAGE_BASENAME/base-clang-10.0.0 $@ $HW_FUZZING/infra/base-clang-10.0.0
+  docker build -t $DOCKER_IMAGE_BASENAME/base-verilator $@ $HW_FUZZING/infra/base-verilator
+  docker build -t $DOCKER_IMAGE_BASENAME/base-sim $@ $HW_FUZZING/hw
+  docker build -t $DOCKER_IMAGE_BASENAME/base-afl $@ $HW_FUZZING/infra/base-afl
   cp $HW_FUZZING/infra/base-afl/checkout_build_install_afl.sh $HW_FUZZING/infra/base-afl-term-on-crash/
   cp $HW_FUZZING/infra/base-afl/compile-cpp $HW_FUZZING/infra/base-afl-term-on-crash/
   cp $HW_FUZZING/infra/base-afl/compile-cocotb $HW_FUZZING/infra/base-afl-term-on-crash/
   cp $HW_FUZZING/infra/base-afl/fuzz $HW_FUZZING/infra/base-afl-term-on-crash/
-  docker build -t gcr.io/hardware-fuzzing/base-afl-term-on-crash $@ $HW_FUZZING/infra/base-afl-term-on-crash
+  docker build -t $DOCKER_IMAGE_BASENAME/base-afl-term-on-crash $@ $HW_FUZZING/infra/base-afl-term-on-crash
   rm $HW_FUZZING/infra/base-afl-term-on-crash/checkout_build_install_afl.sh
   rm $HW_FUZZING/infra/base-afl-term-on-crash/compile-cpp
   rm $HW_FUZZING/infra/base-afl-term-on-crash/compile-cocotb

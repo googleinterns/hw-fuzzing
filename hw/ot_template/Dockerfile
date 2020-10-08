@@ -1,4 +1,4 @@
-# Copyright 2020 Google LLC
+# Copyright 2020 Timothy Trippel
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -12,17 +12,26 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-# Docker image with AFL that terminates on first crash installed.
-
-FROM hw-fuzzing/base-sim
+# Docker image for fuzzing various lock circuits with AFL
+ARG FUZZER=sim
+FROM hw-fuzzing/base-${FUZZER}
 MAINTAINER trippel@umich.edu
 
-# Putting installation steps in a script reduces the number of intermediate
-# layers generated from the Dockerfile
-COPY checkout_build_install_afl.sh /root/
-ENV AFL_REPO_URL "https://github.com/timtrippel/AFL.git"
-RUN /root/checkout_build_install_afl.sh
-RUN rm /root/checkout_build_install_afl.sh
+# create DUT directory
+#ENV DUT=$HW/<OpenTitan IP Toplevel>
+RUN mkdir $DUT
 
-# Copy over circuit build/fuzz scripts
-COPY compile-cpp compile-cocotb fuzz $SCRIPTS/
+# Copy in HDL and testbench
+RUN apt-get install -y git
+ENV OPENTITAN_ROOT=$HW/opentitan
+RUN git clone --depth=1 https://github.com/lowRISC/opentitan.git
+RUN apt-get remove --purge -y git && apt-get autoremove -y
+COPY hdl $DUT/hdl
+COPY tb $DUT/tb
+COPY seeds $DUT/seeds
+
+# Copy in build scripts
+COPY Makefile $DUT/
+
+WORKDIR $DUT
+CMD ["run"]

@@ -13,19 +13,22 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+DOCKER_IMAGE_BASENAME="hw-fuzzing"
+
 # Remove all DUT Docker images
+docker rmi -f gcr.io/$(gcloud config get-value project)/afl-term-on-crash-rv_timer
 docker rmi -f gcr.io/$(gcloud config get-value project)/sim-lock
 docker rmi -f gcr.io/$(gcloud config get-value project)/afl-term-on-crash-lock
 docker rmi -f gcr.io/$(gcloud config get-value project)/afl-lock
 
 ## Remove all local fuzzing infrastructure Docker images
-docker rmi -f gcr.io/hardware-fuzzing/base-afl-term-on-crash:latest
-docker rmi -f gcr.io/hardware-fuzzing/base-afl:latest
-docker rmi -f gcr.io/hardware-fuzzing/base-sim:latest
-docker rmi -f gcr.io/hardware-fuzzing/base-verilator:latest
-docker rmi -f gcr.io/hardware-fuzzing/base-clang-10.0.0:latest
-docker rmi -f gcr.io/hardware-fuzzing/base-image:latest
-docker rmi -f ubuntu:16.04
+docker rmi -f $DOCKER_IMAGE_BASENAME/base-afl-term-on-crash:latest
+docker rmi -f $DOCKER_IMAGE_BASENAME/base-afl:latest
+docker rmi -f $DOCKER_IMAGE_BASENAME/base-sim:latest
+docker rmi -f $DOCKER_IMAGE_BASENAME/base-verilator:latest
+docker rmi -f $DOCKER_IMAGE_BASENAME/base-clang-10.0.0:latest
+docker rmi -f $DOCKER_IMAGE_BASENAME/base-image:latest
+docker rmi -f ubuntu:20.04
 
 # Cleanup Docker containers
 docker ps -a -q | xargs -I {} docker rm {}

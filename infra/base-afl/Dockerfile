@@ -14,8 +14,8 @@
 
 # Docker image with AFL installed.
 
-FROM gcr.io/hardware-fuzzing/base-sim
-MAINTAINER ttrippel@google.com
+FROM hw-fuzzing/base-sim
+MAINTAINER trippel@umich.edu
 
 # Putting installation steps in a script reduces the number of intermediate
 # layers generated from the Dockerfile
