@@ -338,7 +338,6 @@ def run_docker_container_on_gce(config):
 # Main entry point
 def fuzz(argv):
   """Runs fuzzing experiment with provided configuration filename."""
-
   # Parse cmd args
   module_description = "Hardware Fuzzing Pipeline"
   parser = argparse.ArgumentParser(description=module_description)

@@ -59,7 +59,6 @@ import logging
 import math
 import os
 import sys
-from enum import IntEnum
 
 import cocotb
 from cocotb.binary import BinaryValue
@@ -69,18 +68,9 @@ from cocotb.triggers import RisingEdge, Timer
 # Import custom cocotb extension packages
 sys.path.append("/Users/ttrippel/repos/hw-fuzzing/hw/tb")
 from cocotb_ext.drivers.tlul import TLULHost
-
-ENDIANNESS = "little"  # how to interpret bytes from STDIN
-OPCODE_SIZE = 1  # number of opcode bytes to read from STDIN
-WAIT_OPCODE_THRESHOLD = 85
-RW_OPCODE_THRESHOLD = 170
-
-
-class HWFuzzOpcode(IntEnum):
-  """Hardware fuzzer opcode derived from AFL generated inputs."""
-  wait = 1
-  read = 2
-  write = 3
+from cocotb_ext.hw_fuzz_opcode import (ENDIANNESS, OPCODE_SIZE,
+                                       RW_OPCODE_THRESHOLD,
+                                       WAIT_OPCODE_THRESHOLD, HWFuzzOpcode)
 
 
 def bin2hex(value: BinaryValue) -> str:
