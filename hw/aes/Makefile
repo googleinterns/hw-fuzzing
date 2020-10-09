@@ -19,14 +19,14 @@ endif
 ################################################################################
 # Circuit specific configs
 ################################################################################
-export TOPLEVEL      := rv_timer
-export TOPLEVEL_LANG := verilog
-export TB_TYPE       ?= cpp
-export TB            ?= afl
-export CPPFLAGS      := -std=c++11
-export LDFLAGS       :=
-export LDLIBS        :=
-export SEED          ?= afl_seed.1.tf
+export TOPLEVEL        := aes
+export TOPLEVEL_LANG   := verilog
+export TB_TYPE         ?= cpp
+export TB              ?= afl
+export CPPFLAGS        := -std=c++11
+export LDFLAGS         :=
+export LDLIBS          :=
+export SEED            ?= afl_seed.0.tf
 
 ################################################################################
 # Simulation Environment Vars
@@ -36,7 +36,7 @@ export SEED          ?= afl_seed.1.tf
 ################################################################################
 # FuseSoC Settings (for generated OpenTitan IP)
 ################################################################################
-FUSESOC_VERSION  := 0.1
+FUSESOC_VERSION  := 0.6
 FUSESOC_CORE     := lowrisc_ip_$(TOPLEVEL)_$(FUSESOC_VERSION)
 FUSESOC_GEN_PATH := build/$(FUSESOC_CORE)/default-verilator/generated/lowrisc
 
@@ -50,10 +50,23 @@ export HDL := \
 	$(OPENTITAN_ROOT)/hw/ip/prim/rtl/prim_intr_hw.sv \
 	$(OPENTITAN_ROOT)/hw/ip/prim/rtl/prim_subreg_arb.sv \
 	$(OPENTITAN_ROOT)/hw/ip/prim/rtl/prim_subreg_ext.sv \
+	$(OPENTITAN_ROOT)/hw/ip/prim/rtl/prim_subreg_shadow.sv \
 	$(OPENTITAN_ROOT)/hw/ip/prim/rtl/prim_subreg.sv \
+	$(OPENTITAN_ROOT)/hw/ip/prim/rtl/prim_alert_pkg.sv \
+	$(OPENTITAN_ROOT)/hw/ip/prim/rtl/prim_cipher_pkg.sv \
+	$(OPENTITAN_ROOT)/hw/ip/prim/rtl/prim_pulse_sync.sv \
+	$(OPENTITAN_ROOT)/hw/ip/prim/rtl/prim_lfsr.sv \
+	$(OPENTITAN_ROOT)/hw/ip/prim_generic/rtl/prim_generic_flop_2sync.sv \
+	$(OPENTITAN_ROOT)/hw/ip/prim_generic/rtl/prim_generic_flop.sv \
 	\
-	../tb/hdl/prim_assert.sv \
+	$(FUSESOC_GEN_PATH)_prim_flop_2sync-impl_0/prim_flop_2sync.sv \
+	$(FUSESOC_GEN_PATH)_prim_prim_pkg-impl_0.1/prim_pkg.sv \
+	$(FUSESOC_GEN_PATH)_prim_flop-impl_0/prim_flop.sv \
+	\
 	../tb/hdl/prim_assert_hwfuzzing_macros.svh \
+	../tb/hdl/prim_assert.sv \
+	../tb/hdl/prim_alert_sender.sv \
+	../tb/hdl/prim_diff_decode.sv \
 	\
 	$(OPENTITAN_ROOT)/hw/ip/tlul/rtl/tlul_pkg.sv \
 	$(OPENTITAN_ROOT)/hw/ip/tlul/rtl/tlul_adapter_reg.sv \
@@ -61,8 +74,28 @@ export HDL := \
 	\
 	$(OPENTITAN_ROOT)/hw/ip/$(TOPLEVEL)/rtl/$(TOPLEVEL)_reg_pkg.sv \
 	$(OPENTITAN_ROOT)/hw/ip/$(TOPLEVEL)/rtl/$(TOPLEVEL)_reg_top.sv \
-	$(OPENTITAN_ROOT)/hw/ip/$(TOPLEVEL)/rtl/timer_core.sv \
+	$(OPENTITAN_ROOT)/hw/ip/aes/rtl/aes_pkg.sv \
+	$(OPENTITAN_ROOT)/hw/ip/aes/rtl/aes_sbox_canright_pkg.sv \
+	\
 	$(OPENTITAN_ROOT)/hw/ip/$(TOPLEVEL)/rtl/$(TOPLEVEL).sv \
+	$(OPENTITAN_ROOT)/hw/ip/aes/rtl/aes_cipher_control.sv \
+	$(OPENTITAN_ROOT)/hw/ip/aes/rtl/aes_cipher_core.sv \
+	$(OPENTITAN_ROOT)/hw/ip/aes/rtl/aes_control.sv \
+	$(OPENTITAN_ROOT)/hw/ip/aes/rtl/aes_core.sv \
+	$(OPENTITAN_ROOT)/hw/ip/aes/rtl/aes_ctr.sv \
+	$(OPENTITAN_ROOT)/hw/ip/aes/rtl/aes_key_expand.sv \
+	$(OPENTITAN_ROOT)/hw/ip/aes/rtl/aes_mix_columns.sv \
+	$(OPENTITAN_ROOT)/hw/ip/aes/rtl/aes_mix_single_column.sv \
+	$(OPENTITAN_ROOT)/hw/ip/aes/rtl/aes_prng_clearing.sv \
+	$(OPENTITAN_ROOT)/hw/ip/aes/rtl/aes_prng_masking.sv \
+	$(OPENTITAN_ROOT)/hw/ip/aes/rtl/aes_reg_status.sv \
+	$(OPENTITAN_ROOT)/hw/ip/aes/rtl/aes_sbox.sv \
+	$(OPENTITAN_ROOT)/hw/ip/aes/rtl/aes_sbox_canright.sv \
+	$(OPENTITAN_ROOT)/hw/ip/aes/rtl/aes_sbox_canright_masked.sv \
+	$(OPENTITAN_ROOT)/hw/ip/aes/rtl/aes_sbox_canright_masked_noreuse.sv \
+	$(OPENTITAN_ROOT)/hw/ip/aes/rtl/aes_sbox_lut.sv \
+	$(OPENTITAN_ROOT)/hw/ip/aes/rtl/aes_shift_rows.sv \
+	$(OPENTITAN_ROOT)/hw/ip/aes/rtl/aes_sub_bytes.sv \
 	\
 	hdl/$(TOPLEVEL)_tb.sv
 export SHARED_TB_SRCS := \

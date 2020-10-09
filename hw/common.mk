@@ -81,11 +81,14 @@ endif
 $(BIN_DIR)/$(TOPLEVEL): $(MODEL_SRC) $(TB_SRCS) $(SHARED_TB_SRCS)
 	@mkdir -p $(BUILD_DIR); \
 	mkdir -p $(BIN_DIR); \
-	$(MAKE) -f ../exe.mk debug-make; \
+	$(MAKE) -f ../exe.mk debug-make;
 	$(MAKE) -f ../exe.mk
 
 $(MODEL_SRC): $(HDL)
 	$(VERILATOR_ROOT)/bin/verilator $(VFLAGS) $^
+
+%.sv:
+	$(shell fusesoc run --tool=verilator --setup lowrisc:ip:$(TOPLEVEL)) || true
 
 ################################################################################
 # Utility targets

@@ -31,20 +31,49 @@ export SEED          ?= afl_seed.0.tf
 ################################################################################
 # Simulation Environment Vars
 ################################################################################
+# N/A
+
+################################################################################
+# FuseSoC Settings (for generated OpenTitan IP)
+################################################################################
+FUSESOC_VERSION  := # OpenTitan IP Version
+FUSESOC_CORE     := lowrisc_ip_$(TOPLEVEL)_$(FUSESOC_VERSION)
+FUSESOC_GEN_PATH := build/$(FUSESOC_CORE)/default-verilator/generated/lowrisc
 
 ################################################################################
 # HDL/TB
 ################################################################################
-export HDL_INC_DIRS := \
-	../tb/hdl \
-	$(OPENTITAN_ROOT)/hw/ip/prim/rtl \
-	$(OPENTITAN_ROOT)/hw/ip/tlul/rtl \
-	$(OPENTITAN_ROOT)/hw/ip/$(TOPLEVEL)/rtl
+export HDL_INC_DIRS := ../tb/hdl
 export HDL := \
+	# OpenTitan IP configuration package
 	$(OPENTITAN_ROOT)/hw/top_earlgrey/rtl/top_pkg.sv \
+	\
+	# OpenTitan primitive packages/RTL
+$(OPENTITAN_ROOT)/hw/ip/prim/rtl/<OpenTitan IP Primitive>.sv \
+	\
+	# OpenTitan FuseSoC generated primitive packages/RTL
+	$(FUSESOC_GEN_PATH)_prim_flop_2sync-impl_0/prim_flop_2sync.sv \
+	\
+	# Modified OpenTitan primitives with ONLY Verilator-supported SVAs
+	../tb/hdl/prim_assert_hwfuzzing_macros.svh \
+	../tb/hdl/prim_assert.sv \
+	#../tb/hdl/prim_alert_sender.sv
+	#../tb/hdl/prim_diff_decode.sv
+  \
+	# OpenTitan TL-UL Bus Packages/RTL
 	$(OPENTITAN_ROOT)/hw/ip/tlul/rtl/tlul_pkg.sv \
+	$(OPENTITAN_ROOT)/hw/ip/tlul/rtl/tlul_adapter_reg.sv \
+	$(OPENTITAN_ROOT)/hw/ip/tlul/rtl/tlul_err.sv \
+	\
+	# OpenTitan IP Packages
 	$(OPENTITAN_ROOT)/hw/ip/$(TOPLEVEL)/rtl/$(TOPLEVEL)_reg_pkg.sv \
-	hdl/#<OpenTitan IP Toplevel>_tb.sv
+	$(OPENTITAN_ROOT)/hw/ip/$(TOPLEVEL)/rtl/$(TOPLEVEL)_reg_top.sv \
+	\
+	# OpenTitan IP RTL
+	$(OPENTITAN_ROOT)/hw/ip/$(TOPLEVEL)/rtl/$(TOPLEVEL).sv \
+	\
+	# SV testbench wrapper
+	hdl/$(TOPLEVEL)_tb.sv
 export SHARED_TB_SRCS := \
 	verilator_tb.cpp \
 	stdin_fuzz_tb.cpp \
