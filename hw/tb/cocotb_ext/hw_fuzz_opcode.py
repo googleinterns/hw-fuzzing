@@ -26,3 +26,22 @@ class HWFuzzOpcode(IntEnum):
   wait = 1
   read = 2
   write = 3
+
+
+def get_hw_fuzz_opcode(opcode_bytes):
+  """Maps a series of opcode bytes to one of three opcodes."""
+  if len(opcode_bytes) == OPCODE_SIZE:
+    opcode_int = int.from_bytes(opcode_bytes,
+                                byteorder=ENDIANNESS,
+                                signed=False)
+    if opcode_int < WAIT_OPCODE_THRESHOLD:
+      # hw_fuzz_opcode_str = "wait"
+      return HWFuzzOpcode.wait
+    elif opcode_int < RW_OPCODE_THRESHOLD:
+      # hw_fuzz_opcode_str = "write"
+      return HWFuzzOpcode.write
+    else:
+      # hw_fuzz_opcode_str = "read"
+      return HWFuzzOpcode.read
+  else:
+    return None

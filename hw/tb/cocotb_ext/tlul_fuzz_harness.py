@@ -66,11 +66,10 @@ from cocotb.clock import Clock
 from cocotb.triggers import RisingEdge, Timer
 
 # Import custom cocotb extension packages
-sys.path.append("/Users/ttrippel/repos/hw-fuzzing/hw/tb")
+sys.path.append(os.path.join(os.getenv("HW_FUZZING"), "hw/tb"))
 from cocotb_ext.drivers.tlul import TLULHost
 from cocotb_ext.hw_fuzz_opcode import (ENDIANNESS, OPCODE_SIZE,
-                                       RW_OPCODE_THRESHOLD,
-                                       WAIT_OPCODE_THRESHOLD, HWFuzzOpcode)
+                                       get_hw_fuzz_opcode)
 
 
 def bin2hex(value: BinaryValue) -> str:
@@ -116,22 +115,7 @@ class TLULFuzzHarness():
     """Reads a single byte from STDIN and maps it to one of three opcodes."""
     # create ~equal oportunity for each opcode type
     fuzzer_opcode_bytes = sys.stdin.buffer.read(OPCODE_SIZE)
-    if len(fuzzer_opcode_bytes) == OPCODE_SIZE:
-      fuzzer_opcode = int.from_bytes(fuzzer_opcode_bytes,
-                                     byteorder=ENDIANNESS,
-                                     signed=False)
-      if fuzzer_opcode < WAIT_OPCODE_THRESHOLD:
-        # hw_fuzz_opcode_str = "wait"
-        hw_fuzz_opcode = HWFuzzOpcode.wait
-      elif fuzzer_opcode < RW_OPCODE_THRESHOLD:
-        # hw_fuzz_opcode_str = "write"
-        hw_fuzz_opcode = HWFuzzOpcode.write
-      else:
-        # hw_fuzz_opcode_str = "read"
-        hw_fuzz_opcode = HWFuzzOpcode.read
-      return hw_fuzz_opcode
-    else:
-      return None
+    return get_hw_fuzz_opcode(fuzzer_opcode_bytes)
 
   def get_tlul_address(self):
     """Reads ADDRESS_SIZE bytes from STDIN as the address for a transaction."""

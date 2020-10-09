@@ -1,0 +1,28 @@
+---
+# Wait a few clk cycles
+- {opcode: wait, addr: 0, data: 0}
+- {opcode: wait, addr: 0, data: 0}
+- {opcode: wait, addr: 0, data: 0}
+- {opcode: wait, addr: 0, data: 0}
+- {opcode: wait, addr: 0, data: 0}
+
+# Intilize shadowed CTRL register
+# Modes: encryption, CTR, 256-bit key length
+- {opcode: write, addr: 0x70, data: 0x120}
+- {opcode: write, addr: 0x70, data: 0x120}
+
+## Write to key registers
+- {opcode: write, addr: 0x00, data: 0xDEADBEAF}
+- {opcode: write, addr: 0x04, data: 0xDEADBEAF}
+- {opcode: write, addr: 0x08, data: 0xDEADBEAF}
+- {opcode: write, addr: 0x0C, data: 0xDEADBEAF}
+- {opcode: write, addr: 0x10, data: 0xDEADBEAF}
+- {opcode: write, addr: 0x14, data: 0xDEADBEAF}
+- {opcode: write, addr: 0x18, data: 0xDEADBEAF}
+- {opcode: write, addr: 0x1C, data: 0xDEADBEAF}
+
+# Write to IV registers
+# Write to input data registers
+# Wait for 16 clk cycles (when ouput data should be ready
+# Read from output data registers
+...
