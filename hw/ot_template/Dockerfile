@@ -24,7 +24,7 @@ RUN mkdir $DUT
 # Copy in HDL and testbench
 RUN apt-get install -y git
 ENV OPENTITAN_ROOT=$HW/opentitan
-RUN git clone --depth=1 https://github.com/lowRISC/opentitan.git
+RUN git clone --depth=1 https://github.com/lowRISC/opentitan.git $OPENTITAN_ROOT
 RUN apt-get remove --purge -y git && apt-get autoremove -y
 COPY hdl $DUT/hdl
 COPY tb $DUT/tb

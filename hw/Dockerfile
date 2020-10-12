@@ -21,11 +21,16 @@ MAINTAINER trippel@umich.edu
 ENV HW=$SRC/hw
 RUN mkdir $HW
 
-# Install cocotb version 1.4.0 & replace default Verilator makefile with custom
-RUN python3 -m pip install cocotb==1.4.0
-
 # Copy over hardware fuzzing build scripts and common test bench code
 COPY common.mk exe.mk $HW/
 COPY tb $HW/tb
 COPY scripts/cpp-verilator-sim scripts/cocotb-verilator-sim $SCRIPTS/
 COPY scripts/gcp-shutdown-vm scripts/check-exit-code scripts/run $SCRIPTS/
+COPY python-requirements.txt $SRC/python-requirements.txt
+
+# Install cocotb version 1.4.0 & python dependencies for interacting with OT IP
+RUN python3 -m pip install cocotb==1.4.0
+RUN apt-get install -y git
+RUN python3 -m pip install -r $SRC/python-requirements.txt
+RUN apt-get remove --purge -y git && apt-get autoremove -y
+RUN rm $SRC/python-requirements.txt

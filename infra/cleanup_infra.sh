@@ -16,6 +16,7 @@
 DOCKER_IMAGE_BASENAME="hw-fuzzing"
 
 # Remove all DUT Docker images
+docker rmi -f gcr.io/$(gcloud config get-value project)/afl-term-on-crash-aes
 docker rmi -f gcr.io/$(gcloud config get-value project)/afl-term-on-crash-rv_timer
 docker rmi -f gcr.io/$(gcloud config get-value project)/sim-lock
 docker rmi -f gcr.io/$(gcloud config get-value project)/afl-term-on-crash-lock

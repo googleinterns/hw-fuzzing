@@ -54,10 +54,10 @@ echo "Done!"
 ################################################################################
 echo $LINE_SEP
 echo "Installing dependencies for testbench ..."
-if [[ ! -f tb/$TB_TYPE/$TB/requirements.txt ]]; then
+if [[ ! -f tb/$TB_TYPE/$TB/python-requirements.txt ]]; then
   echo "No dependencies to install."
 else
-  python3 -m pip install -r tb/$TB_TYPE/$TB/requirements.txt
+  python3 -m pip install -r tb/$TB_TYPE/$TB/python-requirements.txt
   check-exit-code
 fi
 echo "Done!"

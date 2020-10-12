@@ -22,7 +22,9 @@ else
   docker build --pull -t $DOCKER_IMAGE_BASENAME/base-image $@ $HW_FUZZING/infra/base-image
   docker build -t $DOCKER_IMAGE_BASENAME/base-clang-10.0.0 $@ $HW_FUZZING/infra/base-clang-10.0.0
   docker build -t $DOCKER_IMAGE_BASENAME/base-verilator $@ $HW_FUZZING/infra/base-verilator
+  cp $HW_FUZZING/python-requirements.txt $HW_FUZZING/hw/
   docker build -t $DOCKER_IMAGE_BASENAME/base-sim $@ $HW_FUZZING/hw
+  rm $HW_FUZZING/hw/python-requirements.txt
   docker build -t $DOCKER_IMAGE_BASENAME/base-afl $@ $HW_FUZZING/infra/base-afl
   cp $HW_FUZZING/infra/base-afl/checkout_build_install_afl.sh $HW_FUZZING/infra/base-afl-term-on-crash/
   cp $HW_FUZZING/infra/base-afl/compile-cpp $HW_FUZZING/infra/base-afl-term-on-crash/
