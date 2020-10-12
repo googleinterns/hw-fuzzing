@@ -23,7 +23,7 @@
 #define DATA_SIZE_BYTES 4     // size of TL-UL data bus
 #define WAIT_OPCODE_THRESHOLD 85
 #define RW_OPCODE_THRESHOLD 170
-#define NUM_RESET_CLK_PERIODS 5
+#define NUM_RESET_CLK_PERIODS 1
 
 enum class HWFuzzOpcode {
   kInvalid = 0,

@@ -19,14 +19,14 @@ endif
 ################################################################################
 # Circuit specific configs
 ################################################################################
-export TOPLEVEL        := aes
-export TOPLEVEL_LANG   := verilog
-export TB_TYPE         ?= cpp
-export TB              ?= afl
-export CPPFLAGS        := -std=c++11
-export LDFLAGS         :=
-export LDLIBS          :=
-export SEED            ?= ctr_encrypt_256bit.tf
+export TOPLEVEL      := aes
+export TOPLEVEL_LANG := verilog
+export TB_TYPE       ?= cpp
+export TB            ?= afl
+export CPPFLAGS      := -std=c++11
+export LDFLAGS       :=
+export LDLIBS        :=
+export SEED          ?= auto_ctr_128bit_encrypt_1block.tf
 
 ################################################################################
 # Simulation Environment Vars

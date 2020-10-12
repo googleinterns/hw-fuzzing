@@ -1,5 +1,9 @@
+# This file describes a sequence of simulation operations that places the AES
+# IP block in 128-bit CTR auto encryption mode and proceeds to encrypt a single
+# 128-bit block of data.
 ---
-# Wait a few clk cycles
+# Wait a 8 clk cycles for AES to go into IDLE state
+- {opcode: wait, addr: 0, data: 0}
 - {opcode: wait, addr: 0, data: 0}
 - {opcode: wait, addr: 0, data: 0}
 - {opcode: wait, addr: 0, data: 0}
@@ -7,19 +11,27 @@
 - {opcode: wait, addr: 0, data: 0}
 
 # Intilize shadowed CTRL register
-# Modes: encryption, CTR, 256-bit key length
-- {opcode: write, addr: 0x70, data: 0x120}
-- {opcode: write, addr: 0x70, data: 0x120}
+# Modes: encryption, CTR, 128-bit key length
+- {opcode: write, addr: 0x70, data: 0xA0}
+- {opcode: write, addr: 0x70, data: 0xA0}
 
-## Write to key registers
-- {opcode: write, addr: 0x00, data: 0xDEADBEAF}
-- {opcode: write, addr: 0x04, data: 0xDEADBEAF}
-- {opcode: write, addr: 0x08, data: 0xDEADBEAF}
-- {opcode: write, addr: 0x0C, data: 0xDEADBEAF}
+# Write to key registers
+- {opcode: write, addr: 0x00, data: 0xDEADBEEF}
+- {opcode: write, addr: 0x04, data: 0xDEADBEEF}
+- {opcode: write, addr: 0x08, data: 0xDEADBEEF}
+- {opcode: write, addr: 0x0C, data: 0xDEADBEEF}
 - {opcode: write, addr: 0x10, data: 0x00000000}
 - {opcode: write, addr: 0x14, data: 0x00000000}
 - {opcode: write, addr: 0x18, data: 0x00000000}
 - {opcode: write, addr: 0x1C, data: 0x00000000}
+- {opcode: write, addr: 0x20, data: 0x00000000}
+- {opcode: write, addr: 0x24, data: 0x00000000}
+- {opcode: write, addr: 0x28, data: 0x00000000}
+- {opcode: write, addr: 0x2C, data: 0x00000000}
+- {opcode: write, addr: 0x30, data: 0x00000000}
+- {opcode: write, addr: 0x34, data: 0x00000000}
+- {opcode: write, addr: 0x38, data: 0x00000000}
+- {opcode: write, addr: 0x3C, data: 0x00000000}
 
 # Write to IV registers
 - {opcode: write, addr: 0x40, data: 0x00000000}
@@ -29,15 +41,11 @@
 
 # Write to input data registers
 - {opcode: write, addr: 0x50, data: 0xCAFECAFE}
-- {opcode: write, addr: 0x54, data: 0xCAFECAFE}
+- {opcode: write, addr: 0x54, data: 0x11111111}
 - {opcode: write, addr: 0x58, data: 0xCAFECAFE}
-- {opcode: write, addr: 0x5C, data: 0xCAFECAFE}
+- {opcode: write, addr: 0x5C, data: 0x22222222}
 
-# Wait for 16 clk cycles (when ouput data should be ready
-- {opcode: wait, addr: 0, data: 0}
-- {opcode: wait, addr: 0, data: 0}
-- {opcode: wait, addr: 0, data: 0}
-- {opcode: wait, addr: 0, data: 0}
+# Wait for 12 clk cycles (when ouput data should be ready for 128-bit mode)
 - {opcode: wait, addr: 0, data: 0}
 - {opcode: wait, addr: 0, data: 0}
 - {opcode: wait, addr: 0, data: 0}
