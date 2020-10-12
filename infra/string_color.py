@@ -1,4 +1,4 @@
-# Copyright 2020 Google LLC
+# Copyright 2020 Timothy Trippel
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -11,5 +11,19 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+"""String coloring helper methods."""
 
-__all__ = ["config", "fuzz", "gcp", "string_color"]
+
+def color_str_red(s):
+  """Color string RED for writing to STDIN."""
+  return "\033[1m\033[91m{}\033[00m".format(s)
+
+
+def color_str_green(s):
+  """Color string GREEN for writing to STDIN."""
+  return "\033[1m\033[92m{}\033[00m".format(s)
+
+
+def color_str_yellow(s):
+  """Color string YELLOW for writing to STDIN."""
+  return "\033[93m{}\033[00m".format(s)

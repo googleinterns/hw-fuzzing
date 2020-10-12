@@ -31,7 +31,6 @@ Usage Example:
 For a reference on how to define the HJSON configuration files, see tests/.
 """
 
-# Standard modules
 import argparse
 import glob
 import os
@@ -42,8 +41,10 @@ import subprocess
 import sys
 import time
 
-# Custom modules
-from config import Config, color_str_green, color_str_red, color_str_yellow
+from config import Config
+from string_color import color_str_green as green
+from string_color import color_str_red as red
+from string_color import color_str_yellow as yellow
 
 LINE_SEP = "==================================================================="
 MAX_NUM_VM_INSTANCES = 36  # this is max default quota for us-east4-a zone
@@ -51,19 +52,20 @@ VM_LAUNCH_WAIT_TIME_S = 30
 
 
 # Handler to gracefully exit on ctrl+c
-def sigint_handler(sig, frame):
-  print(color_str_red("\nTERMINATING EXPERIMENT!"))
+def _sigint_handler(sig, frame):
+  print(red("\nTERMINATING EXPERIMENT!"))
   sys.exit(0)
 
 
 # Run command as subprocess catching non-zero exit codes
 def run_cmd(cmd, error_str):
+  """Runs the provided command (list of strings) in a separate process."""
   try:
     print("Running command:")
-    print(color_str_yellow(subprocess.list2cmdline(cmd)))
+    print(yellow(subprocess.list2cmdline(cmd)))
     subprocess.check_call(cmd)
   except subprocess.CalledProcessError:
-    print(color_str_red(error_str))
+    print(red(error_str))
     sys.exit(1)
 
 
@@ -75,17 +77,17 @@ def check_for_data_locally(config):
     if config.args.yes:
       shutil.rmtree(exp_data_path)
     else:
-      ovw = input(
-          color_str_yellow("WARNING: experiment data exists. Overwrite? [Yn]"))
+      ovw = input(yellow("WARNING: experiment data exists. Overwrite? [Yn]"))
       if ovw in {"yes", "y", "Y", "YES", "Yes", ""}:
         shutil.rmtree(exp_data_path)
       else:
         abort_str = "ABORT: re-run with different experiment name."
-        print(color_str_red(abort_str))
+        print(red(abort_str))
         sys.exit(1)
 
 
 def delete_data_in_gcs(config):
+  """Deletes data in the configured GCS bucket for a fuzzing session."""
   sub_cmd = [
       "gsutil", "rm",
       "gs://%s-%s/%s/**" %
@@ -112,13 +114,12 @@ def check_for_data_in_gcs(config):
     delete_data_in_gcs(config)
   else:
     ovw = input(
-        color_str_yellow(
-            "WARNING: experiment data exists in GCS. Overwrite? [Yn]"))
+        yellow("WARNING: experiment data exists in GCS. Overwrite? [Yn]"))
     if ovw in {"yes", "y", "Y", "YES", "Yes", ""}:
       delete_data_in_gcs(config)
     else:
       abort_str = "ABORT: re-run with different experiment name."
-      print(color_str_red(abort_str))
+      print(red(abort_str))
       sys.exit(1)
 
 
@@ -134,7 +135,7 @@ def build_docker_image(config):
   ]
   error_str = "ERROR: image build FAILED. Terminating experiment!"
   run_cmd(cmd, error_str)
-  print(color_str_green("IMAGE BUILD SUCCESSFUL -- Done!"))
+  print(green("IMAGE BUILD SUCCESSFUL -- Done!"))
 
 
 # Create experiment data directories and copy over configs
@@ -164,7 +165,7 @@ def create_local_experiment_data_dir(config):
 
   # Copy over HJSON config file that was used
   shutil.copy2(config.config_filename, exp_data_path)
-  print(color_str_green("DIRECTORY CREATION SUCCESSFUL -- Done!"))
+  print(green("DIRECTORY CREATION SUCCESSFUL -- Done!"))
   return exp_data_path
 
 
@@ -197,7 +198,7 @@ def run_docker_container_locally(config, exp_data_path):
   # cmd.append("bash")
   error_str = "ERROR: container run FAILED. Terminating experiment!"
   run_cmd(cmd, error_str)
-  print(color_str_green("CONTAINER RUN SUCCESSFUL -- Done!"))
+  print(green("CONTAINER RUN SUCCESSFUL -- Done!"))
 
 
 def check_if_docker_image_exists_in_gcr(config):
@@ -233,12 +234,13 @@ def push_docker_image_to_gcr(config):
     cmd = ["docker", "push", config.docker_image]
     error_str = "ERROR: pushing image to GCR FAILED. Terminating experiment!"
     run_cmd(cmd, error_str)
-    print(color_str_green("IMAGE PUSH SUCCESSFUL -- Done!"))
+    print(green("IMAGE PUSH SUCCESSFUL -- Done!"))
   else:
-    print(color_str_yellow("IMAGE ALREADY EXISTS IN GCR -- Done!"))
+    print(yellow("IMAGE ALREADY EXISTS IN GCR -- Done!"))
 
 
 def push_vm_management_scripts_to_gcs(config):
+  """Pushes VM management (startup/shutdown scripts to GCS."""
   print(LINE_SEP)
   print("Copying VM management script to GCS ...")
   print(LINE_SEP)
@@ -252,7 +254,7 @@ def push_vm_management_scripts_to_gcs(config):
   ]
   error_str = "ERROR: pushing scripts to GCS FAILED. Terminating experiment!"
   run_cmd(cmd, error_str)
-  print(color_str_green("COPY SUCCESSFUL -- Done!"))
+  print(green("COPY SUCCESSFUL -- Done!"))
 
 
 def check_num_active_vm_instances(config):
@@ -276,18 +278,17 @@ def check_num_active_vm_instances(config):
       break
     num_active_vm_instances += 1
   if num_active_vm_instances < MAX_NUM_VM_INSTANCES:
-    print(color_str_green("%d active VM(s)" % num_active_vm_instances))
+    print(green("%d active VM(s)" % num_active_vm_instances))
   else:
-    print(color_str_red("%d active VM(s)" % num_active_vm_instances))
+    print(red("%d active VM(s)" % num_active_vm_instances))
     print(
-        color_str_yellow("waiting %d seconds and trying again ..." %
-                         VM_LAUNCH_WAIT_TIME_S))
+        yellow("waiting %d seconds and trying again ..." %
+               VM_LAUNCH_WAIT_TIME_S))
   return num_active_vm_instances
 
 
 def run_docker_container_on_gce(config):
   """Runs a Docker container to fuzz the DUT on a Google Compute Engine VM."""
-
   # ***IMPORTANT: check how many VM instances currently up before launching***
   launch_vm = False
   while not launch_vm:
@@ -332,7 +333,7 @@ def run_docker_container_on_gce(config):
   # launch container in VM instance
   error_str = "ERROR: launching VM on GCE FAILED. Terminating experiment!"
   run_cmd(cmd, error_str)
-  print(color_str_green("VM LAUNCH SUCCESSFUL -- Done!"))
+  print(green("VM LAUNCH SUCCESSFUL -- Done!"))
 
 
 # Main entry point
@@ -377,5 +378,5 @@ def fuzz(argv):
 
 
 if __name__ == "__main__":
-  signal.signal(signal.SIGINT, sigint_handler)
+  signal.signal(signal.SIGINT, _sigint_handler)
   fuzz(sys.argv[1:])

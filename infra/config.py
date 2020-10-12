@@ -1,4 +1,3 @@
-#!/usr/bin/python3
 # Copyright 2020 Google LLC
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -21,29 +20,14 @@ designed to be invoked by the fuzz.py module in the root directory of this
 repository. See the tests/ directory for example HJSON configuration files.
 """
 
-# Standard modules
 import os
 
-# Installed dependencies
 import hjson
 import prettytable
 
+from string_color import color_str_yellow as yellow
+
 LINE_SEP = "==================================================================="
-
-
-# Color string RED for printing to terminal
-def color_str_red(s):
-  return "\033[1m\033[91m{}\033[00m".format(s)
-
-
-# Color string GREEN for printing to terminal
-def color_str_green(s):
-  return "\033[1m\033[92m{}\033[00m".format(s)
-
-
-# Color string YELLOW for printing to terminal
-def color_str_yellow(s):
-  return "\033[93m{}\033[00m".format(s)
 
 
 class Config():
@@ -102,11 +86,10 @@ class Config():
     self.print_configs()
 
   # TODO(ttrippel): make sure didn't make mistakes writing config file!
-  def validate_configs(self):
+  def _validate_configs(self):
     return
 
-  def print_configs(self):
-    """Creates a table detailing experiment configurations and prints."""
+  def _print_configs(self):
     exp_config_table = prettytable.PrettyTable(header=False)
     exp_config_table.title = "Experiment Parameters"
     exp_config_table.field_names = ["Parameter", "Value"]
@@ -127,4 +110,4 @@ class Config():
 
     # Print table
     exp_config_table.align = "l"
-    print(color_str_yellow(exp_config_table.get_string()))
+    print(yellow(exp_config_table.get_string()))
