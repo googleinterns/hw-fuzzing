@@ -1,0 +1,34 @@
+{
+  // Experiment Parameters
+  experiment_name: exp006-cpp-afl-local-aes-sanity
+  toplevel: aes
+  // Options: [cpp, cocotb]
+  tb_type: cpp
+  // Options: [default]
+  tb: afl
+  // Options: [afl, afl-term-on-crash, sim]
+  fuzzer: afl-term-on-crash
+  run_on_gcp: 0
+
+  // Verilator Parameters
+  verilator_params: {
+    opt_slow: -O3
+    opt_fast: -O3
+    opt_global: -O3
+  }
+
+  // HDL Generation Parameters (if any)
+  hdl_gen_params: {
+  }
+
+  // AFL - Fuzzer Parameters
+  fuzzer_params: {
+    interactive_mode: 1
+    timeout_ms: null
+    memory_limit_mb: null
+    num_instances: 1
+    mode: s
+    duration_mins: null
+  }
+}
+

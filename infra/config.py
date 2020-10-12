@@ -82,8 +82,8 @@ class Config():
         (self.gcp_params["project_id"], self.fuzzer, self.toplevel)
 
     # Validate and print configurations
-    self.validate_configs()
-    self.print_configs()
+    self._validate_configs()
+    self._print_configs()
 
   # TODO(ttrippel): make sure didn't make mistakes writing config file!
   def _validate_configs(self):
