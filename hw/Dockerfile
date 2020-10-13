@@ -24,8 +24,7 @@ RUN mkdir $HW
 # Copy over hardware fuzzing build scripts and common test bench code
 COPY common.mk exe.mk $HW/
 COPY tb $HW/tb
-COPY scripts/cpp-verilator-sim scripts/cocotb-verilator-sim $SCRIPTS/
-COPY scripts/gcp-shutdown-vm scripts/check-exit-code scripts/run $SCRIPTS/
+COPY scripts/ $SCRIPTS/
 COPY python-requirements.txt $SRC/python-requirements.txt
 
 # Install cocotb version 1.4.0 & python dependencies for interacting with OT IP

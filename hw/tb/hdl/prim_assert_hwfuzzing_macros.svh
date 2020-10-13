@@ -44,15 +44,5 @@
 `define COVER(__name, __prop, __clk = `ASSERT_DEFAULT_CLK, __rst = `ASSERT_DEFAULT_RST) \
   __name: cover property (@(posedge __clk) disable iff ((__rst) !== '0) __prop);
 
-`define ASSUME(__name, __prop, __clk = `ASSERT_DEFAULT_CLK, __rst = `ASSERT_DEFAULT_RST) \
-  __name: assume property (@(posedge __clk) disable iff ((__rst) !== '0) __prop)         \
-    else begin                                                                           \
-      `ASSERT_RPT(`PRIM_STRINGIFY(__name))                                               \
-    end
-
-`define ASSUME_I(__name, __prop)           \
-  __name: assume (__prop)                  \
-    else begin                             \
-      `ASSERT_RPT(`PRIM_STRINGIFY(__name)) \
-    end
-
+`define ASSUME(__name, __prop, __clk = `ASSERT_DEFAULT_CLK, __rst = `ASSERT_DEFAULT_RST)
+`define ASSUME_I(__name, __prop)

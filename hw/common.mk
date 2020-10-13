@@ -12,6 +12,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+SHELL := /bin/bash
+
 ################################################################################
 # Directories
 ################################################################################
@@ -30,6 +32,7 @@ endif
 export MODEL_DIR := model
 export BUILD_DIR := build
 export BIN_DIR   := bin
+export SCRIPTS   ?= ./../scripts
 
 ################################################################################
 # Sources/Inputs
@@ -79,7 +82,8 @@ endif
 # Compilation rules
 ################################################################################
 $(BIN_DIR)/$(TOPLEVEL): $(MODEL_SRC) $(TB_SRCS) $(SHARED_TB_SRCS)
-	@mkdir -p $(BUILD_DIR); \
+	@$(SCRIPTS)/report-embedded-svas $(HDL); \
+	mkdir -p $(BUILD_DIR); \
 	mkdir -p $(BIN_DIR); \
 	$(MAKE) -f ../exe.mk debug-make;
 	$(MAKE) -f ../exe.mk
