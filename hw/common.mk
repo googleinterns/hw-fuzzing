@@ -83,6 +83,7 @@ endif
 ################################################################################
 $(BIN_DIR)/$(TOPLEVEL): $(MODEL_SRC) $(TB_SRCS) $(SHARED_TB_SRCS)
 	@$(SCRIPTS)/report-embedded-svas $(HDL); \
+	$(SCRIPTS)/gen-seeds-from-yaml; \
 	mkdir -p $(BUILD_DIR); \
 	mkdir -p $(BIN_DIR); \
 	$(MAKE) -f ../exe.mk debug-make;

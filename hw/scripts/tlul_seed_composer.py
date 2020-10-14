@@ -14,25 +14,32 @@
 # limitations under the License.
 
 import argparse
-import os
 import subprocess
 import sys
 
 import prettytable
 import yaml
 
-sys.path.append(os.path.join(os.getenv("HW_FUZZING")))
-sys.path.append(os.path.join(os.getenv("HW_FUZZING"), "hw/tb"))
+sys.path.append("../tb")
 from cocotb_ext.hw_fuzz_opcode import (ENDIANNESS, OPCODE_SIZE,
                                        RW_OPCODE_THRESHOLD,
                                        WAIT_OPCODE_THRESHOLD)
-from infra.string_color import color_str_green as green
-from infra.string_color import color_str_red as red
-from infra.string_color import color_str_yellow as yellow
 
 # Max field sizes for OT TLUL bus implementation
 OT_TLUL_ADDR_SIZE = 4
 OT_TLUL_DATA_SIZE = 4
+
+
+def _red(s):
+  return "\033[1m\033[91m{}\033[00m".format(s)
+
+
+def _green(s):
+  return "\033[1m\033[92m{}\033[00m".format(s)
+
+
+def _yellow(s):
+  return "\033[93m{}\033[00m".format(s)
 
 
 def write_bytes(out_file, value, size_bytes):
@@ -41,7 +48,7 @@ def write_bytes(out_file, value, size_bytes):
     out_file.write(
         int(value).to_bytes(size_bytes, byteorder=ENDIANNESS, signed=False))
   else:
-    print(red("ERROR: value is too large for corresponding field. ABORTING!"))
+    print(_red("ERROR: value is too large for corresponding field. ABORTING!"))
     sys.exit(1)
 
 
@@ -52,7 +59,7 @@ def dump_seed_file_to_stdin(args):
   try:
     subprocess.check_call(cmd)
   except subprocess.CalledProcessError:
-    print(red("ERROR: cannot dump generated seed file."))
+    print(_red("ERROR: cannot dump generated seed file."))
     sys.exit(1)
 
 
@@ -61,7 +68,7 @@ def generate_afl_seed(args):
   print("Creating fuzzer seed from YAML description ...")
   # TODO(ttrippe): support various frame types and direct input bits
   with open(args.input_filename, "r") as in_file:
-    fuzz_opcodes = yaml.load(in_file)
+    fuzz_opcodes = yaml.load(in_file, Loader=yaml.Loader)
   with open(args.output_filename, "wb") as out_file:
     for instr in fuzz_opcodes:
       # Read HW fuzz instruction
@@ -84,7 +91,7 @@ def generate_afl_seed(args):
       else:
         print("ERROR: invalid opcode in input file. ABORTING!")
         sys.exit(1)
-  print(green("Seed file generated!"))
+  print(_green("Seed file generated!"))
   dump_seed_file_to_stdin(args)
 
 
@@ -104,7 +111,7 @@ def _print_configs(args):
 
   # Print table
   config_table.align = "l"
-  print(yellow(config_table.get_string()))
+  print(_yellow(config_table.get_string()))
 
 
 def _main(argv):

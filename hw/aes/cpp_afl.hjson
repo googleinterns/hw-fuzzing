@@ -32,7 +32,7 @@
     timeout_ms: null
     memory_limit_mb: null
     num_instances: 1
-    mode: s
+    mode: m
     duration_mins: null
   }
 }

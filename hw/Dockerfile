@@ -27,9 +27,8 @@ COPY tb $HW/tb
 COPY scripts/ $SCRIPTS/
 COPY python-requirements.txt $SRC/python-requirements.txt
 
-# Install cocotb version 1.4.0 & python dependencies for interacting with OT IP
-RUN python3 -m pip install cocotb==1.4.0
-RUN apt-get install -y git
+# Install python dependencies
+RUN apt-get install -y git xxd
 RUN python3 -m pip install -r $SRC/python-requirements.txt
 RUN apt-get remove --purge -y git && apt-get autoremove -y
 RUN rm $SRC/python-requirements.txt

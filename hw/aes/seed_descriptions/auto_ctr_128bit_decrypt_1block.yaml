@@ -1,6 +1,3 @@
-# This file describes a sequence of simulation operations that places the AES
-# IP block in 128-bit CTR auto encryption mode and proceeds to encrypt a single
-# 128-bit block of data.
 ---
 # Wait a 8 clk cycles for AES to go into IDLE state
 - {opcode: wait, addr: 0, data: 0}
@@ -11,9 +8,9 @@
 - {opcode: wait, addr: 0, data: 0}
 
 # Intilize shadowed CTRL register
-# Modes: encryption, CTR, 128-bit key length
-- {opcode: write, addr: 0x70, data: 0xA0}
-- {opcode: write, addr: 0x70, data: 0xA0}
+# Modes: decryption, CTR, 128-bit key length
+- {opcode: write, addr: 0x70, data: 0xA1}
+- {opcode: write, addr: 0x70, data: 0xA1}
 
 # Write to key registers
 - {opcode: write, addr: 0x00, data: 0xDEADBEEF}
@@ -40,23 +37,12 @@
 - {opcode: write, addr: 0x4C, data: 0x00000000}
 
 # Write to input data registers
-- {opcode: write, addr: 0x50, data: 0xCAFECAFE}
-- {opcode: write, addr: 0x54, data: 0x11111111}
-- {opcode: write, addr: 0x58, data: 0xCAFECAFE}
-- {opcode: write, addr: 0x5C, data: 0x22222222}
-
-# Wait for 1 clk cycle before loading new data
-- {opcode: wait, addr: 0, data: 0}
-
-# Write to input data registers
-- {opcode: write, addr: 0x50, data: 0x11111111}
-- {opcode: write, addr: 0x54, data: 0x22222222}
-- {opcode: write, addr: 0x58, data: 0x33333333}
-- {opcode: write, addr: 0x5C, data: 0x44444444}
+- {opcode: write, addr: 0x50, data: 0x43d0a729}
+- {opcode: write, addr: 0x54, data: 0xf3613d74}
+- {opcode: write, addr: 0x58, data: 0x620412e6}
+- {opcode: write, addr: 0x5C, data: 0xbee76bcd}
 
 # Wait for 12 clk cycles (when ouput data should be ready for 128-bit mode)
-# This is slightly too many clk cycles, which is good because it will cause
-# the stall status signal to be risen.
 - {opcode: wait, addr: 0, data: 0}
 - {opcode: wait, addr: 0, data: 0}
 - {opcode: wait, addr: 0, data: 0}
@@ -68,12 +54,7 @@
 - {opcode: wait, addr: 0, data: 0}
 - {opcode: wait, addr: 0, data: 0}
 - {opcode: wait, addr: 0, data: 0}
-
-# Read from output data registers
-- {opcode: read, addr: 0x60, data: 0x0}
-- {opcode: read, addr: 0x64, data: 0x0}
-- {opcode: read, addr: 0x68, data: 0x0}
-- {opcode: read, addr: 0x6C, data: 0x0}
+- {opcode: wait, addr: 0, data: 0}
 
 # Read from output data registers
 - {opcode: read, addr: 0x60, data: 0x0}
