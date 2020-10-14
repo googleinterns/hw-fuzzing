@@ -19,7 +19,8 @@ FUZZERS="afl-term-on-crash afl sim"
 for DUT in aes lock rv_timer; do
   for FUZZER in $FUZZERS; do
     FUZZER_REGEX="gcr.io/$GCP_PROJECT_ID/$FUZZER-$DUT"
-    docker images | grep $FUZZER_REGEX | awk '{print $3}' | xargs docker rmi -f
+    docker images | grep $FUZZER_REGEX | awk '{print $3}' | \
+      xargs docker rmi -f | >/dev/null
   done
 done
 
