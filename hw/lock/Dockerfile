@@ -15,7 +15,7 @@
 # Docker image for fuzzing various lock circuits with AFL
 ARG FUZZER=sim
 FROM gcr.io/hardware-fuzzing/base-${FUZZER}
-MAINTAINER ttrippel@google.com
+MAINTAINER trippel@umich.edu
 
 # Install Rust compiler/build system for HDL generator
 RUN curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y

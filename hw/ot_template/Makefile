@@ -12,8 +12,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-ifndef OPENTITAN_ROOT
-$(error OPENTITAN_ROOT is not set ... ABORTING.)
+ifndef DUT_HDL_DIR
+$(error DUT_HDL_DIR is not set ... ABORTING.)
 endif
 
 ################################################################################
@@ -37,6 +37,7 @@ export SEED          ?= afl_seed.0.tf
 # FuseSoC Settings (for generated OpenTitan IP)
 ################################################################################
 FUSESOC_VERSION  := # OpenTitan IP Version
+FUSESOC_LIBRARY  := lowrisc:ip
 FUSESOC_CORE     := lowrisc_ip_$(TOPLEVEL)_$(FUSESOC_VERSION)
 FUSESOC_GEN_PATH := build/$(FUSESOC_CORE)/default-verilator/generated/lowrisc
 
@@ -46,10 +47,10 @@ FUSESOC_GEN_PATH := build/$(FUSESOC_CORE)/default-verilator/generated/lowrisc
 export HDL_INC_DIRS := ../tb/hdl
 export HDL := \
 	# OpenTitan IP configuration package
-	$(OPENTITAN_ROOT)/hw/top_earlgrey/rtl/top_pkg.sv \
+	$(DUT_HDL_DIR)/hw/top_earlgrey/rtl/top_pkg.sv \
 	\
 	# OpenTitan primitive packages/RTL
-$(OPENTITAN_ROOT)/hw/ip/prim/rtl/<OpenTitan IP Primitive>.sv \
+$(DUT_HDL_DIR)/hw/ip/prim/rtl/<OpenTitan IP Primitive>.sv \
 	\
 	# OpenTitan FuseSoC generated primitive packages/RTL
 	$(FUSESOC_GEN_PATH)_prim_flop_2sync-impl_0/prim_flop_2sync.sv \
@@ -61,16 +62,16 @@ export HDL := \
 	#../tb/hdl/prim_diff_decode.sv
   \
 	# OpenTitan TL-UL Bus Packages/RTL
-	$(OPENTITAN_ROOT)/hw/ip/tlul/rtl/tlul_pkg.sv \
-	$(OPENTITAN_ROOT)/hw/ip/tlul/rtl/tlul_adapter_reg.sv \
-	$(OPENTITAN_ROOT)/hw/ip/tlul/rtl/tlul_err.sv \
+	$(DUT_HDL_DIR)/hw/ip/tlul/rtl/tlul_pkg.sv \
+	$(DUT_HDL_DIR)/hw/ip/tlul/rtl/tlul_adapter_reg.sv \
+	$(DUT_HDL_DIR)/hw/ip/tlul/rtl/tlul_err.sv \
 	\
 	# OpenTitan IP Packages
-	$(OPENTITAN_ROOT)/hw/ip/$(TOPLEVEL)/rtl/$(TOPLEVEL)_reg_pkg.sv \
-	$(OPENTITAN_ROOT)/hw/ip/$(TOPLEVEL)/rtl/$(TOPLEVEL)_reg_top.sv \
+	$(DUT_HDL_DIR)/hw/ip/$(TOPLEVEL)/rtl/$(TOPLEVEL)_reg_pkg.sv \
+	$(DUT_HDL_DIR)/hw/ip/$(TOPLEVEL)/rtl/$(TOPLEVEL)_reg_top.sv \
 	\
 	# OpenTitan IP RTL
-	$(OPENTITAN_ROOT)/hw/ip/$(TOPLEVEL)/rtl/$(TOPLEVEL).sv \
+	$(DUT_HDL_DIR)/hw/ip/$(TOPLEVEL)/rtl/$(TOPLEVEL).sv \
 	\
 	# SV testbench wrapper
 	hdl/$(TOPLEVEL)_tb.sv

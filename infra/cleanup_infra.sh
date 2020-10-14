@@ -1,4 +1,4 @@
-#!/bin/bash -eux
+#!/bin/bash -eu
 # Copyright 2020 Google LLC
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -13,25 +13,31 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-DOCKER_IMAGE_BASENAME="hw-fuzzing"
+DOCKER_REPO_BASENAME="hw-fuzzing"
 
 # Remove all DUT Docker images
-docker rmi -f gcr.io/$(gcloud config get-value project)/afl-term-on-crash-aes
-docker rmi -f gcr.io/$(gcloud config get-value project)/afl-term-on-crash-rv_timer
-docker rmi -f gcr.io/$(gcloud config get-value project)/sim-lock
-docker rmi -f gcr.io/$(gcloud config get-value project)/afl-term-on-crash-lock
-docker rmi -f gcr.io/$(gcloud config get-value project)/afl-lock
+if [ -z ${HW_FUZZING+x} ]; then
+  echo "ERROR: Set HW_FUZZING path and try again."
+else
 
-## Remove all local fuzzing infrastructure Docker images
-docker rmi -f $DOCKER_IMAGE_BASENAME/base-afl-term-on-crash:latest
-docker rmi -f $DOCKER_IMAGE_BASENAME/base-afl:latest
-docker rmi -f $DOCKER_IMAGE_BASENAME/base-sim:latest
-docker rmi -f $DOCKER_IMAGE_BASENAME/base-verilator:latest
-docker rmi -f $DOCKER_IMAGE_BASENAME/base-clang-10.0.0:latest
-docker rmi -f $DOCKER_IMAGE_BASENAME/base-image:latest
-docker rmi -f ubuntu:20.04
+  # Remove all fuzzing images
+  source $HW_FUZZING/infra/cleanup_fuzzing_images.sh
 
-# Cleanup Docker containers
-docker ps -a -q | xargs -I {} docker rm {}
-docker images -q -f dangling=true | xargs -I {} docker rmi -f {}
-docker volume ls -qf dangling=true | xargs -I {} docker volume rm {}
+  # Remove all fuzzer/sim images
+  docker rmi -f $DOCKER_REPO_BASENAME/base-afl-term-on-crash:latest
+  docker rmi -f $DOCKER_REPO_BASENAME/base-afl:latest
+  docker rmi -f $DOCKER_REPO_BASENAME/base-sim:latest
+
+  # Only remove these when prompted since they take a long time to build
+  if [[ ${1-} == "--all" ]]; then
+    docker rmi -f $DOCKER_REPO_BASENAME/base-verilator:latest
+    docker rmi -f $DOCKER_REPO_BASENAME/base-clang-10.0.0:latest
+    docker rmi -f $DOCKER_REPO_BASENAME/base-image:latest
+    docker rmi -f ubuntu:20.04
+  fi
+
+  # Cleanup Docker containers/image layers
+  docker ps -a -q | xargs -I {} docker rm {}
+  docker images -q -f dangling=true | xargs -I {} docker rmi -f {}
+  docker volume ls -qf dangling=true | xargs -I {} docker volume rm {}
+fi

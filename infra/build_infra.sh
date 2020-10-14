@@ -13,24 +13,29 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-DOCKER_IMAGE_BASENAME="hw-fuzzing"
+DOCKER_REPO_BASENAME="hw-fuzzing"
 
 if [ -z ${HW_FUZZING+x} ]; then
   echo "ERROR: Set HW_FUZZING path and try again."
 else
-  # Build local fuzzing Docker infrastructure
-  docker build --pull -t $DOCKER_IMAGE_BASENAME/base-image $@ $HW_FUZZING/infra/base-image
-  docker build -t $DOCKER_IMAGE_BASENAME/base-clang-10.0.0 $@ $HW_FUZZING/infra/base-clang-10.0.0
-  docker build -t $DOCKER_IMAGE_BASENAME/base-verilator $@ $HW_FUZZING/infra/base-verilator
+  # Only rebuild these when prompted since they take a long time to build
+  if [[ ${1-} == "--all" ]]; then
+    docker build --pull -t $DOCKER_REPO_BASENAME/base-image $@ $HW_FUZZING/infra/base-image
+    docker build -t $DOCKER_REPO_BASENAME/base-clang-10.0.0 $@ $HW_FUZZING/infra/base-clang-10.0.0
+    docker build -t $DOCKER_REPO_BASENAME/base-verilator $@ $HW_FUZZING/infra/base-verilator
+  fi
+
+  # Build all fuzzer/sim images (requires above to exist)
+  # TODO(ttippel): add check to see if above exist/autobuild them if not
   cp $HW_FUZZING/python-requirements.txt $HW_FUZZING/hw/
-  docker build -t $DOCKER_IMAGE_BASENAME/base-sim $@ $HW_FUZZING/hw
+  docker build -t $DOCKER_REPO_BASENAME/base-sim $@ $HW_FUZZING/hw
   rm $HW_FUZZING/hw/python-requirements.txt
-  docker build -t $DOCKER_IMAGE_BASENAME/base-afl $@ $HW_FUZZING/infra/base-afl
+  docker build -t $DOCKER_REPO_BASENAME/base-afl $@ $HW_FUZZING/infra/base-afl
   cp $HW_FUZZING/infra/base-afl/checkout_build_install_afl.sh $HW_FUZZING/infra/base-afl-term-on-crash/
   cp $HW_FUZZING/infra/base-afl/compile-cpp $HW_FUZZING/infra/base-afl-term-on-crash/
   cp $HW_FUZZING/infra/base-afl/compile-cocotb $HW_FUZZING/infra/base-afl-term-on-crash/
   cp $HW_FUZZING/infra/base-afl/fuzz $HW_FUZZING/infra/base-afl-term-on-crash/
-  docker build -t $DOCKER_IMAGE_BASENAME/base-afl-term-on-crash $@ $HW_FUZZING/infra/base-afl-term-on-crash
+  docker build -t $DOCKER_REPO_BASENAME/base-afl-term-on-crash $@ $HW_FUZZING/infra/base-afl-term-on-crash
   rm $HW_FUZZING/infra/base-afl-term-on-crash/checkout_build_install_afl.sh
   rm $HW_FUZZING/infra/base-afl-term-on-crash/compile-cpp
   rm $HW_FUZZING/infra/base-afl-term-on-crash/compile-cocotb

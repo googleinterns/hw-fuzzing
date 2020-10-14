@@ -21,30 +21,30 @@ INSTANCE_NAME_URL="$METADATA_URL/instance/name"
 AUTH_TOKEN_URL="$METADATA_URL/instance/service-accounts/default/token"
 
 # Get GCE VM instance info
-PROJECT_ID=`curl -H "Metadata-Flavor: Google" $PROJECT_ID_URL`
-ZONE=`curl -H "Metadata-Flavor: Google" $ZONE_URL`
+PROJECT_ID=$(curl -H "Metadata-Flavor: Google" $PROJECT_ID_URL)
+ZONE=$(curl -H "Metadata-Flavor: Google" $ZONE_URL)
 IFS_BACKUP=$IFS
 IFS=$'/'
 ZONE_SPLIT=($ZONE)
 ZONE="${ZONE_SPLIT[3]}"
 IFS=$IFS_BACKUP
-INSTANCE_NAME=`curl -H "Metadata-Flavor: Google" $INSTANCE_NAME_URL`
+INSTANCE_NAME=$(curl -H "Metadata-Flavor: Google" $INSTANCE_NAME_URL)
 
 # Get GCE metadata authorization token
-TOKEN=`curl -H "Metadata-Flavor: Google" $AUTH_TOKEN_URL | python3 -c \
-    "import sys, json; print(json.load(sys.stdin)['access_token'])"`
+TOKEN=$(curl -H "Metadata-Flavor: Google" $AUTH_TOKEN_URL | python3 -c \
+  "import sys, json; print(json.load(sys.stdin)['access_token'])")
 
 # Save fuzzing data to GCS
 BUCKET_NAME="${PROJECT_ID}-fuzzing-data"
 GCS_API_URL="https://storage.googleapis.com/upload/storage/v1/b"
 find logs -type f -exec curl -X POST --data-binary @{} \
-    -H "Authorization: Bearer $TOKEN" \
-    -H "Content-Type: text" \
-    "$GCS_API_URL/$BUCKET_NAME/o?uploadType=media&name=$INSTANCE_NAME/{}" \; > /dev/null
+  -H "Authorization: Bearer $TOKEN" \
+  -H "Content-Type: text" \
+  "$GCS_API_URL/$BUCKET_NAME/o?uploadType=media&name=$INSTANCE_NAME/{}" \; >/dev/null
 find out -type f -exec curl -X POST --data-binary @{} \
-    -H "Authorization: Bearer $TOKEN" \
-    -H "Content-Type: text" \
-    "$GCS_API_URL/$BUCKET_NAME/o?uploadType=media&name=$INSTANCE_NAME/{}" \; > /dev/null
+  -H "Authorization: Bearer $TOKEN" \
+  -H "Content-Type: text" \
+  "$GCS_API_URL/$BUCKET_NAME/o?uploadType=media&name=$INSTANCE_NAME/{}" \; >/dev/null
 
 # Delete GCE VM instance
 GCE_API_URL="https://www.googleapis.com/compute/v1/projects"

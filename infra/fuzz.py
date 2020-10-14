@@ -130,7 +130,8 @@ def build_docker_image(config):
   print(LINE_SEP)
   cmd = [
       "docker", "build", "--build-arg",
-      "FUZZER=%s" % config.fuzzer, "-t", config.docker_image,
+      "FUZZER=%s" % config.fuzzer, "--build-arg",
+      "VERSION=%s" % config.version, "-t", config.docker_image,
       "%s/hw/%s" % (config.root_path, config.toplevel)
   ]
   error_str = "ERROR: image build FAILED. Terminating experiment!"
@@ -177,6 +178,7 @@ def run_docker_container_locally(config, exp_data_path):
   cmd = ["docker", "run", "-it", "--rm", "--name", config.experiment_name]
   # Set environment variables for general configs
   cmd.extend(["-e", "%s=%s" % ("TOPLEVEL", config.toplevel)])
+  cmd.extend(["-e", "%s=%s" % ("VERSION", config.version)])
   cmd.extend(["-e", "%s=%s" % ("TB_TYPE", config.tb_type)])
   cmd.extend(["-e", "%s=%s" % ("TB", config.tb)])
   cmd.extend(["-e", "%s=%s" % ("FUZZER", config.fuzzer)])
@@ -194,8 +196,9 @@ def run_docker_container_locally(config, exp_data_path):
       ["-v", "%s/out:/src/hw/%s/out" % (exp_data_path, config.toplevel)])
   # Set target Docker image and run
   cmd.extend(["-t", config.docker_image])
-  # TODO(ttrippel): add debug flag to launch container interactively w/ shell
-  # cmd.append("bash")
+  # Open shell in container on launch if manual mode activated for debugging
+  if config.manual:
+    cmd.append("/bin/bash")
   error_str = "ERROR: container run FAILED. Terminating experiment!"
   run_cmd(cmd, error_str)
   print(green("CONTAINER RUN SUCCESSFUL -- Done!"))
@@ -318,10 +321,12 @@ def run_docker_container_on_gce(config):
        config.gcp_params["vm_management_bucket"],
        config.gcp_params["startup_script"])
   ]
-  # TODO(ttrippel): add debug flag to launch container interactively w/ shell
-  # cmd.extend["--container-tty", "--container-stdin", "--container-arg=bash"]
+  # Open shell in container on launch if manual mode activated for debugging
+  if config.manual:
+    cmd.extend["--container-command=/bin/bash"]
   # Set environment variables for general configs
   cmd.extend(["--container-env", "%s=%s" % ("TOPLEVEL", config.toplevel)])
+  cmd.extend(["--container-env", "%s=%s" % ("VERSION", config.version)])
   cmd.extend(["--container-env", "%s=%s" % ("TB_TYPE", config.tb_type)])
   cmd.extend(["--container-env", "%s=%s" % ("TB", config.tb)])
   cmd.extend(["--container-env", "%s=%s" % ("FUZZER", config.fuzzer)])

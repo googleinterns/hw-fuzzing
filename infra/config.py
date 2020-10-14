@@ -69,17 +69,26 @@ class Config():
       cdict = hjson.load(hjson_file)
       self.experiment_name = cdict["experiment_name"]
       self.toplevel = cdict["toplevel"]
+      self.version = cdict["version"]
       self.tb_type = cdict["tb_type"]
       self.tb = cdict["tb"]
       self.fuzzer = cdict["fuzzer"]
+      self.manual = cdict["manual"]
       self.run_on_gcp = cdict["run_on_gcp"]
       self.env_var_params = [cdict["verilator_params"]]
       self.env_var_params.append(cdict["hdl_gen_params"])
       self.env_var_params.append(cdict["fuzzer_params"])
 
-    # Initialize docker image name:
-    self.docker_image = "gcr.io/%s/%s-%s" % \
-        (self.gcp_params["project_id"], self.fuzzer, self.toplevel)
+    # Initialize docker image tag
+    if self.version == "HEAD":
+      self.docker_image_tag = "latest"
+    else:
+      self.docker_image_tag = self.version
+
+    # Initialize docker image name
+    self.docker_image = "gcr.io/%s/%s-%s:%s" % (self.gcp_params["project_id"],
+                                                self.fuzzer, self.toplevel,
+                                                self.docker_image_tag)
 
     # Validate and print configurations
     self._validate_configs()
@@ -97,9 +106,11 @@ class Config():
     # Add main experiment parameters
     exp_config_table.add_row(["Experiment Name", self.experiment_name])
     exp_config_table.add_row(["Toplevel", self.toplevel])
+    exp_config_table.add_row(["Version", self.version])
     exp_config_table.add_row(["Testbench Type", self.tb_type])
     exp_config_table.add_row(["Testbench", self.tb])
     exp_config_table.add_row(["Fuzzer", self.fuzzer])
+    exp_config_table.add_row(["Manual", self.manual])
     exp_config_table.add_row(["Run on GCP", self.run_on_gcp])
 
     # Add other parameters

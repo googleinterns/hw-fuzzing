@@ -1,3 +1,4 @@
+#!/bin/bash -eu
 # Copyright 2020 Timothy Trippel
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -12,27 +13,17 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-# Docker image for fuzzing various lock circuits with AFL
-ARG FUZZER=sim
-FROM hw-fuzzing/base-${FUZZER}
-MAINTAINER trippel@umich.edu
+# Remove all DUT Docker images
+GCP_PROJECT_ID=$(gcloud config get-value project)
+FUZZERS="afl-term-on-crash afl sim"
+for DUT in aes lock rv_timer; do
+  for FUZZER in $FUZZERS; do
+    FUZZER_REGEX="gcr.io/$GCP_PROJECT_ID/$FUZZER-$DUT"
+    docker images | grep $FUZZER_REGEX | awk '{print $3}' | xargs docker rmi -f
+  done
+done
 
-# create DUT directory
-ENV DUT=$HW/rv_timer
-RUN mkdir $DUT
-
-# Copy in HDL and testbench
-RUN apt-get install -y git
-ENV DUT_HDL_DIR=$HW/opentitan
-RUN git clone https://github.com/lowRISC/opentitan.git $DUT_HDL_DIR
-ARG VERSION=HEAD
-RUN cd $DUT_HDL_DIR && git checkout ${VERSION}
-COPY hdl $DUT/hdl
-COPY tb $DUT/tb
-COPY seeds $DUT/seeds
-
-# Copy in build scripts
-COPY Makefile $DUT/
-
-WORKDIR $DUT
-CMD ["run"]
+# Cleanup Docker containers/image layers
+docker ps -a -q | xargs -I {} docker rm {}
+docker images -q -f dangling=true | xargs -I {} docker rmi -f {}
+docker volume ls -qf dangling=true | xargs -I {} docker volume rm {}

@@ -12,8 +12,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-ifndef OPENTITAN_ROOT
-$(error OPENTITAN_ROOT is not set ... ABORTING.)
+ifndef DUT_HDL_DIR
+$(error DUT_HDL_DIR is not set ... ABORTING.)
 endif
 
 ################################################################################
@@ -37,6 +37,7 @@ export SEED          ?= afl_seed.1.tf
 # FuseSoC Settings (for generated OpenTitan IP)
 ################################################################################
 FUSESOC_VERSION  := 0.1
+FUSESOC_LIBRARY  := lowrisc:ip
 FUSESOC_CORE     := lowrisc_ip_$(TOPLEVEL)_$(FUSESOC_VERSION)
 FUSESOC_GEN_PATH := build/$(FUSESOC_CORE)/default-verilator/generated/lowrisc
 
@@ -45,24 +46,24 @@ FUSESOC_GEN_PATH := build/$(FUSESOC_CORE)/default-verilator/generated/lowrisc
 ################################################################################
 export HDL_INC_DIRS := ../tb/hdl
 export HDL := \
-	$(OPENTITAN_ROOT)/hw/top_earlgrey/rtl/top_pkg.sv \
+	$(DUT_HDL_DIR)/hw/top_earlgrey/rtl/top_pkg.sv \
 	\
-	$(OPENTITAN_ROOT)/hw/ip/prim/rtl/prim_intr_hw.sv \
-	$(OPENTITAN_ROOT)/hw/ip/prim/rtl/prim_subreg_arb.sv \
-	$(OPENTITAN_ROOT)/hw/ip/prim/rtl/prim_subreg_ext.sv \
-	$(OPENTITAN_ROOT)/hw/ip/prim/rtl/prim_subreg.sv \
+	$(DUT_HDL_DIR)/hw/ip/prim/rtl/prim_intr_hw.sv \
+	$(DUT_HDL_DIR)/hw/ip/prim/rtl/prim_subreg_arb.sv \
+	$(DUT_HDL_DIR)/hw/ip/prim/rtl/prim_subreg_ext.sv \
+	$(DUT_HDL_DIR)/hw/ip/prim/rtl/prim_subreg.sv \
 	\
 	../tb/hdl/prim_assert.sv \
 	../tb/hdl/prim_assert_hwfuzzing_macros.svh \
 	\
-	$(OPENTITAN_ROOT)/hw/ip/tlul/rtl/tlul_pkg.sv \
-	$(OPENTITAN_ROOT)/hw/ip/tlul/rtl/tlul_adapter_reg.sv \
-	$(OPENTITAN_ROOT)/hw/ip/tlul/rtl/tlul_err.sv \
+	$(DUT_HDL_DIR)/hw/ip/tlul/rtl/tlul_pkg.sv \
+	$(DUT_HDL_DIR)/hw/ip/tlul/rtl/tlul_adapter_reg.sv \
+	$(DUT_HDL_DIR)/hw/ip/tlul/rtl/tlul_err.sv \
 	\
-	$(OPENTITAN_ROOT)/hw/ip/$(TOPLEVEL)/rtl/$(TOPLEVEL)_reg_pkg.sv \
-	$(OPENTITAN_ROOT)/hw/ip/$(TOPLEVEL)/rtl/$(TOPLEVEL)_reg_top.sv \
-	$(OPENTITAN_ROOT)/hw/ip/$(TOPLEVEL)/rtl/timer_core.sv \
-	$(OPENTITAN_ROOT)/hw/ip/$(TOPLEVEL)/rtl/$(TOPLEVEL).sv \
+	$(DUT_HDL_DIR)/hw/ip/$(TOPLEVEL)/rtl/$(TOPLEVEL)_reg_pkg.sv \
+	$(DUT_HDL_DIR)/hw/ip/$(TOPLEVEL)/rtl/$(TOPLEVEL)_reg_top.sv \
+	$(DUT_HDL_DIR)/hw/ip/$(TOPLEVEL)/rtl/timer_core.sv \
+	$(DUT_HDL_DIR)/hw/ip/$(TOPLEVEL)/rtl/$(TOPLEVEL).sv \
 	\
 	hdl/$(TOPLEVEL)_tb.sv
 export SHARED_TB_SRCS := \

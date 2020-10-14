@@ -12,8 +12,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-ifndef OPENTITAN_ROOT
-$(error OPENTITAN_ROOT is not set ... ABORTING.)
+ifndef DUT_HDL_DIR
+$(error DUT_HDL_DIR is not set ... ABORTING.)
 endif
 
 ################################################################################
@@ -37,6 +37,7 @@ export SEED          ?= auto_ctr_128bit_encrypt_1block.tf
 # FuseSoC Settings (for generated OpenTitan IP)
 ################################################################################
 FUSESOC_VERSION  := 0.6
+FUSESOC_LIBRARY  := lowrisc:ip
 FUSESOC_CORE     := lowrisc_ip_$(TOPLEVEL)_$(FUSESOC_VERSION)
 FUSESOC_GEN_PATH := build/$(FUSESOC_CORE)/default-verilator/generated/lowrisc
 
@@ -45,19 +46,19 @@ FUSESOC_GEN_PATH := build/$(FUSESOC_CORE)/default-verilator/generated/lowrisc
 ################################################################################
 export HDL_INC_DIRS := ../tb/hdl
 export HDL := \
-	$(OPENTITAN_ROOT)/hw/top_earlgrey/rtl/top_pkg.sv \
+	$(DUT_HDL_DIR)/hw/top_earlgrey/rtl/top_pkg.sv \
 	\
-	$(OPENTITAN_ROOT)/hw/ip/prim/rtl/prim_intr_hw.sv \
-	$(OPENTITAN_ROOT)/hw/ip/prim/rtl/prim_subreg_arb.sv \
-	$(OPENTITAN_ROOT)/hw/ip/prim/rtl/prim_subreg_ext.sv \
-	$(OPENTITAN_ROOT)/hw/ip/prim/rtl/prim_subreg_shadow.sv \
-	$(OPENTITAN_ROOT)/hw/ip/prim/rtl/prim_subreg.sv \
-	$(OPENTITAN_ROOT)/hw/ip/prim/rtl/prim_alert_pkg.sv \
-	$(OPENTITAN_ROOT)/hw/ip/prim/rtl/prim_cipher_pkg.sv \
-	$(OPENTITAN_ROOT)/hw/ip/prim/rtl/prim_pulse_sync.sv \
-	$(OPENTITAN_ROOT)/hw/ip/prim/rtl/prim_lfsr.sv \
-	$(OPENTITAN_ROOT)/hw/ip/prim_generic/rtl/prim_generic_flop_2sync.sv \
-	$(OPENTITAN_ROOT)/hw/ip/prim_generic/rtl/prim_generic_flop.sv \
+	$(DUT_HDL_DIR)/hw/ip/prim/rtl/prim_intr_hw.sv \
+	$(DUT_HDL_DIR)/hw/ip/prim/rtl/prim_subreg_arb.sv \
+	$(DUT_HDL_DIR)/hw/ip/prim/rtl/prim_subreg_ext.sv \
+	$(DUT_HDL_DIR)/hw/ip/prim/rtl/prim_subreg_shadow.sv \
+	$(DUT_HDL_DIR)/hw/ip/prim/rtl/prim_subreg.sv \
+	$(DUT_HDL_DIR)/hw/ip/prim/rtl/prim_alert_pkg.sv \
+	$(DUT_HDL_DIR)/hw/ip/prim/rtl/prim_cipher_pkg.sv \
+	$(DUT_HDL_DIR)/hw/ip/prim/rtl/prim_pulse_sync.sv \
+	$(DUT_HDL_DIR)/hw/ip/prim/rtl/prim_lfsr.sv \
+	$(DUT_HDL_DIR)/hw/ip/prim_generic/rtl/prim_generic_flop_2sync.sv \
+	$(DUT_HDL_DIR)/hw/ip/prim_generic/rtl/prim_generic_flop.sv \
 	\
 	$(FUSESOC_GEN_PATH)_prim_flop_2sync-impl_0/prim_flop_2sync.sv \
 	$(FUSESOC_GEN_PATH)_prim_prim_pkg-impl_0.1/prim_pkg.sv \
@@ -68,34 +69,34 @@ export HDL := \
 	../tb/hdl/prim_alert_sender.sv \
 	../tb/hdl/prim_diff_decode.sv \
 	\
-	$(OPENTITAN_ROOT)/hw/ip/tlul/rtl/tlul_pkg.sv \
-	$(OPENTITAN_ROOT)/hw/ip/tlul/rtl/tlul_adapter_reg.sv \
-	$(OPENTITAN_ROOT)/hw/ip/tlul/rtl/tlul_err.sv \
+	$(DUT_HDL_DIR)/hw/ip/tlul/rtl/tlul_pkg.sv \
+	$(DUT_HDL_DIR)/hw/ip/tlul/rtl/tlul_adapter_reg.sv \
+	$(DUT_HDL_DIR)/hw/ip/tlul/rtl/tlul_err.sv \
 	\
-	$(OPENTITAN_ROOT)/hw/ip/$(TOPLEVEL)/rtl/$(TOPLEVEL)_reg_pkg.sv \
-	$(OPENTITAN_ROOT)/hw/ip/$(TOPLEVEL)/rtl/$(TOPLEVEL)_reg_top.sv \
-	$(OPENTITAN_ROOT)/hw/ip/aes/rtl/aes_pkg.sv \
-	$(OPENTITAN_ROOT)/hw/ip/aes/rtl/aes_sbox_canright_pkg.sv \
+	$(DUT_HDL_DIR)/hw/ip/$(TOPLEVEL)/rtl/$(TOPLEVEL)_reg_pkg.sv \
+	$(DUT_HDL_DIR)/hw/ip/$(TOPLEVEL)/rtl/$(TOPLEVEL)_reg_top.sv \
+	$(DUT_HDL_DIR)/hw/ip/aes/rtl/aes_pkg.sv \
+	$(DUT_HDL_DIR)/hw/ip/aes/rtl/aes_sbox_canright_pkg.sv \
 	\
-	$(OPENTITAN_ROOT)/hw/ip/$(TOPLEVEL)/rtl/$(TOPLEVEL).sv \
-	$(OPENTITAN_ROOT)/hw/ip/aes/rtl/aes_cipher_control.sv \
-	$(OPENTITAN_ROOT)/hw/ip/aes/rtl/aes_cipher_core.sv \
-	$(OPENTITAN_ROOT)/hw/ip/aes/rtl/aes_control.sv \
-	$(OPENTITAN_ROOT)/hw/ip/aes/rtl/aes_core.sv \
-	$(OPENTITAN_ROOT)/hw/ip/aes/rtl/aes_ctr.sv \
-	$(OPENTITAN_ROOT)/hw/ip/aes/rtl/aes_key_expand.sv \
-	$(OPENTITAN_ROOT)/hw/ip/aes/rtl/aes_mix_columns.sv \
-	$(OPENTITAN_ROOT)/hw/ip/aes/rtl/aes_mix_single_column.sv \
-	$(OPENTITAN_ROOT)/hw/ip/aes/rtl/aes_prng_clearing.sv \
-	$(OPENTITAN_ROOT)/hw/ip/aes/rtl/aes_prng_masking.sv \
-	$(OPENTITAN_ROOT)/hw/ip/aes/rtl/aes_reg_status.sv \
-	$(OPENTITAN_ROOT)/hw/ip/aes/rtl/aes_sbox.sv \
-	$(OPENTITAN_ROOT)/hw/ip/aes/rtl/aes_sbox_canright.sv \
-	$(OPENTITAN_ROOT)/hw/ip/aes/rtl/aes_sbox_canright_masked.sv \
-	$(OPENTITAN_ROOT)/hw/ip/aes/rtl/aes_sbox_canright_masked_noreuse.sv \
-	$(OPENTITAN_ROOT)/hw/ip/aes/rtl/aes_sbox_lut.sv \
-	$(OPENTITAN_ROOT)/hw/ip/aes/rtl/aes_shift_rows.sv \
-	$(OPENTITAN_ROOT)/hw/ip/aes/rtl/aes_sub_bytes.sv \
+	$(DUT_HDL_DIR)/hw/ip/$(TOPLEVEL)/rtl/$(TOPLEVEL).sv \
+	$(DUT_HDL_DIR)/hw/ip/aes/rtl/aes_cipher_control.sv \
+	$(DUT_HDL_DIR)/hw/ip/aes/rtl/aes_cipher_core.sv \
+	$(DUT_HDL_DIR)/hw/ip/aes/rtl/aes_control.sv \
+	$(DUT_HDL_DIR)/hw/ip/aes/rtl/aes_core.sv \
+	$(DUT_HDL_DIR)/hw/ip/aes/rtl/aes_ctr.sv \
+	$(DUT_HDL_DIR)/hw/ip/aes/rtl/aes_key_expand.sv \
+	$(DUT_HDL_DIR)/hw/ip/aes/rtl/aes_mix_columns.sv \
+	$(DUT_HDL_DIR)/hw/ip/aes/rtl/aes_mix_single_column.sv \
+	$(DUT_HDL_DIR)/hw/ip/aes/rtl/aes_prng_clearing.sv \
+	$(DUT_HDL_DIR)/hw/ip/aes/rtl/aes_prng_masking.sv \
+	$(DUT_HDL_DIR)/hw/ip/aes/rtl/aes_reg_status.sv \
+	$(DUT_HDL_DIR)/hw/ip/aes/rtl/aes_sbox.sv \
+	$(DUT_HDL_DIR)/hw/ip/aes/rtl/aes_sbox_canright.sv \
+	$(DUT_HDL_DIR)/hw/ip/aes/rtl/aes_sbox_canright_masked.sv \
+	$(DUT_HDL_DIR)/hw/ip/aes/rtl/aes_sbox_canright_masked_noreuse.sv \
+	$(DUT_HDL_DIR)/hw/ip/aes/rtl/aes_sbox_lut.sv \
+	$(DUT_HDL_DIR)/hw/ip/aes/rtl/aes_shift_rows.sv \
+	$(DUT_HDL_DIR)/hw/ip/aes/rtl/aes_sub_bytes.sv \
 	\
 	hdl/$(TOPLEVEL)_tb.sv
 export SHARED_TB_SRCS := \

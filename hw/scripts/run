@@ -15,12 +15,29 @@
 
 # Create logs dir if it does not exist
 if [ ! -d "logs" ]; then
-    mkdir -p logs
+  mkdir -p logs
 fi
 
+# Print DUT version hash to log
+echo | tee logs/exp.log
+echo "Fuzzing Stats:" | tee logs/exp.log
+echo "DUT: $TOPLEVEL" | tee logs/exp.log
+if [ -n ${DUT_HDL_DIR-} ]; then
+  pushd $DUT_HDL_DIR >/dev/nul
+  echo "Version: $(git rev-parse HEAD)" | tee $DUT/logs/exp.log
+  popd >/dev/null
+else
+  echo "Version: n/a" | tee $DUT/logs/exp.log
+fi
+echo "Start Time: $(date +%s)" | tee logs/exp.log
+echo | tee logs/exp.log
+
 # Generate HDL (if necessary)
-command -v generate-hdl >/dev/null 2>&1 && \
-  { generate-hdl 2>&1 | tee logs/exp.log; check-exit-code; }
+command -v generate-hdl >/dev/null 2>&1 &&
+  {
+    generate-hdl 2>&1 | tee logs/exp.log
+    check-exit-code
+  }
 
 if [[ $FUZZER == "sim" ]]; then
   if [[ $TB_TYPE == "cocotb" ]]; then
@@ -60,7 +77,7 @@ elif [[ $FUZZER == "afl" || $FUZZER == "afl-term-on-crash" ]]; then
   fi
 
   # Fuzz the DUT
-  BIN_DIR=bin fuzz 
+  BIN_DIR=bin fuzz
   check-exit-code
 
 else

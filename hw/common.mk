@@ -92,8 +92,8 @@ $(MODEL_SRC): $(HDL)
 	$(VERILATOR_ROOT)/bin/verilator $(VFLAGS) $^
 
 %.sv:
-	$(shell fusesoc --cores-root=$(OPENTITAN_ROOT) run --tool=verilator \
-		--setup lowrisc:ip:$(TOPLEVEL)) || true
+	$(shell fusesoc --cores-root=$(DUT_HDL_DIR) run --tool=verilator \
+		--setup $(FUSESOC_LIBRARY):$(TOPLEVEL)) || true
 
 ################################################################################
 # Utility targets
