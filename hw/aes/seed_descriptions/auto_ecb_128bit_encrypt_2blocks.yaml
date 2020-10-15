@@ -8,8 +8,8 @@
 - {opcode: wait, addr: 0, data: 0}
 
 # Intilize shadowed CTRL register
-- {opcode: write, addr: 0x70, data: 0xA0}
-- {opcode: write, addr: 0x70, data: 0xA0}
+- {opcode: write, addr: 0x70, data: 0x82}
+- {opcode: write, addr: 0x70, data: 0x82}
 
 # Write to key registers
 - {opcode: write, addr: 0x00, data: 0xDEADBEEF}
@@ -29,12 +29,6 @@
 - {opcode: write, addr: 0x38, data: 0x00000000}
 - {opcode: write, addr: 0x3C, data: 0x00000000}
 
-# Write to IV registers
-- {opcode: write, addr: 0x40, data: 0x00000000}
-- {opcode: write, addr: 0x44, data: 0x00000000}
-- {opcode: write, addr: 0x48, data: 0x00000000}
-- {opcode: write, addr: 0x4C, data: 0x00000000}
-
 # Write to input data registers
 - {opcode: write, addr: 0x50, data: 0xCAFECAFE}
 - {opcode: write, addr: 0x54, data: 0x11111111}
@@ -50,7 +44,9 @@
 - {opcode: write, addr: 0x58, data: 0x33333333}
 - {opcode: write, addr: 0x5C, data: 0x44444444}
 
-# Wait before reading result
+# Wait for 11 clk cycles (when ouput data should be ready for 128-bit mode).
+# This is slightly too many clk cycles, which is good because it will cause
+# the stall status signal to be risen.
 - {opcode: wait, addr: 0, data: 0}
 - {opcode: wait, addr: 0, data: 0}
 - {opcode: wait, addr: 0, data: 0}

@@ -8,7 +8,6 @@
 - {opcode: wait, addr: 0, data: 0}
 
 # Intilize shadowed CTRL register
-# Modes: encryption, CTR, 128-bit key length
 - {opcode: write, addr: 0x70, data: 0xA0}
 - {opcode: write, addr: 0x70, data: 0xA0}
 
@@ -42,7 +41,7 @@
 - {opcode: write, addr: 0x58, data: 0xCAFECAFE}
 - {opcode: write, addr: 0x5C, data: 0x22222222}
 
-# Wait for 12 clk cycles (when ouput data should be ready for 128-bit mode)
+# Wait before reading result
 - {opcode: wait, addr: 0, data: 0}
 - {opcode: wait, addr: 0, data: 0}
 - {opcode: wait, addr: 0, data: 0}

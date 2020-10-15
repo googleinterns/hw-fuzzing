@@ -8,16 +8,16 @@
 - {opcode: wait, addr: 0, data: 0}
 
 # Intilize shadowed CTRL register
-- {opcode: write, addr: 0x70, data: 0xA0}
-- {opcode: write, addr: 0x70, data: 0xA0}
+- {opcode: write, addr: 0x70, data: 0x104}
+- {opcode: write, addr: 0x70, data: 0x104}
 
 # Write to key registers
 - {opcode: write, addr: 0x00, data: 0xDEADBEEF}
 - {opcode: write, addr: 0x04, data: 0xDEADBEEF}
 - {opcode: write, addr: 0x08, data: 0xDEADBEEF}
 - {opcode: write, addr: 0x0C, data: 0xDEADBEEF}
-- {opcode: write, addr: 0x10, data: 0x00000000}
-- {opcode: write, addr: 0x14, data: 0x00000000}
+- {opcode: write, addr: 0x10, data: 0xDEADBEEF}
+- {opcode: write, addr: 0x14, data: 0xDEADBEEF}
 - {opcode: write, addr: 0x18, data: 0x00000000}
 - {opcode: write, addr: 0x1C, data: 0x00000000}
 - {opcode: write, addr: 0x20, data: 0x00000000}
@@ -30,10 +30,10 @@
 - {opcode: write, addr: 0x3C, data: 0x00000000}
 
 # Write to IV registers
-- {opcode: write, addr: 0x40, data: 0x00000000}
-- {opcode: write, addr: 0x44, data: 0x00000000}
-- {opcode: write, addr: 0x48, data: 0x00000000}
-- {opcode: write, addr: 0x4C, data: 0x00000000}
+- {opcode: write, addr: 0x40, data: 0x12345678}
+- {opcode: write, addr: 0x44, data: 0x87654321}
+- {opcode: write, addr: 0x48, data: 0x11001100}
+- {opcode: write, addr: 0x4C, data: 0x01010101}
 
 # Write to input data registers
 - {opcode: write, addr: 0x50, data: 0xCAFECAFE}
@@ -41,7 +41,7 @@
 - {opcode: write, addr: 0x58, data: 0xCAFECAFE}
 - {opcode: write, addr: 0x5C, data: 0x22222222}
 
-# Wait for 1 clk cycle before loading new data
+# Wait before loading new data
 - {opcode: wait, addr: 0, data: 0}
 
 # Write to input data registers
@@ -50,7 +50,7 @@
 - {opcode: write, addr: 0x58, data: 0x33333333}
 - {opcode: write, addr: 0x5C, data: 0x44444444}
 
-# Wait before reading result
+# Wait to read result
 - {opcode: wait, addr: 0, data: 0}
 - {opcode: wait, addr: 0, data: 0}
 - {opcode: wait, addr: 0, data: 0}
@@ -75,3 +75,4 @@
 - {opcode: read, addr: 0x68, data: 0x0}
 - {opcode: read, addr: 0x6C, data: 0x0}
 ...
+
