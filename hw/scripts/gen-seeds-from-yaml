@@ -13,13 +13,23 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+LINE_SEP="---------------------------------------------------------------------"
+
 if [ -d seed_descriptions ]; then
   SEED_YAML_FILES=$(ls -1 seed_descriptions)
   mkdir -p seeds
+  NUM_SEEDS_CREATED=0
+  echo "$LINE_SEP"
+  echo "Creating seeds from YAML descriptions ..."
+  echo "$LINE_SEP"
   for YAML in $SEED_YAML_FILES; do
     IFS='.' read -ra OUTPUT_BASENAME <<<"$YAML"
     python3 $SCRIPTS/tlul_seed_composer.py \
       seed_descriptions/$YAML \
       seeds/$OUTPUT_BASENAME.tf
+    NUM_SEEDS_CREATED=$((NUM_SEEDS_CREATED + 1))
   done
+  echo "$LINE_SEP"
+  echo "# of seeds created: $NUM_SEEDS_CREATED"
+  echo "$LINE_SEP"
 fi

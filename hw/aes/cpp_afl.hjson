@@ -13,7 +13,7 @@
   // Open shell in container on launch for debugging (0)
   manual: 0
   // Launch container on GCP (1) or locally (0)
-  run_on_gcp: 0
+  run_on_gcp: 1
 
   // Verilator Parameters
   verilator_params: {
@@ -28,12 +28,11 @@
 
   // AFL - Fuzzer Parameters
   fuzzer_params: {
-    interactive_mode: 1
-    timeout_ms: null
+    interactive_mode: 0
+    timeout_ms: 1140
     memory_limit_mb: null
     num_instances: 1
     mode: m
     duration_mins: null
   }
 }
-

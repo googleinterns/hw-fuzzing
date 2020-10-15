@@ -65,7 +65,7 @@ def dump_seed_file_to_stdin(args):
 
 def generate_afl_seed(args):
   """Parse YAML HW fuzzing opcodes and translates them in binary to file."""
-  print("Creating fuzzer seed from YAML description ...")
+  print(f"Creating fuzzer seed from YAML: {args.input_filename} ...")
   # TODO(ttrippe): support various frame types and direct input bits
   with open(args.input_filename, "r") as in_file:
     fuzz_opcodes = yaml.load(in_file, Loader=yaml.Loader)
@@ -92,7 +92,8 @@ def generate_afl_seed(args):
         print("ERROR: invalid opcode in input file. ABORTING!")
         sys.exit(1)
   print(_green("Seed file generated!"))
-  dump_seed_file_to_stdin(args)
+  if args.verbose:
+    dump_seed_file_to_stdin(args)
 
 
 def _print_configs(args):
@@ -150,7 +151,8 @@ def _main(argv):
                       metavar="afl_seed.tf",
                       help="Name of output seed file (hex).")
   args = parser.parse_args(argv)
-  _print_configs(args)
+  if args.verbose:
+    _print_configs(args)
 
   # Generate output seed file
   generate_afl_seed(args)

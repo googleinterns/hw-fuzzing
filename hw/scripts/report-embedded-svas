@@ -13,9 +13,11 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-printf "%s\n" "----------------------------------------------------------------"
+LINE_SEP="---------------------------------------------------------------------"
+
+printf "%s\n" "$LINE_SEP"
 printf "# of SVAS embedded in HDL:\n"
-printf "%s\n" "----------------------------------------------------------------"
+printf "%s\n" "$LINE_SEP"
 for SVA_MACRO in \
   ASSERT \
   ASSERT_NEVER \
@@ -35,4 +37,4 @@ for SVA_MACRO in \
   done
   printf "%d\n" "$NUM_TOTAL_SVAS"
 done
-printf "%s\n" "----------------------------------------------------------------"
+printf "%s\n" "$LINE_SEP"
