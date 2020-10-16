@@ -41,10 +41,10 @@ import subprocess
 import sys
 import time
 
-from config import Config
-from string_color import color_str_green as green
-from string_color import color_str_red as red
-from string_color import color_str_yellow as yellow
+from infra.config import Config
+from infra.string_color import color_str_green as green
+from infra.string_color import color_str_red as red
+from infra.string_color import color_str_yellow as yellow
 
 LINE_SEP = "==================================================================="
 MAX_NUM_VM_INSTANCES = 36  # this is max default quota for us-east4-a zone
@@ -182,6 +182,9 @@ def run_docker_container_locally(config, exp_data_path):
   cmd.extend(["-e", "%s=%s" % ("TB_TYPE", config.tb_type)])
   cmd.extend(["-e", "%s=%s" % ("TB", config.tb)])
   cmd.extend(["-e", "%s=%s" % ("FUZZER", config.fuzzer)])
+  cmd.extend(["-e", "%s=%s" % ("INSTRUMENT_DUT", config.instrument_dut)])
+  cmd.extend(["-e", "%s=%s" % ("INSTRUMENT_TB", config.instrument_tb)])
+  cmd.extend(["-e", "%s=%s" % ("INSTRUMENT_VLTRT", config.instrument_vltrt)])
   cmd.extend(["-e", "%s=%s" % ("RUN_ON_GCP", config.run_on_gcp)])
   # Set environment variables for Verilator/HDL-generator/fuzzer params
   for params in config.env_var_params:
@@ -330,6 +333,16 @@ def run_docker_container_on_gce(config):
   cmd.extend(["--container-env", "%s=%s" % ("TB_TYPE", config.tb_type)])
   cmd.extend(["--container-env", "%s=%s" % ("TB", config.tb)])
   cmd.extend(["--container-env", "%s=%s" % ("FUZZER", config.fuzzer)])
+  cmd.extend(
+      ["--container-env",
+       "%s=%s" % ("INSTRUMENT_DUT", config.instrument_dut)])
+  cmd.extend(
+      ["--container-env",
+       "%s=%s" % ("INSTRUMENT_TB", config.instrument_tb)])
+  cmd.extend([
+      "--container-env",
+      "%s=%s" % ("INSTRUMENT_VLTRT", config.instrument_vltrt)
+  ])
   cmd.extend(["--container-env", "%s=%s" % ("RUN_ON_GCP", config.run_on_gcp)])
   # Set environment variables for Verilator/HDL-generator/fuzzer params
   for params in config.env_var_params:

@@ -48,10 +48,6 @@ echo $LINE_SEP
 echo "Verilating/Compiling/Instrumenting/Simulating the DUT ..."
 make clean
 make \
-  CXX=clang++ \
-  OPT_SLOW=$OPT_SLOW \
-  OPT_FAST=$OPT_FAST \
-  OPT_GLOBAL=$OPT_GLOBAL \
   TB_TYPE=$TB_TYPE \
   TB=$TB \
   DISABLE_VCD_TRACING=1 \

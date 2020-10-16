@@ -21,15 +21,15 @@ fi
 # Print DUT version hash to log
 echo | tee logs/exp.log
 echo "Fuzzing Stats:" | tee logs/exp.log
-echo "DUT: $TOPLEVEL" | tee logs/exp.log
-if [ -n ${DUT_HDL_DIR-} ]; then
+echo "    DUT: $TOPLEVEL" | tee logs/exp.log
+if [ -v DUT_HDL_DIR ]; then
   pushd $DUT_HDL_DIR >/dev/nul
-  echo "Version: $(git rev-parse HEAD)" | tee $DUT/logs/exp.log
+  echo "    Version: $(git rev-parse HEAD)" | tee $DUT/logs/exp.log
   popd >/dev/null
 else
-  echo "Version: n/a" | tee $DUT/logs/exp.log
+  echo "    Version: n/a" | tee $DUT/logs/exp.log
 fi
-echo "Start Time: $(date +%s)" | tee logs/exp.log
+echo "    Start Time: $(date +%s)" | tee logs/exp.log
 echo | tee logs/exp.log
 
 # Generate HDL (if necessary)
@@ -57,24 +57,14 @@ if [[ $FUZZER == "sim" ]]; then
   fi
 elif [[ $FUZZER == "afl" || $FUZZER == "afl-term-on-crash" ]]; then
   if [[ $TB_TYPE == "cocotb" ]]; then
-
     # cocotb Required Environment Vars.
     export MODULE=tb.$TB_TYPE.$TB.${TOPLEVEL}_tb
     export TOPLEVEL_LANG=verilog
-
-    # Compile the DUT for fuzzing
-    compile-cocotb 2>&1 | tee -a logs/exp.log
-    check-exit-code
-
-  elif [[ $TB_TYPE == "cpp" ]]; then
-
-    # Compile the DUT for fuzzing
-    compile-cpp 2>&1 | tee -a logs/exp.log
-    check-exit-code
-
-  else
-    echo "ERROR: unsupported testbench type. Aborting!" | tee -a logs/exp.log
   fi
+
+  # Compile the DUT for fuzzing
+  compile 2>&1 | tee -a logs/exp.log
+  check-exit-code
 
   # Fuzz the DUT
   BIN_DIR=bin fuzz

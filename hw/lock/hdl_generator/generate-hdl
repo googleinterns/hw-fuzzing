@@ -13,12 +13,10 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-mkdir -p $DUT/hdl
-
 # generate lock circuit with passed parameters
 cd $DUT/hdl_generator/locksmith
 cargo build
 cargo run -- \
     --states $NUM_LOCK_STATES \
-    --width $LOCK_COMP_WIDTH > $DUT/hdl/$TOPLEVEL.v
+    --width $LOCK_COMP_WIDTH > $DUT/hdl/$TOPLEVEL.sv
 exit 0

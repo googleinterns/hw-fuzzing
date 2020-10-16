@@ -22,7 +22,7 @@ export TB            ?= afl
 export CPPFLAGS      := -std=c++11
 export LDFLAGS       :=
 export LDLIBS        :=
-export SEED          ?= afl_seed.0.tf
+export SEED          ?= afl_seed.1.tf
 
 ################################################################################
 # Simulation Environment Vars
@@ -34,13 +34,13 @@ export LOCK_COMP_WIDTH ?= 8
 # HDL/TB
 ################################################################################
 #export HDL_INC_DIRS :=
-export HDL            := hdl/lock.v
+export HDL            := hdl/lock_tb.sv hdl/lock.sv
 export SHARED_TB_SRCS := verilator_tb.cpp stdin_fuzz_tb.cpp
 
 ################################################################################
 # Verilator Flags (optional)
 ################################################################################
-#export VFLAGS :=
+export VFLAGS := --assert
 
 ################################################################################
 # Include common build targets

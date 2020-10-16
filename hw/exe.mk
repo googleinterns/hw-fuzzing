@@ -15,14 +15,21 @@
 ################################################################################
 # Compiler/Linker
 ################################################################################
-CXX     = clang++
-VLT_CXX = $(CXX)
-LINK    = $(CXX)
+CXX       = clang++
+DUT_CXX   = $(CXX)
+TB_CXX    = $(CXX)
+VLTRT_CXX = $(CXX)
+LINK      = $(CXX)
 
 ################################################################################
 # Preprocessor flags
 ################################################################################
 include $(MODEL_DIR)/Vtop_classes.mk
+
+# Set component specific flags to default CXXFLAGS
+DUT_CXXFLAGS   = $(CXXFLAGS)
+TB_CXXFLAGS    = $(CXXFLAGS)
+VLTRT_CXXFLAGS = $(CXXFLAGS)
 
 # Compiler flags to use to turn off unused and generated code warnings,
 # such as -Wno-div-by-zero
@@ -52,60 +59,51 @@ VPATH += $(VERILATOR_ROOT)/include
 VPATH += $(VERILATOR_ROOT)/include/vltstd
 
 ################################################################################
-# Optimization control
+# Optimization control (modified from VLT default to isolate TB, DUT, and VLTRT)
 ################################################################################
-# See also the BENCHMARKING & OPTIMIZATION section of the manual.
-
-# Optimization flags for non performance-critical/rarely executed code.
-# No optimization by default, which improves compilation speed.
-OPT_SLOW =
-
-# Optimization for performance critical/hot code. Most time is spent in these
-# routines. Optimizing by default for improved execution speed.
-OPT_FAST = -Os
-
-# Optimization applied to the common run-time library used by verilated models.
-# For compatibility this is called OPT_GLOBAL even though it only applies to
-# files in the run-time library. Normally there should be no need for the user
-# to change this as the library is small, but can have significant speed impact.
-OPT_GLOBAL = -Os
+DUT_OPT   = -O3
+TB_OPT    = -O3
+VLTRT_OPT = -O3
 
 ################################################################################
-# Verilator/Testbench classes
+# DUT/Verilator-Runtime/Testbench classes
 ################################################################################
-VM_FAST   += $(VM_CLASSES_FAST)
-VM_SLOW   += $(VM_CLASSES_SLOW) $(VM_SUPPORT_SLOW)
-VM_GLOBAL += $(VM_GLOBAL_FAST) $(VM_GLOBAL_SLOW) $(VM_SUPPORT_FAST)
+DUT_CLASSES   += $(VM_CLASSES_FAST)
+VLTRT_CLASSES += $(VM_CLASSES_SLOW) \
+								 $(VM_GLOBAL_FAST) \
+								 $(VM_GLOBAL_SLOW) \
+								 $(VM_SUPPORT_FAST) \
+								 $(VM_SUPPORT_SLOW)
 
 ################################################################################
 # Object file lists
 ################################################################################
-VK_FAST_OBJS   = $(addprefix $(BUILD_DIR)/, $(addsuffix .o, $(VM_FAST)))
-VK_SLOW_OBJS   = $(addprefix $(BUILD_DIR)/, $(addsuffix .o, $(VM_SLOW)))
-VK_GLOBAL_OBJS = $(addprefix $(BUILD_DIR)/, $(addsuffix .o, $(VM_GLOBAL)))
-VK_USER_OBJS   = $(TB_SRCS:$(TB_SRCS_DIR)/%.cpp=$(BUILD_DIR)/%.o)
-VK_USER_OBJS  += $(SHARED_TB_SRCS:$(SHARED_TB_SRCS_DIR)/%.cpp=$(BUILD_DIR)/%.o)
-
-VK_ALL_OBJS = $(VK_USER_OBJS) $(VK_GLOBAL_OBJS) $(VK_FAST_OBJS) $(VK_SLOW_OBJS)
+DUT_OBJS    = $(addprefix $(BUILD_DIR)/, $(addsuffix .o, $(DUT_CLASSES)))
+VLTRT_OBJS  = $(addprefix $(BUILD_DIR)/, $(addsuffix .o, $(VLTRT_CLASSES)))
+TB_OBJS     = $(TB_SRCS:$(TB_SRCS_DIR)/%.cpp=$(BUILD_DIR)/%.o)
+TB_OBJS    += $(SHARED_TB_SRCS:$(SHARED_TB_SRCS_DIR)/%.cpp=$(BUILD_DIR)/%.o)
+ALL_OBJS    = $(DUT_OBJS) $(VLTRT_OBJS) $(TB_OBJS)
 
 ################################################################################
 # Linking rules
 ################################################################################
-$(BIN_DIR)/$(TOPLEVEL): $(VK_ALL_OBJS)
+$(BIN_DIR)/$(TOPLEVEL): $(ALL_OBJS)
 	$(LINK) $(LDFLAGS) $^ $(LDLIBS) -o $@
 
 ################################################################################
 # Compilation rules
 ################################################################################
-$(BUILD_DIR)/%.o: %.cpp
-	$(CXX) $(CXXFLAGS) $(CPPFLAGS) $(OPT_FAST) -c -o $@ $<
+# DUT Model
+$(DUT_OBJS): $(BUILD_DIR)/%.o: %.cpp
+	$(DUT_CXX) $(DUT_CXXFLAGS) $(CPPFLAGS) $(DUT_OPT) -c -o $@ $<
 
-$(VK_SLOW_OBJS): $(BUILD_DIR)/%.o: %.cpp
-	$(CXX) $(CXXFLAGS) $(CPPFLAGS) $(OPT_SLOW) -c -o $@ $<
+# Testbench code
+$(TB_OBJS): $(BUILD_DIR)/%.o: %.cpp
+	$(TB_CXX) $(TB_CXXFLAGS) $(CPPFLAGS) $(TB_OPT) -c -o $@ $<
 
-# DO NOT instrument this code for fuzzing
-$(VK_GLOBAL_OBJS): $(BUILD_DIR)/%.o: %.cpp
-	$(VLT_CXX) $(VLT_CXXFLAGS) $(CPPFLAGS) $(OPT_GLOBAL) -c -o $@ $<
+# Verilator runtime code (don't want to instrument this when fuzzing)
+$(VLTRT_OBJS): $(BUILD_DIR)/%.o: %.cpp
+	$(VLTRT_CXX) $(VLTRT_CXXFLAGS) $(CPPFLAGS) $(VLTRT_OPT) -c -o $@ $<
 
 .PHONY: debug-make
 
@@ -114,23 +112,49 @@ $(VK_GLOBAL_OBJS): $(BUILD_DIR)/%.o: %.cpp
 ################################################################################
 debug-make:
 	@echo
-	@echo CXX: $(CXX)
-	@echo VLT_CXX: $(VLT_CXX)
-	@echo LINK: $(LINK)
+	@echo "----------------------------------------------------------------------"
+	@echo "Generic compiler configurations:"
+	@echo "----------------------------------------------------------------------"
+	@echo CXX:      $(CXX)
+	@echo LINK:     $(LINK)
 	@echo CXXFLAGS: $(CXXFLAGS)
-	@echo VLT_CXXFLAGS: $(VLT_CXXFLAGS)
 	@echo CPPFLAGS: $(CPPFLAGS)
-	@echo LDFLAGS: $(LDFLAGS)
-	@echo LDLIBS: $(LDLIBS)
-	@echo OPT_FAST: $(OPT_FAST)
-	@echo OPT_SLOW: $(OPT_SLOW)
+	@echo LDFLAGS:  $(LDFLAGS)
+	@echo LDLIBS:   $(LDLIBS)
+	@echo VPATH:    $(VPATH)
+	@echo "----------------------------------------------------------------------"
+	@echo "Verilator generated classes:"
+	@echo "----------------------------------------------------------------------"
 	@echo VM_CLASSES_FAST: $(VM_CLASSES_FAST)
 	@echo VM_CLASSES_SLOW: $(VM_CLASSES_SLOW)
 	@echo VM_SUPPORT_FAST: $(VM_SUPPORT_FAST)
 	@echo VM_SUPPORT_SLOW: $(VM_SUPPORT_SLOW)
-	@echo VM_GLOBAL_FAST: $(VM_GLOBAL_FAST)
-	@echo VM_GLOBAL_SLOW: $(VM_GLOBAL_SLOW)
+	@echo VM_GLOBAL_FAST:  $(VM_GLOBAL_FAST)
+	@echo VM_GLOBAL_SLOW:  $(VM_GLOBAL_SLOW)
+	@echo "----------------------------------------------------------------------"
+	@echo "User provided classes:"
+	@echo "----------------------------------------------------------------------"
 	@echo VK_USER_OBJS: $(VK_USER_OBJS)
-	@echo VK_ALL_OBJS: $(VK_ALL_OBJS)
-	@echo VPATH: $(VPATH)
+	@echo "----------------------------------------------------------------------"
+	@echo "All object files:"
+	@echo "----------------------------------------------------------------------"
+	@echo ALL_OBJS: $(ALL_OBJS)
+	@echo "----------------------------------------------------------------------"
+	@echo "DUT compiler configurations:"
+	@echo "----------------------------------------------------------------------"
+	@echo DUT_CXX:      $(DUT_CXX)
+	@echo DUT_CXXFLAGS: $(DUT_CXXFLAGS)
+	@echo DUT_OPT:      $(DUT_OPT)
+	@echo "----------------------------------------------------------------------"
+	@echo "TB compiler configurations:"
+	@echo "----------------------------------------------------------------------"
+	@echo TB_CXX:      $(TB_CXX)
+	@echo TB_CXXFLAGS: $(TB_CXXFLAGS)
+	@echo TB_OPT:      $(TB_OPT)
+	@echo "----------------------------------------------------------------------"
+	@echo "Verilator Runtime compiler configurations:"
+	@echo "----------------------------------------------------------------------"
+	@echo VLTRT_CXX:      $(VLTRT_CXX)
+	@echo VLTRT_CXXFLAGS: $(VLTRT_CXXFLAGS)
+	@echo VLTRT_OPT:      $(VLTRT_OPT)
 	@echo

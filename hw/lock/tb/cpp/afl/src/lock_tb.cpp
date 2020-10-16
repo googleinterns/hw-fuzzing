@@ -14,6 +14,7 @@
 
 #include "hw/lock/tb/cpp/afl/inc/lock_tb.h"
 
+#include <bitset>
 #include <iostream>
 
 // Constructor
@@ -58,7 +59,8 @@ void LockTb::SimulateDUT() {
 
     // Print test read from file/STDIN
     std::cout << "Loading inputs for test " << get_test_num();
-    std::cout << " (time = " << unsigned(get_main_time()) << ") ...";
+    std::cout << " (time = " << std::dec << unsigned(get_main_time())
+              << ") ...";
     std::cout << std::endl;
     std::cout << "  in = " << std::bitset<8>(test_input[0]);
     std::cout << " (0x" << std::hex << unsigned(test_input[0]) << ")";
@@ -74,12 +76,15 @@ void LockTb::SimulateDUT() {
 
     // Print vital DUT state
     std::cout << "Checking if unlocked (time = ";
-    std::cout << unsigned(get_main_time()) << ") ..." << std::endl;
-    std::cout << "  state = " << unsigned(dut_.state) << std::endl;
-    std::cout << "  unlocked = " << unsigned(dut_.unlocked) << std::endl;
+    std::cout << std::dec << unsigned(get_main_time()) << ") ..." << std::endl;
+    std::cout << "  state = 0x" << std::hex << unsigned(dut_.state)
+              << std::endl;
+    std::cout << "  unlocked = 0x" << std::hex << unsigned(dut_.unlocked)
+              << std::endl;
 
     // Verify vital DUT state
-    assert(dut_.unlocked == 0 && "SUCCESS: unlocked state has been reached!");
+    // assert(dut_.unlocked == 0 && "SUCCESS: unlocked state has been
+    // reached!");
   }
 
 #if VM_TRACE

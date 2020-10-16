@@ -25,7 +25,7 @@ import os
 import hjson
 import prettytable
 
-from string_color import color_str_yellow as yellow
+from infra.string_color import color_str_yellow as yellow
 
 LINE_SEP = "==================================================================="
 
@@ -73,6 +73,9 @@ class Config():
       self.tb_type = cdict["tb_type"]
       self.tb = cdict["tb"]
       self.fuzzer = cdict["fuzzer"]
+      self.instrument_dut = cdict["instrument_dut"]
+      self.instrument_tb = cdict["instrument_tb"]
+      self.instrument_vltrt = cdict["instrument_vltrt"]
       self.manual = cdict["manual"]
       self.run_on_gcp = cdict["run_on_gcp"]
       self.env_var_params = [cdict["verilator_params"]]
@@ -110,6 +113,9 @@ class Config():
     exp_config_table.add_row(["Testbench Type", self.tb_type])
     exp_config_table.add_row(["Testbench", self.tb])
     exp_config_table.add_row(["Fuzzer", self.fuzzer])
+    exp_config_table.add_row(["Instrument DUT", self.instrument_dut])
+    exp_config_table.add_row(["Instrument TB", self.instrument_tb])
+    exp_config_table.add_row(["Instrument VLT-RT", self.instrument_vltrt])
     exp_config_table.add_row(["Manual", self.manual])
     exp_config_table.add_row(["Run on GCP", self.run_on_gcp])
 

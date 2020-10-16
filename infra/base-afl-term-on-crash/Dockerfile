@@ -25,4 +25,4 @@ RUN /root/checkout_build_install_afl.sh
 RUN rm /root/checkout_build_install_afl.sh
 
 # Copy over circuit build/fuzz scripts
-COPY compile-cpp compile-cocotb fuzz $SCRIPTS/
+COPY compile install-cpp-deps install-cocotb-deps fuzz $SCRIPTS/

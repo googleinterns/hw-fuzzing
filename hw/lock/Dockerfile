@@ -14,7 +14,7 @@
 
 # Docker image for fuzzing various lock circuits with AFL
 ARG FUZZER=sim
-FROM gcr.io/hardware-fuzzing/base-${FUZZER}
+FROM hw-fuzzing/base-${FUZZER}
 MAINTAINER trippel@umich.edu
 
 # Install Rust compiler/build system for HDL generator
@@ -28,7 +28,7 @@ RUN mkdir $DUT
 # Copy in HDL and testbench
 COPY hdl_generator $DUT/hdl_generator
 RUN mv $DUT/hdl_generator/generate-hdl $SCRIPTS/
-#COPY hdl $DUT/hdl
+COPY hdl $DUT/hdl
 COPY tb $DUT/tb
 COPY seeds $DUT/seeds
 

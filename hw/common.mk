@@ -53,8 +53,8 @@ MODEL_SRC := $(MODEL_DIR)/Vtop.cpp
 VFLAGS += \
 	-Wno-fatal \
 	--prefix Vtop \
-	--top-module $(TOPLEVEL)_tb \
 	--Mdir $(MODEL_DIR) \
+	--top-module $(TOPLEVEL)_tb \
 	--cc \
 	--compiler clang
 
@@ -86,7 +86,7 @@ $(BIN_DIR)/$(TOPLEVEL): $(MODEL_SRC) $(TB_SRCS) $(SHARED_TB_SRCS)
 	$(SCRIPTS)/gen-seeds-from-yaml; \
 	mkdir -p $(BUILD_DIR); \
 	mkdir -p $(BIN_DIR); \
-	$(MAKE) -f ../exe.mk debug-make;
+	$(MAKE) -f ../exe.mk debug-make; \
 	$(MAKE) -f ../exe.mk
 
 $(MODEL_SRC): $(HDL)
@@ -123,19 +123,30 @@ clean:
 ################################################################################
 debug-make::
 	@echo
-	@echo TOPLEVEL: $(TOPLEVEL)
+	@echo "----------------------------------------------------------------------"
+	@echo "Toplevel Info:"
+	@echo "----------------------------------------------------------------------"
+	@echo TOPLEVEL:      $(TOPLEVEL)
 	@echo TOPLEVEL_LANG: $(TOPLEVEL_LANG)
+	@echo "----------------------------------------------------------------------"
+	@echo "HDL:"
+	@echo "----------------------------------------------------------------------"
 	@echo HDL: $(HDL)
-	@echo TB_DIR: $(TB_DIR)
-	@echo TB_SRCS_DIR: $(TB_SRCS_DIR)
-	@echo TB_INCS_DIR: $(TB_INCS_DIR)
-	@echo SHARED_TB_SRCS_DIR: $(SHARED_TB_SRCS_DIR)
-	@echo SHARED_TB_INCS_DIR: $(SHARED_TB_INCS_DIR)
-	@echo TB_SRCS: $(TB_SRCS)
+	@echo "----------------------------------------------------------------------"
+	@echo "Testbench:"
+	@echo "----------------------------------------------------------------------"
+	@echo TB_DIR:         $(TB_DIR)
+	@echo TB_SRCS:        $(TB_SRCS)
 	@echo SHARED_TB_SRCS: $(SHARED_TB_SRCS)
+	@echo "----------------------------------------------------------------------"
+	@echo "Verilator Flags:"
+	@echo "----------------------------------------------------------------------"
 	@echo VFLAGS: $(VFLAGS)
-	@echo CPPFLAGS: $(CPPFLAGS)
-	@echo LDFLAGS: $(LDFLAGS)
-	@echo LDLIBS: $(LDLIBS)
+	@echo "----------------------------------------------------------------------"
+	@echo "cocotb/Verilator Configs:"
+	@echo "----------------------------------------------------------------------"
+	@echo CPPFLAGS:        $(CPPFLAGS)
+	@echo LDFLAGS:         $(LDFLAGS)
+	@echo LDLIBS:          $(LDLIBS)
 	@echo LD_LIBRARY_PATH: $(LD_LIBRARY_PATH)
 	@echo

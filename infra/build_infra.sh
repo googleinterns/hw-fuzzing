@@ -32,12 +32,14 @@ else
   rm $HW_FUZZING/hw/python-requirements.txt
   docker build -t $DOCKER_REPO_BASENAME/base-afl $@ $HW_FUZZING/infra/base-afl
   cp $HW_FUZZING/infra/base-afl/checkout_build_install_afl.sh $HW_FUZZING/infra/base-afl-term-on-crash/
-  cp $HW_FUZZING/infra/base-afl/compile-cpp $HW_FUZZING/infra/base-afl-term-on-crash/
-  cp $HW_FUZZING/infra/base-afl/compile-cocotb $HW_FUZZING/infra/base-afl-term-on-crash/
+  cp $HW_FUZZING/infra/base-afl/compile $HW_FUZZING/infra/base-afl-term-on-crash/
+  cp $HW_FUZZING/infra/base-afl/install-cpp-deps $HW_FUZZING/infra/base-afl-term-on-crash/
+  cp $HW_FUZZING/infra/base-afl/install-cocotb-deps $HW_FUZZING/infra/base-afl-term-on-crash/
   cp $HW_FUZZING/infra/base-afl/fuzz $HW_FUZZING/infra/base-afl-term-on-crash/
   docker build -t $DOCKER_REPO_BASENAME/base-afl-term-on-crash $@ $HW_FUZZING/infra/base-afl-term-on-crash
   rm $HW_FUZZING/infra/base-afl-term-on-crash/checkout_build_install_afl.sh
-  rm $HW_FUZZING/infra/base-afl-term-on-crash/compile-cpp
-  rm $HW_FUZZING/infra/base-afl-term-on-crash/compile-cocotb
+  rm $HW_FUZZING/infra/base-afl-term-on-crash/compile
+  rm $HW_FUZZING/infra/base-afl-term-on-crash/install-cpp-deps
+  rm $HW_FUZZING/infra/base-afl-term-on-crash/install-cocotb-deps
   rm $HW_FUZZING/infra/base-afl-term-on-crash/fuzz
 fi

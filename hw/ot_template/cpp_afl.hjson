@@ -10,21 +10,20 @@
   tb: afl
   // Options: [afl, afl-term-on-crash, sim]
   fuzzer: afl
+  // Parts of the design that should be instrumented for fuzzing
+  instrument_dut: 1
+  instrument_tb: 1
+  instrument_vltrt: 0
   // Open shell in container on launch for debugging
   manual: 0
   // Launch container on GCP (1) or locally (0)
   run_on_gcp: 0
 
   // Verilator Parameters
-  verilator_params: {
-    opt_slow: -O3
-    opt_fast: -O3
-    opt_global: -O3
-  }
+  verilator_params: {}
 
   // HDL Generation Parameters (if any)
-  hdl_gen_params: {
-  }
+  hdl_gen_params: {}
 
   // AFL - Fuzzer Parameters
   fuzzer_params: {
