@@ -272,7 +272,7 @@ def push_vm_management_scripts_to_gcs(config):
   print(LINE_SEP)
   cmd = [
       "gsutil", "cp",
-      "%s/infra/gcp/%s" %
+      "%s/infra/hwfp/%s" %
       (config.root_path, config.gcp_params["startup_script"]),
       "gs://%s-%s/%s" % (config.gcp_params["project_id"],
                          config.gcp_params["vm_management_bucket"],
