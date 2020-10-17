@@ -21,27 +21,24 @@ WAIT_OPCODE_THRESHOLD = 85
 RW_OPCODE_THRESHOLD = 170
 
 
-class HWFuzzOpcode(IntEnum):
+class TLULOpcode(IntEnum):
   """Hardware fuzzer opcode derived from AFL generated inputs."""
   wait = 1
   read = 2
   write = 3
 
 
-def get_hw_fuzz_opcode(opcode_bytes):
+def get_tlul_opcode(opcode_bytes):
   """Maps a series of opcode bytes to one of three opcodes."""
   if len(opcode_bytes) == OPCODE_SIZE:
     opcode_int = int.from_bytes(opcode_bytes,
                                 byteorder=ENDIANNESS,
                                 signed=False)
     if opcode_int < WAIT_OPCODE_THRESHOLD:
-      # hw_fuzz_opcode_str = "wait"
-      return HWFuzzOpcode.wait
+      return TLULOpcode.wait
     elif opcode_int < RW_OPCODE_THRESHOLD:
-      # hw_fuzz_opcode_str = "write"
-      return HWFuzzOpcode.write
+      return TLULOpcode.write
     else:
-      # hw_fuzz_opcode_str = "read"
-      return HWFuzzOpcode.read
+      return TLULOpcode.read
   else:
     return None

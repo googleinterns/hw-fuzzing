@@ -12,23 +12,21 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-"""This module contains methods to fuzz hw IP block in hw/.
+"""This module contains methods to fuzz hw within containerized infrastructure.
 
 Description:
 This module contains several methods that:
-1. Parses an HJSON configuration file defining which toplevel to fuzz and how to
-   fuzz it (i.e. HDL-generation/testbench/GCP/Verilator/fuzzer parameters).
+1. Parse an HJSON configuration file defining which toplevel IP core to fuzz and
+   how to fuzz it (e.g., see hw/aes/cpp_afl.hjson).
 2. Builds a Docker image containing the DUT (toplevel) HDL, the desired
    testbench, fuzzer, Verilator (simulation engine), and compilation/simulation
    scripts).
-3. Checks if a data already exists/Creates a directory to store the fuzzing
+3. Checks if data already exists/creates a directory to store the fuzzing
    results either locally or in a GCS bucket.
-4. Launches a Docker container either locally or on a GCE VM to fuzz the DUT.
+4. Launches a Docker container either locally or on a GCP VM to fuzz the DUT.
 
 Usage Example:
   fuzz.py <HSJON configuration file>
-
-For a reference on how to define the HJSON configuration files, see tests/.
 """
 
 import argparse
@@ -41,12 +39,14 @@ import subprocess
 import sys
 import time
 
-from infra.config import Config
-from infra.string_color import color_str_green as green
-from infra.string_color import color_str_red as red
-from infra.string_color import color_str_yellow as yellow
+sys.path.append(os.path.join(os.getenv("HW_FUZZING"), "infra"))
+from hwfp.config import LINE_SEP, Config
+from hwfp.string_color import color_str_green as green
+from hwfp.string_color import color_str_red as red
+from hwfp.string_color import color_str_yellow as yellow
 
-LINE_SEP = "==================================================================="
+SEEDER_PATH = "infra/base-sim/seeder"
+SHARED_TB_PATH = "infra/base-sim/tb"
 MAX_NUM_VM_INSTANCES = 36  # this is max default quota for us-east4-a zone
 VM_LAUNCH_WAIT_TIME_S = 30
 
@@ -160,9 +160,19 @@ def create_local_experiment_data_dir(config):
 
   # Copy over seeds that were used in this experiment
   seeds_dir = "%s/hw/%s/seeds" % (config.root_path, config.toplevel)
-  shutil.copytree(seeds_dir, os.path.join(exp_data_path, "seeds"))
-  os.chmod(os.path.join(exp_data_path, "seeds"),
-           stat.S_IRWXU | stat.S_IRGRP | stat.S_IROTH)
+  seed_descripts_dir = "%s/hw/%s/seed_descriptions" % (config.root_path,
+                                                       config.toplevel)
+  if os.path.isdir(seeds_dir):
+    shutil.copytree(seeds_dir, os.path.join(exp_data_path, "seeds"))
+    os.chmod(os.path.join(exp_data_path, "seeds"),
+             stat.S_IRWXU | stat.S_IRGRP | stat.S_IROTH)
+  elif os.path.isdir(seed_descripts_dir):
+    shutil.copytree(seed_descripts_dir,
+                    os.path.join(exp_data_path, "seed_descriptions"))
+    os.chmod(os.path.join(exp_data_path, "seed_descriptions"),
+             stat.S_IRWXU | stat.S_IRGRP | stat.S_IROTH)
+  else:
+    print(red("ERROR: no seeds found. Terminating experiment!"))
 
   # Copy over HJSON config file that was used
   shutil.copy2(config.config_filename, exp_data_path)
@@ -197,9 +207,19 @@ def run_docker_container_locally(config, exp_data_path):
        "%s/logs:/src/hw/%s/logs" % (exp_data_path, config.toplevel)])
   cmd.extend(
       ["-v", "%s/out:/src/hw/%s/out" % (exp_data_path, config.toplevel)])
+  # If manual mode, mount src code for development/debugging
+  if config.manual:
+    cmd.extend(
+        ["-v", "%s/%s:/src/hw/seeder" % (config.root_path, SEEDER_PATH)])
+    cmd.extend(["-v", "%s/%s:/src/hw/tb" % (config.root_path, SHARED_TB_PATH)])
+    cmd.extend([
+        "-v",
+        "%s/hw/%s:/src/hw/%s" %
+        (config.root_path, config.toplevel, config.toplevel)
+    ])
   # Set target Docker image and run
   cmd.extend(["-t", config.docker_image])
-  # Open shell in container on launch if manual mode activated for debugging
+  # If manual mode, start shell
   if config.manual:
     cmd.append("/bin/bash")
   error_str = "ERROR: container run FAILED. Terminating experiment!"
@@ -324,7 +344,7 @@ def run_docker_container_on_gce(config):
        config.gcp_params["vm_management_bucket"],
        config.gcp_params["startup_script"])
   ]
-  # Open shell in container on launch if manual mode activated for debugging
+  # Open shell debugging
   if config.manual:
     cmd.extend["--container-command=/bin/bash"]
   # Set environment variables for general configs

@@ -27,7 +27,7 @@
 
   // AFL - Fuzzer Parameters
   fuzzer_params: {
-    interactive_mode: 0
+    interactive_mode: 1
     timeout_ms: null
     memory_limit_mb: null
     num_instances: 1

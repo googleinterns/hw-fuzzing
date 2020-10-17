@@ -20,9 +20,10 @@ MAINTAINER trippel@umich.edu
 # Putting installation steps in a script reduces the number of intermediate
 # layers generated from the Dockerfile
 COPY checkout_build_install_afl.sh /root/
-ENV AFL_REPO_URL "https://github.com/google/AFL.git"
+ARG AFL_REPO_URL="https://github.com/google/AFL.git"
+ENV AFL_REPO_URL ${AFL_REPO_URL}
 RUN /root/checkout_build_install_afl.sh
 RUN rm /root/checkout_build_install_afl.sh
 
 # Copy over circuit build/fuzz scripts
-COPY compile install-cpp-deps install-cocotb-deps fuzz $SCRIPTS/
+COPY compile fuzz $SCRIPTS/

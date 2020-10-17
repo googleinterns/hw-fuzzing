@@ -20,10 +20,8 @@ import sys
 import prettytable
 import yaml
 
-sys.path.append("../tb")
-from cocotb_ext.hw_fuzz_opcode import (ENDIANNESS, OPCODE_SIZE,
-                                       RW_OPCODE_THRESHOLD,
-                                       WAIT_OPCODE_THRESHOLD)
+from opcode import (ENDIANNESS, OPCODE_SIZE, RW_OPCODE_THRESHOLD,
+                    WAIT_OPCODE_THRESHOLD)
 
 # Max field sizes for OT TLUL bus implementation
 OT_TLUL_ADDR_SIZE = 4

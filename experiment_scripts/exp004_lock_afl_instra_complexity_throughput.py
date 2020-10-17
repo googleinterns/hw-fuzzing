@@ -27,11 +27,11 @@ import sys
 
 import hjson
 
-sys.path.append(os.getenv("HW_FUZZING"))
-from infra.fuzz import fuzz
-from infra.string_color import color_str_green as green
-from infra.string_color import color_str_red as red
-from infra.string_color import color_str_yellow as yellow
+sys.path.append(os.path.join(os.getenv("HW_FUZZING"), "infra"))
+from hwfp.fuzz import fuzz
+from hwfp.string_color import color_str_green as green
+from hwfp.string_color import color_str_red as red
+from hwfp.string_color import color_str_yellow as yellow
 
 # Experiment configurations
 BASE_CONFIG_DICT = {
@@ -44,8 +44,8 @@ BASE_CONFIG_DICT = {
     "instrument_dut": 1,
     "instrument_tb": 1,
     "instrument_vltrt": 1,
-    "manual": 1,
-    "run_on_gcp": 0,
+    "manual": 0,
+    "run_on_gcp": 1,
     "hdl_gen_params": {},
     "verilator_params": {},
     "fuzzer_params": {
@@ -53,21 +53,21 @@ BASE_CONFIG_DICT = {
         "timeout_ms": None,
         "memory_limit_mb": None,
         "num_instances": 1,
-        "mode": "m",
+        "mode": "s",
         "duration_mins": 1440,
     },
 }
 
-# EXPERIMENT_BASE_NAMES = [
-# "exp003-cpp-afl-lock-%dstates-%dwidth-full-instr-%d",
-# "exp004-cpp-afl-lock-%dstates-%dwidth-duttb-instr-%d",
-# "exp005-cpp-afl-lock-%dstates-%dwidth-dut-instr-%d"
-# ]
-# NUM_STATES = [8, 16, 32, 64, 128]
 EXPERIMENT_BASE_NAMES = [
+    "exp003-cpp-afl-lock-%dstates-%dwidth-full-instr-%d",
     "exp004-cpp-afl-lock-%dstates-%dwidth-duttb-instr-%d",
+    "exp005-cpp-afl-lock-%dstates-%dwidth-dut-instr-%d"
 ]
-NUM_STATES = [8]
+NUM_STATES = [8, 16, 32, 64, 128]
+# EXPERIMENT_BASE_NAMES = [
+# "exp004-cpp-afl-lock-%dstates-%dwidth-duttb-instr-%d",
+# ]
+# NUM_STATES = [8]
 COMP_WIDTHS = [4]
 RUNS = range(0, 1)
 

@@ -21,11 +21,13 @@ repository. See the tests/ directory for example HJSON configuration files.
 """
 
 import os
+import sys
 
 import hjson
 import prettytable
 
-from infra.string_color import color_str_yellow as yellow
+sys.path.append(os.path.join(os.getenv("HW_FUZZING"), "infra"))
+from hwfp.string_color import color_str_yellow as yellow
 
 LINE_SEP = "==================================================================="
 

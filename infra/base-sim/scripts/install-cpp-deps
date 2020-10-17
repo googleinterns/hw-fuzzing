@@ -26,6 +26,5 @@ if [[ ! -f tb/$TB_TYPE/$TB/cpp-packages.txt ]]; then
   echo "No dependencies to install."
 else
   cat tb/$TB_TYPE/$TB/cpp-packages.txt | xargs apt-get install -y
-  check-exit-code
 fi
 echo "Done!"

@@ -65,11 +65,9 @@ from cocotb.binary import BinaryValue
 from cocotb.clock import Clock
 from cocotb.triggers import RisingEdge, Timer
 
-# Import custom cocotb extension packages
-sys.path.append(os.path.join(os.getenv("HW_FUZZING"), "hw/tb"))
-from cocotb_ext.drivers.tlul import TLULHost
-from cocotb_ext.hw_fuzz_opcode import (ENDIANNESS, OPCODE_SIZE,
-                                       get_hw_fuzz_opcode)
+from drivers.tlul import TLULHost
+
+from ..hw_fuzz_opcode import ENDIANNESS, OPCODE_SIZE, get_hw_fuzz_opcode
 
 
 def bin2hex(value: BinaryValue) -> str:

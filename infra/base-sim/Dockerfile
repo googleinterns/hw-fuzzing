@@ -12,4 +12,24 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-__all__ = ["config", "fuzz", "gcp", "string_color"]
+# Docker image for circuit verification
+
+FROM hw-fuzzing/base-verilator
+MAINTAINER trippel@umich.edu
+
+# Setup directory structure
+ENV HW=$SRC/hw
+RUN mkdir $HW
+
+# Copy over hardware fuzzing build scripts and common test bench code
+COPY common.mk exe.mk $HW/
+COPY seeder $HW/seeder
+COPY tb $HW/tb
+COPY scripts/ $SCRIPTS/
+COPY requirements.txt $SRC/requirements.txt
+
+# Install python dependencies
+RUN apt-get install -y git xxd
+RUN python3 -m pip install -r $SRC/requirements.txt
+RUN apt-get remove --purge -y git && apt-get autoremove -y
+RUN rm $SRC/requirements.txt

@@ -24,7 +24,7 @@ if [ -d seed_descriptions ]; then
   echo "$LINE_SEP"
   for YAML in $SEED_YAML_FILES; do
     IFS='.' read -ra OUTPUT_BASENAME <<<"$YAML"
-    python3 $SCRIPTS/tlul_seed_composer.py \
+    python3 $HW/seeder/tlul_seed_composer.py \
       seed_descriptions/$YAML \
       seeds/$OUTPUT_BASENAME.tf
     NUM_SEEDS_CREATED=$((NUM_SEEDS_CREATED + 1))

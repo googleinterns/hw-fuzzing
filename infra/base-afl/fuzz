@@ -1,4 +1,4 @@
-#!/bin/bash -eu
+#!/bin/bash -u
 # Copyright 2020 Google LLC
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -12,6 +12,12 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+
+function check_exit_code() {
+  if (($? != 0 && $? != 124)); then
+    exit 1
+  fi
+}
 
 ################################################################################
 ################################################################################
@@ -57,12 +63,22 @@ if [[ ${INTERACTIVE_MODE} -ne 0 ]]; then
   fi
 
   # Launch fuzzer
-  $FUZZER_BIN \
-    -i seeds \
-    -o out \
-    $FUZZER_OPTIONS \
-    afl_${MODE}_interactive \
-    $BIN_DIR/$TOPLEVEL
+  if [[ -z ${DURATION_MINS-} ]]; then
+    $FUZZER_BIN \
+      -i seeds \
+      -o out \
+      $FUZZER_OPTIONS \
+      afl_${MODE}_interactive \
+      $BIN_DIR/$TOPLEVEL
+  else
+    timeout --foreground --preserve-status ${DURATION_MINS}m $FUZZER_BIN \
+      -i seeds \
+      -o out \
+      $FUZZER_OPTIONS \
+      afl_${MODE}_interactive \
+      $BIN_DIR/$TOPLEVEL
+  fi
+  check_exit_code
 else
 
   # Launch fuzzer in non-interactive mode (and potentially many instances)
@@ -89,7 +105,7 @@ else
         $BIN_DIR/$TOPLEVEL \
         2>&1 | tee -a $AFL_LOG
     else
-      timeout --foreground ${DURATION_MINS}m $FUZZER_BIN \
+      timeout --foreground --preserve-status ${DURATION_MINS}m $FUZZER_BIN \
         -i seeds \
         -o out \
         $FUZZER_OPTIONS \
@@ -97,7 +113,7 @@ else
         $BIN_DIR/$TOPLEVEL \
         2>&1 | tee -a $AFL_LOG
     fi
-    check-exit-code
+    check_exit_code
 
     # Set process ID of recently launched fuzzer
     FUZZER_PID=$!

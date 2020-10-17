@@ -23,7 +23,7 @@ LINE_SEP="-------------------------------------------------------------------"
 echo "Setting compiler/linker flags..."
 
 # Set DUT compiler
-if [ -n $INSTRUMENT_DUT ]; then
+if (($INSTRUMENT_DUT == 1)); then
   DUT_CXX="$SRC/AFL/afl-clang-fast++"
 else
   DUT_CXX="clang++"
@@ -31,7 +31,7 @@ fi
 DUT_CXXFLAGS=""
 
 # Set TB compiler
-if [ -n $INSTRUMENT_TB ]; then
+if (($INSTRUMENT_TB == 1)); then
   TB_CXX="$SRC/AFL/afl-clang-fast++"
 else
   TB_CXX="clang++"
@@ -39,12 +39,19 @@ fi
 TB_CXXFLAGS=""
 
 # Set Verilator Runtime compiler
-if [ -n $INSTRUMENT_TB ]; then
+if (($INSTRUMENT_VLTRT == 1)); then
   VLTRT_CXX="$SRC/AFL/afl-clang-fast++"
 else
   VLTRT_CXX="clang++"
 fi
 VLTRT_CXXFLAGS=""
+
+# Set Linker
+if (($INSTRUMENT_DUT || $INSTRUMENT_TB || $INSTRUMENT_VLTRT)); then
+  LINK="$SRC/AFL/afl-clang-fast++"
+else
+  LINK="clang++"
+fi
 
 # Print Fuzzer/Compiler/Linker Configurations
 echo $LINE_SEP
@@ -56,6 +63,7 @@ make \
   TB_CXXFLAGS=$TB_CXXFLAGS \
   VLTRT_CXX=$VLTRT_CXX \
   VLTRT_CXXFLAGS=$VLTRT_CXXFLAGS \
+  LINK=$LINK \
   TB_TYPE=$TB_TYPE \
   TB=$TB \
   DISABLE_VCD_TRACING=1 \
@@ -89,10 +97,10 @@ make \
   TB_CXXFLAGS=$TB_CXXFLAGS \
   VLTRT_CXX=$VLTRT_CXX \
   VLTRT_CXXFLAGS=$VLTRT_CXXFLAGS \
+  LINK=$LINK \
   TB_TYPE=$TB_TYPE \
   TB=$TB \
   DISABLE_VCD_TRACING=1
-check-exit-code
 echo "Done!"
 
 ################################################################################

@@ -117,6 +117,7 @@ clean:
 	@rm -f *.xml
 	@rm -f *.dat
 	@rm -rf tb/cocotb/*/__pycache__
+	@if [ -d seed_descriptions ]; then rm -rf seeds; fi
 
 ################################################################################
 # Debugging

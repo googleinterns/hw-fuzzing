@@ -20,26 +20,18 @@ if [ -z ${HW_FUZZING+x} ]; then
 else
   # Only rebuild these when prompted since they take a long time to build
   if [[ ${1-} == "--all" ]]; then
-    docker build --pull -t $DOCKER_REPO_BASENAME/base-image $@ $HW_FUZZING/infra/base-image
-    docker build -t $DOCKER_REPO_BASENAME/base-clang-10.0.0 $@ $HW_FUZZING/infra/base-clang-10.0.0
-    docker build -t $DOCKER_REPO_BASENAME/base-verilator $@ $HW_FUZZING/infra/base-verilator
+    docker build --pull -t $DOCKER_REPO_BASENAME/base-image $@ \
+      $HW_FUZZING/infra/base-image
+    docker build -t $DOCKER_REPO_BASENAME/base-clang-10.0.0 $@ \
+      $HW_FUZZING/infra/base-clang-10.0.0
+    docker build -t $DOCKER_REPO_BASENAME/base-verilator $@ \
+      $HW_FUZZING/infra/base-verilator
   fi
 
   # Build all fuzzer/sim images (requires above to exist)
-  # TODO(ttippel): add check to see if above exist/autobuild them if not
-  cp $HW_FUZZING/python-requirements.txt $HW_FUZZING/hw/
-  docker build -t $DOCKER_REPO_BASENAME/base-sim $@ $HW_FUZZING/hw
-  rm $HW_FUZZING/hw/python-requirements.txt
+  docker build -t $DOCKER_REPO_BASENAME/base-sim $@ $HW_FUZZING/infra/base-sim
   docker build -t $DOCKER_REPO_BASENAME/base-afl $@ $HW_FUZZING/infra/base-afl
-  cp $HW_FUZZING/infra/base-afl/checkout_build_install_afl.sh $HW_FUZZING/infra/base-afl-term-on-crash/
-  cp $HW_FUZZING/infra/base-afl/compile $HW_FUZZING/infra/base-afl-term-on-crash/
-  cp $HW_FUZZING/infra/base-afl/install-cpp-deps $HW_FUZZING/infra/base-afl-term-on-crash/
-  cp $HW_FUZZING/infra/base-afl/install-cocotb-deps $HW_FUZZING/infra/base-afl-term-on-crash/
-  cp $HW_FUZZING/infra/base-afl/fuzz $HW_FUZZING/infra/base-afl-term-on-crash/
-  docker build -t $DOCKER_REPO_BASENAME/base-afl-term-on-crash $@ $HW_FUZZING/infra/base-afl-term-on-crash
-  rm $HW_FUZZING/infra/base-afl-term-on-crash/checkout_build_install_afl.sh
-  rm $HW_FUZZING/infra/base-afl-term-on-crash/compile
-  rm $HW_FUZZING/infra/base-afl-term-on-crash/install-cpp-deps
-  rm $HW_FUZZING/infra/base-afl-term-on-crash/install-cocotb-deps
-  rm $HW_FUZZING/infra/base-afl-term-on-crash/fuzz
+  docker build -t $DOCKER_REPO_BASENAME/base-afl-term-on-crash $@ \
+    --build-arg AFL_REPO_URL="https://github.com/timothytrippel/AFL.git" \
+    $HW_FUZZING/infra/base-afl
 fi
