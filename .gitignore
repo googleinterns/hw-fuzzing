@@ -27,7 +27,7 @@ tags
 # Text files except Python dependency lists
 *.txt
 !cpp-packages.txt
-!python-requirements.txt
+!requirements.txt
 
 # Verilator Ouputs
 *model/
@@ -46,12 +46,6 @@ hw/aes/seeds
 # Experiment Outputs/Data
 *data/
 *.csv
-
-# Ignore copies of compile/fuzz scripts from afl-term-on-crash
-# (they are derived from the scripts in hw-fuzzing/infra/base-afl/)
-infra/base-afl-term-on-crash/compile-cpp
-infra/base-afl-term-on-crash/compile-cocotb
-infra/base-afl-term-on-crash/fuzz
 
 # Plots
 *.pdf
