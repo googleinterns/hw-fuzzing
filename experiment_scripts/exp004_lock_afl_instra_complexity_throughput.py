@@ -85,7 +85,8 @@ def _run_cmd(cmd, error_str):
 
 
 def _main():
-  num_experiments = len(NUM_STATES) * len(COMP_WIDTHS) * len(RUNS)
+  num_experiments = len(NUM_STATES) * len(COMP_WIDTHS) * len(RUNS) * len(
+      EXPERIMENT_BASE_NAMES)
   print(LINE_SEP)
   print(LINE_SEP)
   print(LINE_SEP)
@@ -104,14 +105,15 @@ def _main():
 
   # create config files on the fly and launch experiments
   for run in RUNS:
-    for experiment_name in EXPERIMENT_BASE_NAMES:
+    for experiment_base_name in EXPERIMENT_BASE_NAMES:
       for states in NUM_STATES:
         for width in COMP_WIDTHS:
           # craft config dictionary
           cdict = copy.deepcopy(BASE_CONFIG_DICT)
 
           # Set experiment name
-          experiment_name = experiment_name % (states, width, run)
+          experiment_name = experiment_base_name % (states, width, run)
+          print(experiment_name)
           cdict["experiment_name"] = experiment_name
 
           # Set instrumentation amount
