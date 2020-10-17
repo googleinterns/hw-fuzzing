@@ -1,5 +1,5 @@
-#!/bin/bash -eux
-# Copyright 2020 Google LLC
+#!/usr/bin/python3
+# Copyright 2020 Timothy Trippel
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -13,12 +13,21 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-# generate lock circuit and testbench with passed parameters
-cd $DUT/hdl_generator/locksmith
-cargo build
-cargo run -- \
-  --states $NUM_LOCK_STATES \
-  --width $LOCK_COMP_WIDTH >$DUT/hdl/$TOPLEVEL.sv
-cd $DUT/hdl_generator
-python3 generate_lock_tb.py lock_tb_template.sv >$DUT/hdl/${TOPLEVEL}_tb.sv
-exit 0
+import math
+import os
+import sys
+
+
+def _main(args):
+  code_msb = int(os.getenv("LOCK_COMP_WIDTH")) - 1
+  state_msb = math.ceil(math.log2(int(os.getenv("NUM_LOCK_STATES")))) - 1
+
+  vars = {"code_msb": code_msb, "state_msb": state_msb}
+
+  with open(args[0]) as f:
+    data = f.read()
+    print(data % vars)
+
+
+if __name__ == "__main__":
+  _main(sys.argv[1:])
