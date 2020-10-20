@@ -12,7 +12,7 @@
   fuzzer: afl-term-on-crash
   // Parts of the design that should be instrumented for fuzzing
   instrument_dut: 1
-  instrument_tb: 1
+  instrument_tb: 0
   instrument_vltrt: 0
   // Open shell in container on launch for debugging
   manual: 0
