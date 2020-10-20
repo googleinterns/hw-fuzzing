@@ -12,8 +12,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-
-"""This is a helper module to interact with GCS.
+"""Helper module to interact with GCS.
 
 Description:
 This module implements a method to pull all data from a GCS bucket.
@@ -24,46 +23,44 @@ import os
 import subprocess
 import sys
 
-from infra.config import color_str_red
+import hjson
 
-# TODO(ttrippel): move this to a CMD line arg
-GCS_BUCKET = "fuzzing-data"
+sys.path.append(os.path.join(os.getenv("HW_FUZZING"), "infra"))
+from hwfp.run_cmd import run_cmd
 
 
 def pull_data_from_gcs():
   """Pulls down fuzzer data from GCS to local machine."""
-  ls_cmd = ["gsutil", "ls", "gs://%s" % GCS_BUCKET]
-  proc = subprocess.Popen(ls_cmd, \
-      stdin=subprocess.PIPE, \
-      stdout=subprocess.PIPE, \
-      stderr=subprocess.STDOUT, \
-      close_fds=True)
+  gcs_bucket_path = _get_gcs_bucket_path()
+  ls_cmd = ["gsutil", "ls", gcs_bucket_path]
+  proc = subprocess.Popen(ls_cmd,
+                          stdin=subprocess.PIPE,
+                          stdout=subprocess.PIPE,
+                          stderr=subprocess.STDOUT,
+                          close_fds=True)
   while True:
     line = proc.stdout.readline()
     if not line:
       break
     src = line.decode("utf-8").rstrip("/\n")
-    dst = os.path.join(os.getenv("HW_FUZZING"), "experiments", "data")
-    full_dst = os.path.join(dst, src.lstrip("gs://fuzzing-data"))
-    if not data_exists_locally(full_dst):
-      cp_cmd = ["gsutil", "cp", "-r", src, dst]
+    parent_dst = os.path.join(os.getenv("HW_FUZZING"), "data")
+    dst = os.path.join(parent_dst, src.split("/")[-1])
+    if not _data_exists_locally(dst):
+      # TODO(ttrippel): speed up with -m option, timesout for some reason
+      # cp_cmd = ["gsutil", "-m", "cp", "-r", src, parent_dst]
+      cp_cmd = ["gsutil", "cp", "-r", src, parent_dst]
       print("Pulling down fuzzing data from %s ..." % src)
-      p = subprocess.Popen(cp_cmd, \
-          stdin=subprocess.PIPE, \
-          stdout=subprocess.PIPE, \
-          stderr=subprocess.STDOUT, \
-          close_fds=True)
-      if p.returncode:
-        print(p.stdout.read())
-        line = p.stdout.readline().decode("utf-8")
-        while line:
-          line = p.stdout.readline()
-          print(line)
-        print(color_str_red("ERROR: GCS data copy FAILED."))
-        sys.exit(1)
+      run_cmd(cp_cmd, "ERROR: cannot copy data from GCS.")
 
 
-def data_exists_locally(exp_data_path):
+def _get_gcs_bucket_path():
+  gcp_config_filename = os.getenv("HW_FUZZING") + "/gcp_config.hjson"
+  with open(gcp_config_filename, "r") as hjson_file:
+    gcp_configs = hjson.load(hjson_file)
+  return "gs://%s-%s" % (gcp_configs["project_id"], gcp_configs["data_bucket"])
+
+
+def _data_exists_locally(exp_data_path):
   """Checks if local experiment data already exists."""
   if glob.glob(exp_data_path):
     return True

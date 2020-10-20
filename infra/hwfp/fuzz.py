@@ -41,6 +41,7 @@ import time
 
 sys.path.append(os.path.join(os.getenv("HW_FUZZING"), "infra"))
 from hwfp.config import LINE_SEP, Config
+from hwfp.run_cmd import run_cmd
 from hwfp.string_color import color_str_green as green
 from hwfp.string_color import color_str_red as red
 from hwfp.string_color import color_str_yellow as yellow
@@ -55,18 +56,6 @@ VM_LAUNCH_WAIT_TIME_S = 30
 def _sigint_handler(sig, frame):
   print(red("\nTERMINATING EXPERIMENT!"))
   sys.exit(0)
-
-
-# Run command as subprocess catching non-zero exit codes
-def run_cmd(cmd, error_str):
-  """Runs the provided command (list of strings) in a separate process."""
-  try:
-    print("Running command:")
-    print(yellow(subprocess.list2cmdline(cmd)))
-    subprocess.check_call(cmd)
-  except subprocess.CalledProcessError:
-    print(red(error_str))
-    sys.exit(1)
 
 
 # Check if experiment data directory with same name exists
@@ -346,7 +335,7 @@ def run_docker_container_on_gce(config):
   ]
   # Open shell debugging
   if config.manual:
-    cmd.extend["--container-command=/bin/bash"]
+    cmd.append("--container-command=/bin/bash")
   # Set environment variables for general configs
   cmd.extend(["--container-env", "%s=%s" % ("TOPLEVEL", config.toplevel)])
   cmd.extend(["--container-env", "%s=%s" % ("VERSION", config.version)])
