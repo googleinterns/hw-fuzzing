@@ -21,8 +21,8 @@ SVA_MACROS = [
     "ASSERT_PULSE",
     "ASSERT_IF",
     # below probably won't help for fuzzing
-    # "ASSERT_KNOWN",
-    # "ASSERT_KNOWN_IF",
+    "ASSERT_KNOWN",
+    "ASSERT_KNOWN_IF",
 ]
 
 LINE_SEP = "-------------------------------------------------------------------"

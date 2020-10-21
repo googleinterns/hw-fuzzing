@@ -82,7 +82,7 @@ endif
 # Compilation rules
 ################################################################################
 $(BIN_DIR)/$(TOPLEVEL): $(MODEL_SRC) $(TB_SRCS) $(SHARED_TB_SRCS)
-	@python3 $(HW)/seeder/report_svas.py $(HDL); \ 
+	@python3 $(HW)/seeder/report_svas.py $(HDL); \
 	$(SCRIPTS)/gen-seeds-from-yaml; \
 	mkdir -p $(BUILD_DIR); \
 	mkdir -p $(BIN_DIR); \

@@ -51,6 +51,7 @@ def pull_data_from_gcs():
       cp_cmd = ["gsutil", "cp", "-r", src, parent_dst]
       print("Pulling down fuzzing data from %s ..." % src)
       run_cmd(cp_cmd, "ERROR: cannot copy data from GCS.")
+      # break
 
 
 def _get_gcs_bucket_path():
