@@ -206,6 +206,13 @@ def run_docker_container_locally(config, exp_data_path):
         "%s/hw/%s:/src/hw/%s" %
         (config.root_path, config.toplevel, config.toplevel)
     ])
+    cmd.extend([
+        "-v",
+        "%s/infra/base-sim/common.mk:/src/hw/common.mk" % config.root_path
+    ])
+    cmd.extend(
+        ["-v",
+         "%s/infra/base-sim/exe.mk:/src/hw/exe.mk" % config.root_path])
   # Set target Docker image and run
   cmd.extend(["-t", config.docker_image])
   # If manual mode, start shell

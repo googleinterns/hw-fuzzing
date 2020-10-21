@@ -82,7 +82,7 @@ endif
 # Compilation rules
 ################################################################################
 $(BIN_DIR)/$(TOPLEVEL): $(MODEL_SRC) $(TB_SRCS) $(SHARED_TB_SRCS)
-	@$(SCRIPTS)/report-embedded-svas $(HDL); \
+	@python3 $(HW)/seeder/report_svas.py $(HDL); \ 
 	$(SCRIPTS)/gen-seeds-from-yaml; \
 	mkdir -p $(BUILD_DIR); \
 	mkdir -p $(BIN_DIR); \
@@ -99,7 +99,10 @@ $(MODEL_SRC): $(HDL)
 ################################################################################
 # Utility targets
 ################################################################################
-.PHONY: clean sim debug-make
+.PHONY: clean sim debug-make report-svas
+
+report-svas:
+	@python3 $(HW)/seeder/report_svas.py $(HDL)
 
 ifeq ($(TB_TYPE), cocotb)
 sim: $(BIN_DIR)/$(TOPLEVEL)
@@ -113,6 +116,8 @@ clean:
 	@rm -rf $(BIN_DIR)
 	@rm -rf $(BUILD_DIR)
 	@rm -rf $(MODEL_DIR)
+	@rm -f logs/*
+	@rm -f out/*
 	@rm -f *.vcd
 	@rm -f *.xml
 	@rm -f *.dat
