@@ -17,7 +17,7 @@
 Description:
 
 Usage Example:
-  exp004_lock_afl_instra_complexity_throughput.py
+  exp005_lock_afl_init_opt_throughput.py
 """
 
 import copy
@@ -39,11 +39,11 @@ BASE_CONFIG_DICT = {
     "toplevel": "lock",
     "version": "HEAD",
     "tb_type": "cpp",
-    "tb": "afl",
+    "tb": "afl_opt",
     "fuzzer": "afl-term-on-crash",
     "instrument_dut": 1,
-    "instrument_tb": 1,
-    "instrument_vltrt": 1,
+    "instrument_tb": 0,
+    "instrument_vltrt": 0,
     "manual": 0,
     "run_on_gcp": 1,
     "hdl_gen_params": {},
@@ -59,17 +59,11 @@ BASE_CONFIG_DICT = {
 }
 
 EXPERIMENT_BASE_NAMES = [
-    "exp003-cpp-afl-lock-%dstates-%dwidth-full-instr-%d",
-    "exp004-cpp-afl-lock-%dstates-%dwidth-duttb-instr-%d",
-    "exp005-cpp-afl-lock-%dstates-%dwidth-dut-instr-%d"
+    "exp006-cpp-afl-lock-%dstates-%dwidth-dut-instr-wopt-%d"
 ]
-NUM_STATES = [8, 16, 32, 64, 128]
-# EXPERIMENT_BASE_NAMES = [
-# "exp004-cpp-afl-lock-%dstates-%dwidth-duttb-instr-%d",
-# ]
-# NUM_STATES = [8]
+NUM_STATES = [16, 32, 64]
 COMP_WIDTHS = [4]
-RUNS = range(0, 1)
+RUNS = range(0, 50)
 
 LINE_SEP = "*******************************************************************"
 
@@ -115,23 +109,6 @@ def _main():
           experiment_name = experiment_base_name % (states, width, run)
           print(experiment_name)
           cdict["experiment_name"] = experiment_name
-
-          # Set instrumentation amount
-          if "full-instr" in experiment_name:
-            cdict["instrument_dut"] = 1
-            cdict["instrument_tb"] = 1
-            cdict["instrument_vltrt"] = 1
-          elif "duttb-instr" in experiment_name:
-            cdict["instrument_dut"] = 1
-            cdict["instrument_tb"] = 1
-            cdict["instrument_vltrt"] = 0
-          elif "dut" in experiment_name:
-            cdict["instrument_dut"] = 1
-            cdict["instrument_tb"] = 0
-            cdict["instrument_vltrt"] = 0
-          else:
-            print(red("ERROR: invalid instrumentation config. ABORTING!"))
-            sys.exit(1)
 
           # Set lock size
           cdict["hdl_gen_params"]["num_lock_states"] = states
