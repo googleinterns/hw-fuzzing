@@ -18,7 +18,7 @@ FROM hw-fuzzing/base-${FUZZER}
 MAINTAINER trippel@umich.edu
 
 # create DUT directory
-#ENV DUT=$HW/<OpenTitan IP Toplevel>
+ENV DUT=$HW/hmac
 RUN mkdir $DUT
 
 # Copy in HDL and testbench

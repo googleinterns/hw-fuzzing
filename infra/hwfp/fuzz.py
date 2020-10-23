@@ -54,8 +54,8 @@ VM_LAUNCH_WAIT_TIME_S = 30
 
 # Abort this fuzzing session
 def _abort(abort_msg):
-    print(red(abort_msg))
-    sys.exit(1)
+  print(red(abort_msg))
+  sys.exit(1)
 
 
 # Handler to gracefully exit on ctrl+c

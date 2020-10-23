@@ -12,42 +12,23 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+#include "hw/tb/cpp/inc/ot_ip_fuzz_tb.h"
 
-`include "prim_assert.sv"
+// Testbench needs to be global for sc_time_stamp()
+OTIPFuzzTb* tb = NULL;
 
-module aes_tb
-  import aes_reg_pkg::*;
-(
-  input clk_i,
-  input rst_ni,
+// needs to be defined so Verilog can call $time
+double sc_time_stamp() { return tb->get_main_time(); }
 
-  output logic idle_o,
+int main(int argc, char** argv, char** env) {
+  // Instantiate testbench
+  tb = new OTIPFuzzTb(argc, argv);
 
-  input  tlul_pkg::tl_h2d_t tl_i,
-  output tlul_pkg::tl_d2h_t tl_o,
+  // Simulate the DUT
+  tb->SimulateDUT();
 
-  input  prim_alert_pkg::alert_rx_t [NumAlerts-1:0] alert_rx_i,
-  output prim_alert_pkg::alert_tx_t [NumAlerts-1:0] alert_tx_o
-);
-
-  ////////////////
-  //    DUT     //
-  ////////////////
-  aes dut (
-    .clk_i,
-    .rst_ni,
-
-    .idle_o,
-
-    .tl_i,
-    .tl_o,
-
-    .alert_rx_i,
-    .alert_tx_o
-  );
-
-  ////////////////
-  // Assertions //
-  ////////////////
-
-endmodule
+  // Teardown
+  delete (tb);
+  tb = NULL;
+  exit(0);
+}

@@ -15,35 +15,35 @@
 
 `include "prim_assert.sv"
 
-module aes_tb
-  import aes_reg_pkg::*;
-(
+module hmac_tb (
   input clk_i,
   input rst_ni,
 
-  output logic idle_o,
-
   input  tlul_pkg::tl_h2d_t tl_i,
   output tlul_pkg::tl_d2h_t tl_o,
+  
+  output logic intr_hmac_done_o,
+  output logic intr_fifo_empty_o,
+  output logic intr_hmac_err_o,
 
-  input  prim_alert_pkg::alert_rx_t [NumAlerts-1:0] alert_rx_i,
-  output prim_alert_pkg::alert_tx_t [NumAlerts-1:0] alert_tx_o
+  output logic idle_o
 );
 
   ////////////////
   //    DUT     //
   ////////////////
-  aes dut (
+  hmac dut (
     .clk_i,
     .rst_ni,
-
-    .idle_o,
 
     .tl_i,
     .tl_o,
 
-    .alert_rx_i,
-    .alert_tx_o
+    .intr_hmac_done_o,
+    .intr_fifo_empty_o,
+    .intr_hmac_err_o,
+
+    .idle_o
   );
 
   ////////////////

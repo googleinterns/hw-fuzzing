@@ -1,0 +1,6 @@
+---
+# Wait a few clk cycles for core to go idle
+- {opcode: wait, addr: 0, data: 0}
+- {opcode: wait, addr: 0, data: 0}
+- {opcode: wait, addr: 0, data: 0}
+...
