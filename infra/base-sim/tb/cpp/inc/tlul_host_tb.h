@@ -94,6 +94,7 @@
 // Other defines
 // -----------------------------------------------------------------------------
 #define FULL_MASK ((1U << OT_TL_DBW) - 1)
+#define DEV_RESPONSE_TIMEOUT 100000000000000000  // number of clk cycles
 #define ONE_CLK_CYCLE 2
 #define OT_TL_I_WORD_SIZE_BITS 32
 #define OT_TL_O_WORD_SIZE_BITS 32
@@ -185,7 +186,7 @@ class TLULHostTb : public STDINFuzzTb {
       {"A_SOURCE", TL_A_SOURCE_WIDTH},
       {"A_ADDRESS", TL_A_ADDRESS_WIDTH},
       {"A_MASK", TL_A_MASK_WIDTH},
-      {"A_DATA", TL_A_DATA_INDEX},
+      {"A_DATA", TL_A_DATA_WIDTH},
       {"A_USER", TL_A_USER_WIDTH},
       {"D_READY", TL_D_READY_WIDTH},
       // Device-to-Host Signals

@@ -1,6 +1,6 @@
 {
   // Experiment Parameters
-  experiment_name: exp001-cpp-afl-rv-timer-sanity
+  experiment_name: rv_timer-test
   toplevel: rv_timer
   // VCS commit hash of version of DUT
   version: HEAD
@@ -15,7 +15,7 @@
   instrument_tb: 0
   instrument_vltrt: 0
   // Open shell in container on launch for debugging
-  manual: 0
+  manual: 1
   // Launch container on GCP (1) or locally (0)
   run_on_gcp: 0
 

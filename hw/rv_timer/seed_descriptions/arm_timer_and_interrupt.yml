@@ -1,0 +1,18 @@
+---
+- {opcode: wait, addr: 0x00000000, data: 0x00000000}
+
+# Set the TIMER_COMPARE upper and lower registers to a combined value of 16
+- {opcode: write, addr: 0x0000010C, data: 0x00000100}
+- {opcode: write, addr: 0x00000110, data: 0x00000000}
+
+# Enable interrupts
+- {opcode: write, addr: 0x00000114, data: 0x00000001}
+
+# Arm the timer
+- {opcode: write, addr: 0x00000000, data: 0x00000001}
+
+# Let the timer increment by waiting
+- {opcode: wait, addr: 0, data: 0}
+- {opcode: wait, addr: 0, data: 0}
+...
+

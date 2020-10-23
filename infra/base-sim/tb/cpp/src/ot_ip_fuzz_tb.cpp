@@ -92,11 +92,11 @@ void OTIPFuzzTb::SimulateDUT() {
         case HWFuzzOpcode::kRead: {
           rw_address = GetTLULAddress();
           if (rw_address.valid) {
-            r_data = Get(rw_address.address);
             // TODO(ttrippel): deal with error/finish (data == 0xFFFFFFFF)
             std::cout << "(read) -- addr: 0x" << std::setw(OT_TL_DW >> 2)
-                      << std::setfill('0') << std::hex << rw_address.address
-                      << " --> data: 0x" << std::setw(OT_TL_DW >> 2) << std::hex
+                      << std::setfill('0') << std::hex << rw_address.address;
+            r_data = Get(rw_address.address);
+            std::cout << " --> data: 0x" << std::setw(OT_TL_DW >> 2) << std::hex
                       << r_data << std::endl;
           }
           break;
@@ -106,11 +106,11 @@ void OTIPFuzzTb::SimulateDUT() {
           rw_address = GetTLULAddress();
           w_data = GetTLULData();
           if (rw_address.valid && w_data.valid) {
-            PutFull(rw_address.address, w_data.data);
             std::cout << "(write) -- addr: 0x" << std::setw(OT_TL_DW >> 2)
                       << std::setfill('0') << std::hex << rw_address.address
                       << "; data: 0x" << std::setw(OT_TL_DW >> 2) << std::hex
                       << w_data.data << std::endl;
+            PutFull(rw_address.address, w_data.data);
           }
           break;
         }

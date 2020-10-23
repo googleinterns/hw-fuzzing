@@ -26,7 +26,7 @@ export TB            ?= afl
 export CPPFLAGS      := -std=c++11
 export LDFLAGS       :=
 export LDLIBS        :=
-export SEED          ?= afl_seed.1.tf
+export SEED          ?= arm_timer_and_interrupt.tf
 
 ################################################################################
 # Simulation Environment Vars
@@ -62,9 +62,9 @@ export HDL := \
 	\
 	$(DUT_HDL_DIR)/hw/ip/$(TOPLEVEL)/rtl/$(TOPLEVEL)_reg_pkg.sv \
 	$(DUT_HDL_DIR)/hw/ip/$(TOPLEVEL)/rtl/$(TOPLEVEL)_reg_top.sv \
-	$(DUT_HDL_DIR)/hw/ip/$(TOPLEVEL)/rtl/timer_core.sv \
 	$(DUT_HDL_DIR)/hw/ip/$(TOPLEVEL)/rtl/$(TOPLEVEL).sv \
 	\
+	hdl/timer_core_wbug.sv \
 	hdl/$(TOPLEVEL)_tb.sv
 export SHARED_TB_SRCS := \
 	verilator_tb.cpp \

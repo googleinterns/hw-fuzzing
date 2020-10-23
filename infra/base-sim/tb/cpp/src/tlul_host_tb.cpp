@@ -71,9 +71,9 @@ void TLULHostTb::PrintSignalValue(uint32_t* packed_signals,
   std::cout << "|";
   std::cout << std::left << std::setfill(' ') << std::setw(9) << signal_name;
   std::cout << "|";
-  std::cout << std::right << std::setw(7) << signal_width;
+  std::cout << std::right << std::setw(7) << std::dec << signal_width;
   std::cout << "|";
-  std::cout << std::setw(7) << signal2index_.at(signal_name);
+  std::cout << std::setw(7) << std::dec << signal2index_.at(signal_name);
   std::cout << "|";
   std::cout << " 0x" << std::right << std::setfill('0') << std::setw(8)
             << std::hex << signal_value;
@@ -315,7 +315,12 @@ bool TLULHostTb::WaitForDeviceResponse() {
     if (ToggleClock(&dut_.clk_i, ONE_CLK_CYCLE)) {
       return true;
     }
+
+    // Check if error signal raised --> invalid address access?
+    // TODO(ttrippel): currently it seems the data bus is set to 0xFFFFFFFF on
+    // an invalid address
   }
+
 #ifdef DEBUG
   std::cout << "Device response is valid!" << std::endl;
   PrintD2HSignals();

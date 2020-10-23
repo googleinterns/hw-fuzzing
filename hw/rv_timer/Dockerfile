@@ -29,7 +29,7 @@ ARG VERSION=HEAD
 RUN cd $DUT_HDL_DIR && git checkout ${VERSION}
 COPY hdl $DUT/hdl
 COPY tb $DUT/tb
-COPY seeds $DUT/seeds
+COPY seed_descriptions $DUT/seed_descriptions
 
 # Copy in build scripts
 COPY Makefile $DUT/
