@@ -48,8 +48,14 @@ from hwfp.string_color import color_str_yellow as yellow
 
 SEEDER_PATH = "infra/base-sim/seeder"
 SHARED_TB_PATH = "infra/base-sim/tb"
-MAX_NUM_VM_INSTANCES = 36  # this is max default quota for us-east4-a zone
+MAX_NUM_VM_INSTANCES = 32  # this is max default quota for us-east4-a zone
 VM_LAUNCH_WAIT_TIME_S = 30
+
+
+# Abort this fuzzing session
+def _abort(abort_msg):
+    print(red(abort_msg))
+    sys.exit(1)
 
 
 # Handler to gracefully exit on ctrl+c
@@ -58,21 +64,42 @@ def _sigint_handler(sig, frame):
   sys.exit(0)
 
 
+# Verify an action with user input
+def _verify_action(config, action, action_msg, abort_msg):
+  if config.args.fail_silently:
+    return True
+  elif config.args.no:
+    _abort(abort_msg)
+  elif config.args.yes:
+    action(config)
+  else:
+    ovw = input(yellow(action_msg))
+    if ovw in {"yes", "y", "Y", "YES", "Yes", ""}:
+      action(config)
+    else:
+      _abort(abort_msg)
+  return False
+
+
 # Check if experiment data directory with same name exists
 def check_for_data_locally(config):
   """Checks if experiment data already exists locally."""
   exp_data_path = "%s/data/%s" % (config.root_path, config.experiment_name)
+  abort_str = "ABORT: re-run with different experiment name."
   if glob.glob(exp_data_path):
-    if config.args.yes:
+    if config.args.fail_silently:
+      return True
+    elif config.args.no:
+      _abort(abort_str)
+    elif config.args.yes:
       shutil.rmtree(exp_data_path)
     else:
       ovw = input(yellow("WARNING: experiment data exists. Overwrite? [Yn]"))
       if ovw in {"yes", "y", "Y", "YES", "Yes", ""}:
         shutil.rmtree(exp_data_path)
       else:
-        abort_str = "ABORT: re-run with different experiment name."
-        print(red(abort_str))
-        sys.exit(1)
+        _abort(abort_str)
+  return False
 
 
 def delete_data_in_gcs(config):
@@ -99,17 +126,36 @@ def check_for_data_in_gcs(config):
     subprocess.check_call(cmd)
   except subprocess.CalledProcessError:
     return
-  if config.args.yes:
-    delete_data_in_gcs(config)
-  else:
-    ovw = input(
-        yellow("WARNING: experiment data exists in GCS. Overwrite? [Yn]"))
-    if ovw in {"yes", "y", "Y", "YES", "Yes", ""}:
-      delete_data_in_gcs(config)
-    else:
-      abort_str = "ABORT: re-run with different experiment name."
-      print(red(abort_str))
-      sys.exit(1)
+  action_msg = "WARNING: experiment data exists in GCS. Overwrite? [Yn]"
+  abort_msg = "ABORT: re-run with different experiment name."
+  return _verify_action(config, delete_data_in_gcs, action_msg, abort_msg)
+
+
+def delete_gce_vm(config):
+  """Delete active Google Compute Engine VM running the same experiment."""
+  cmd = ["gcloud", "compute", "instances", "delete", config.experiment_name]
+  error_str = "ERROR: cannot delete GCE VM (%s). Aborting!" % (
+      config.experiment_name)
+  run_cmd(cmd, error_str)
+
+
+def check_if_gce_vm_up(config):
+  """Check if Google Compute Engine VM is running this experiment already."""
+  cmd = ["gcloud", "compute", "instances", "list"]
+  proc = subprocess.Popen(cmd,
+                          stdin=subprocess.PIPE,
+                          stdout=subprocess.PIPE,
+                          stderr=subprocess.STDOUT,
+                          close_fds=True)
+  while True:
+    line = proc.stdout.readline()
+    if not line:
+      break
+    line = line.decode("utf-8").rstrip("/\n")
+    if config.experiment_name in line:
+      action_msg = "WARNING: experiment already running on GCE. Overwrite? [Yn]"
+      abort_msg = "ABORT: re-run with different experiment name."
+      return _verify_action(config, delete_gce_vm, action_msg, abort_msg)
 
 
 def build_docker_image(config):
@@ -377,6 +423,14 @@ def fuzz(argv):
   # Parse cmd args
   module_description = "Hardware Fuzzing Pipeline"
   parser = argparse.ArgumentParser(description=module_description)
+  parser.add_argument("-s",
+                      "--fail-silently",
+                      action="store_true",
+                      help="Fail silently if data/VM already exists.")
+  parser.add_argument("-n",
+                      "--no",
+                      action="store_true",
+                      help="No to all prompts. (overides -y)")
   parser.add_argument("-y",
                       "--yes",
                       action="store_true",
@@ -395,9 +449,16 @@ def fuzz(argv):
 
   # Check if experiment data already exists
   if config.run_on_gcp == 0:
-    check_for_data_locally(config)
+    if check_for_data_locally(config):
+      print(yellow("WARNING: experiment data exists locally... skipping."))
+      return
   else:
-    check_for_data_in_gcs(config)
+    if check_for_data_in_gcs(config):
+      print(yellow("WARNING: experiment data exists in GCS... skipping."))
+      return
+    if check_if_gce_vm_up(config):
+      print(yellow("WARNING: experiment VM is already running... skipping."))
+      return
 
   # Build docker image to fuzz target toplevel
   build_docker_image(config)

@@ -42,8 +42,8 @@ BASE_CONFIG_DICT = {
     "tb": "afl_opt",
     "fuzzer": "afl-term-on-crash",
     "instrument_dut": 1,
-    "instrument_tb": 0,
-    "instrument_vltrt": 0,
+    "instrument_tb": 1,
+    "instrument_vltrt": 1,
     "manual": 0,
     "run_on_gcp": 1,
     "hdl_gen_params": {},
@@ -59,7 +59,7 @@ BASE_CONFIG_DICT = {
 }
 
 EXPERIMENT_BASE_NAMES = [
-    "exp006-cpp-afl-lock-%dstates-%dwidth-dut-instr-wopt-%d"
+    "exp007-cpp-afl-lock-%dstates-%dwidth-full-instr-wopt-%d"
 ]
 NUM_STATES = [16, 32, 64]
 COMP_WIDTHS = [4]
@@ -121,7 +121,7 @@ def _main():
             hjson.dump(cdict, fp)
 
           # launch fuzz the DUT
-          fuzz([hjson_file_path])
+          fuzz(["-s", hjson_file_path])
 
           # cleanup config file
           os.remove(hjson_file_path)

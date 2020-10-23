@@ -20,18 +20,18 @@ if [ -z ${HW_FUZZING+x} ]; then
 else
   # Only rebuild these when prompted since they take a long time to build
   if [[ ${1-} == "--all" ]]; then
-    docker build --pull -t $DOCKER_REPO_BASENAME/base-image $@ \
+    docker build --pull -t $DOCKER_REPO_BASENAME/base-image \
       $HW_FUZZING/infra/base-image
-    docker build -t $DOCKER_REPO_BASENAME/base-clang-10.0.0 $@ \
+    docker build -t $DOCKER_REPO_BASENAME/base-clang-10.0.0 \
       $HW_FUZZING/infra/base-clang-10.0.0
-    docker build -t $DOCKER_REPO_BASENAME/base-verilator $@ \
+    docker build -t $DOCKER_REPO_BASENAME/base-verilator \
       $HW_FUZZING/infra/base-verilator
   fi
 
   # Build all fuzzer/sim images (requires above to exist)
-  docker build -t $DOCKER_REPO_BASENAME/base-sim $@ $HW_FUZZING/infra/base-sim
-  docker build -t $DOCKER_REPO_BASENAME/base-afl $@ $HW_FUZZING/infra/base-afl
-  docker build -t $DOCKER_REPO_BASENAME/base-afl-term-on-crash $@ \
+  docker build -t $DOCKER_REPO_BASENAME/base-sim $HW_FUZZING/infra/base-sim
+  docker build -t $DOCKER_REPO_BASENAME/base-afl $HW_FUZZING/infra/base-afl
+  docker build -t $DOCKER_REPO_BASENAME/base-afl-term-on-crash \
     --build-arg AFL_REPO_URL="https://github.com/timothytrippel/AFL.git" \
     $HW_FUZZING/infra/base-afl
 fi
