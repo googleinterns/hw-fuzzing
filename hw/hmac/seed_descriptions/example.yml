@@ -1,6 +1,73 @@
 ---
 # Wait a few clk cycles for core to go idle
-- {opcode: wait, addr: 0, data: 0}
-- {opcode: wait, addr: 0, data: 0}
-- {opcode: wait, addr: 0, data: 0}
+- {opcode: wait, addr: 0x00000000, data: 0x00000000}
+- {opcode: wait, addr: 0x00000000, data: 0x00000000}
+- {opcode: wait, addr: 0x00000000, data: 0x00000000}
+- {opcode: wait, addr: 0x00000000, data: 0x00000000}
+
+# Enable interrupts
+- {opcode: write, addr: 0x00000004, data: 0x00000007}
+
+# Write the 256-bit key
+- {opcode: write, addr: 0x00000020, data: 0xDEADBEEF}
+- {opcode: write, addr: 0x00000024, data: 0xCAFEFACE}
+- {opcode: write, addr: 0x00000028, data: 0x11111111}
+- {opcode: write, addr: 0x0000002C, data: 0x22222222}
+- {opcode: write, addr: 0x00000030, data: 0x33333333}
+- {opcode: write, addr: 0x00000034, data: 0x44444444}
+- {opcode: write, addr: 0x00000038, data: 0xDEADBEEF}
+- {opcode: write, addr: 0x0000003C, data: 0xCAFEFACE}
+
+# Configure the mode
+- {opcode: write, addr: 0x0000000C, data: 0x00000002}
+
+# Read the status
+- {opcode: read, addr: 0x00000014, data: 0x00000000}
+
+# Start message write operation
+- {opcode: write, addr: 0x00000010, data: 0x00000001}
+
+# Write the message
+- {opcode: write, addr: 0x00000800, data: 0xBEEFBEEF}
+#- {opcode: write, addr: 0x00000804, data: 0x22222222}
+#- {opcode: write, addr: 0x00000808, data: 0x33333333}
+#- {opcode: write, addr: 0x0000080C, data: 0x44444444}
+#- {opcode: write, addr: 0x00000810, data: 0x55555555}
+#- {opcode: write, addr: 0x00000814, data: 0x66666666}
+#- {opcode: write, addr: 0x00000818, data: 0x77777777}
+#- {opcode: write, addr: 0x0000081C, data: 0x88888888}
+#- {opcode: write, addr: 0x00000800, data: 0x11111111}
+#- {opcode: write, addr: 0x00000804, data: 0x22222222}
+#- {opcode: write, addr: 0x00000808, data: 0x33333333}
+#- {opcode: write, addr: 0x0000080C, data: 0x44444444}
+#- {opcode: write, addr: 0x00000810, data: 0x55555555}
+#- {opcode: write, addr: 0x00000814, data: 0x66666666}
+#- {opcode: write, addr: 0x00000818, data: 0x77777777}
+#- {opcode: write, addr: 0x0000081C, data: 0x88888888}
+
+# Start the hashing operation
+- {opcode: write, addr: 0x00000010, data: 0x00000002}
+
+# Wait for the operation to be done
+#- {opcode: wait, addr: 0x00000000, data: 0x00000000, repeat: 380}
+
+## Read the received message length
+#- {opcode: read, addr: 0x00000060, data: 0x00000000}
+#- {opcode: read, addr: 0x00000064, data: 0x00000000}
+
+## Read the status
+#- {opcode: read, addr: 0x00000014, data: 0x00000000}
+
+## Read the result
+#- {opcode: read, addr: 0x00000040, data: 0x00000000}
+#- {opcode: read, addr: 0x00000044, data: 0x00000000}
+#- {opcode: read, addr: 0x00000048, data: 0x00000000}
+#- {opcode: read, addr: 0x0000004C, data: 0x00000000}
+#- {opcode: read, addr: 0x00000040, data: 0x00000000}
+#- {opcode: read, addr: 0x00000044, data: 0x00000000}
+#- {opcode: read, addr: 0x00000048, data: 0x00000000}
+#- {opcode: read, addr: 0x0000004C, data: 0x00000000}
+
+## Read/Clear interrupts
+#- {opcode: read, addr: 0x00000000, data: 0x00000000}
 ...

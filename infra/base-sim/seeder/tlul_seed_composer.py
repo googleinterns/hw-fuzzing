@@ -70,25 +70,31 @@ def generate_afl_seed(args):
   with open(args.output_filename, "wb") as out_file:
     for instr in fuzz_opcodes:
       # Read HW fuzz instruction
-      opcode, addr, data = instr.values()
+      if "repeat" in instr:
+        opcode, addr, data, repeat = instr.values()
+      else:
+        opcode, addr, data = instr.values()
+        repeat = 1
       if args.verbose:
         print("Opcode: ", opcode)
         print("Address: 0x{:0>8X}".format(addr))
         print("Data:    0x{:0>8X}".format(data))
+        print("Repeat: ", repeat)
         print("-------------------")
       # Translate instruction to binary
-      if opcode == "wait":
-        write_bytes(out_file, 1, args.opcode_size)
-      elif opcode == "write":
-        write_bytes(out_file, WAIT_OPCODE_THRESHOLD, args.opcode_size)
-        write_bytes(out_file, addr, args.address_size)
-        write_bytes(out_file, data, args.data_size)
-      elif opcode == "read":
-        write_bytes(out_file, RW_OPCODE_THRESHOLD, args.opcode_size)
-        write_bytes(out_file, addr, args.address_size)
-      else:
-        print("ERROR: invalid opcode in input file. ABORTING!")
-        sys.exit(1)
+      for _ in range(repeat):
+        if opcode == "wait":
+          write_bytes(out_file, 1, args.opcode_size)
+        elif opcode == "write":
+          write_bytes(out_file, WAIT_OPCODE_THRESHOLD, args.opcode_size)
+          write_bytes(out_file, addr, args.address_size)
+          write_bytes(out_file, data, args.data_size)
+        elif opcode == "read":
+          write_bytes(out_file, RW_OPCODE_THRESHOLD, args.opcode_size)
+          write_bytes(out_file, addr, args.address_size)
+        else:
+          print("ERROR: invalid opcode in input file. ABORTING!")
+          sys.exit(1)
   print(_green("Seed file generated!"))
   if args.verbose:
     dump_seed_file_to_stdin(args)

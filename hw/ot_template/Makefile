@@ -26,7 +26,7 @@ export TB            ?= afl
 export CPPFLAGS      := -std=c++11
 export LDFLAGS       :=
 export LDLIBS        :=
-export SEED          ?= afl_seed.0.tf
+export SEED          ?= example.tf
 
 ################################################################################
 # Simulation Environment Vars
