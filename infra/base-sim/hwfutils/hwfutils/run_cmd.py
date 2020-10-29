@@ -13,13 +13,11 @@
 # limitations under the License.
 """Helper module to run shell commands."""
 
-import os
 import subprocess
 import sys
 
-sys.path.append(os.path.join(os.getenv("HW_FUZZING"), "infra"))
-from hwfp.string_color import color_str_red as red
-from hwfp.string_color import color_str_yellow as yellow
+from hwfutils.string_color import color_str_red as red
+from hwfutils.string_color import color_str_yellow as yellow
 
 
 # Run command as subprocess catching non-zero exit codes

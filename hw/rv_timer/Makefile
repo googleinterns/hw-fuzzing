@@ -26,7 +26,7 @@ export TB            ?= afl
 export CPPFLAGS      := -std=c++11
 export LDFLAGS       :=
 export LDLIBS        :=
-export SEED          ?= arm_timer_and_interrupt.tf
+export SEED          ?= arm_timer_and_interrupt.hwf
 
 ################################################################################
 # Simulation Environment Vars

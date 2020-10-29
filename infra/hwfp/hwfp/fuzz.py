@@ -39,17 +39,14 @@ import subprocess
 import sys
 import time
 
-sys.path.append(os.path.join(os.getenv("HW_FUZZING"), "infra"))
-from hwfp.config import LINE_SEP, Config
-from hwfp.run_cmd import run_cmd
-from hwfp.string_color import color_str_green as green
-from hwfp.string_color import color_str_red as red
-from hwfp.string_color import color_str_yellow as yellow
+# sys.path.insert(0, os.path.join(os.getenv("HW_FUZZING"), HWFUTILS_PATH))
+from hwfutils.run_cmd import run_cmd
+from hwfutils.string_color import color_str_green as green
+from hwfutils.string_color import color_str_red as red
+from hwfutils.string_color import color_str_yellow as yellow
 
-SEEDER_PATH = "infra/base-sim/seeder"
-SHARED_TB_PATH = "infra/base-sim/tb"
-MAX_NUM_VM_INSTANCES = 32  # this is max default quota for us-east4-a zone
-VM_LAUNCH_WAIT_TIME_S = 30
+# sys.path.insert(0, os.path.join(os.getenv("HW_FUZZING"), "infra/hwfp"))
+from hwfp.config import HWFUTILS_PATH, LINE_SEP, SHARED_TB_PATH, Config
 
 
 # Abort this fuzzing session
@@ -245,7 +242,8 @@ def run_docker_container_locally(config, exp_data_path):
   # If manual mode, mount src code for development/debugging
   if config.manual:
     cmd.extend(
-        ["-v", "%s/%s:/src/hw/seeder" % (config.root_path, SEEDER_PATH)])
+        ["-v",
+         "%s/%s:/src/hw/hwfutils" % (config.root_path, HWFUTILS_PATH)])
     cmd.extend(["-v", "%s/%s:/src/hw/tb" % (config.root_path, SHARED_TB_PATH)])
     cmd.extend([
         "-v",
@@ -345,13 +343,13 @@ def check_num_active_vm_instances(config):
     if not line:
       break
     num_active_vm_instances += 1
-  if num_active_vm_instances < MAX_NUM_VM_INSTANCES:
+  if num_active_vm_instances < config.args.max_vm_instances:
     print(green("%d active VM(s)" % num_active_vm_instances))
   else:
     print(red("%d active VM(s)" % num_active_vm_instances))
     print(
         yellow("waiting %d seconds and trying again ..." %
-               VM_LAUNCH_WAIT_TIME_S))
+               config.args.vm_launch_wait_time_s))
   return num_active_vm_instances
 
 
@@ -361,10 +359,10 @@ def run_docker_container_on_gce(config):
   launch_vm = False
   while not launch_vm:
     # if above under $$$ threshold, create VM instance, else wait
-    if check_num_active_vm_instances(config) < MAX_NUM_VM_INSTANCES:
+    if check_num_active_vm_instances(config) < config.args.max_vm_instnaces:
       launch_vm = True
     else:
-      time.sleep(VM_LAUNCH_WAIT_TIME_S)  # wait 10 seconds before trying again
+      time.sleep(config.args.vm_launch_wait_time_s)  # wait before trying again
 
   # Launch fuzzing container on VM
   print(LINE_SEP)
@@ -439,6 +437,12 @@ def fuzz(argv):
                       "--update",
                       action="store_true",
                       help="Update Docker image in GCR.")
+  parser.add_argument("--max-vm-instances",
+                      default=32,
+                      help="Max number of VM instances allowed on GCP zone.")
+  parser.add_argument("--vm-launch-wait-time-s",
+                      default=30,
+                      help="Max number of VM instances allowed on GCP zone.")
   parser.add_argument("config_filename",
                       metavar="config.hjson",
                       help="Configuration file in the HJSON format.")

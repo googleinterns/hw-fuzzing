@@ -26,7 +26,7 @@ export TB            ?= afl
 export CPPFLAGS      := -std=c++11
 export LDFLAGS       :=
 export LDLIBS        :=
-export SEED          ?= auto_ctr_128bit_encrypt_1block.tf
+export SEED          ?= auto_ctr_128bit_encrypt_1block.hwf
 
 ################################################################################
 # Simulation Environment Vars

@@ -21,12 +21,9 @@ This module implements a method to pull all data from a GCS bucket.
 import glob
 import os
 import subprocess
-import sys
 
 import hjson
-
-sys.path.append(os.path.join(os.getenv("HW_FUZZING"), "infra"))
-from hwfp.run_cmd import run_cmd
+from hwfutils.run_cmd import run_cmd
 
 
 def pull_data_from_gcs():

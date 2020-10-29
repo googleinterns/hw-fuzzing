@@ -19,6 +19,7 @@ if [ -z ${HW_FUZZING+x} ]; then
   echo "ERROR: Set HW_FUZZING path and try again."
 else
   # Only rebuild these when prompted since they take a long time to build
+  # TODO(ttrippel): check if they exist first, and build them if they don't
   if [[ ${1-} == "--all" ]]; then
     docker build --pull -t $DOCKER_REPO_BASENAME/base-image \
       $HW_FUZZING/infra/base-image

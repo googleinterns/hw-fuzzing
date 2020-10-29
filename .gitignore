@@ -58,5 +58,6 @@ hw/rv_timer/seeds
 !docs/figures/hw_fuzzing_pipeline.png
 !docs/figures/lock_state_machine.png
 
-# MacOS Dir Files
+# Environment
+.envrc
 *.DS_Store

@@ -20,34 +20,10 @@ import sys
 import prettytable
 import yaml
 
-from opcode import (ENDIANNESS, OPCODE_SIZE, RW_OPCODE_THRESHOLD,
-                    WAIT_OPCODE_THRESHOLD)
-
-# Max field sizes for OT TLUL bus implementation
-OT_TLUL_ADDR_SIZE = 4
-OT_TLUL_DATA_SIZE = 4
-
-
-def _red(s):
-  return "\033[1m\033[91m{}\033[00m".format(s)
-
-
-def _green(s):
-  return "\033[1m\033[92m{}\033[00m".format(s)
-
-
-def _yellow(s):
-  return "\033[93m{}\033[00m".format(s)
-
-
-def write_bytes(out_file, value, size_bytes):
-  """Writes an integer value in binary to a file."""
-  if value < 2**(size_bytes * 8):
-    out_file.write(
-        int(value).to_bytes(size_bytes, byteorder=ENDIANNESS, signed=False))
-  else:
-    print(_red("ERROR: value is too large for corresponding field. ABORTING!"))
-    sys.exit(1)
+from hwfutils.string_color import color_str_green as green
+from hwfutils.string_color import color_str_red as red
+from hwfutils.string_color import color_str_yellow as yellow
+from hwfutils.tlul_fuzz_instr import TLULFuzzInstr
 
 
 def dump_seed_file_to_stdin(args):
@@ -57,45 +33,23 @@ def dump_seed_file_to_stdin(args):
   try:
     subprocess.check_call(cmd)
   except subprocess.CalledProcessError:
-    print(_red("ERROR: cannot dump generated seed file."))
+    print(red("ERROR: cannot dump generated seed file."))
     sys.exit(1)
 
 
-def generate_afl_seed(args):
+def gen_seed(args):
   """Parse YAML HW fuzzing opcodes and translates them in binary to file."""
   print(f"Creating fuzzer seed from YAML: {args.input_filename} ...")
-  # TODO(ttrippe): support various frame types and direct input bits
   with open(args.input_filename, "r") as in_file:
     fuzz_opcodes = yaml.load(in_file, Loader=yaml.Loader)
   with open(args.output_filename, "wb") as out_file:
     for instr in fuzz_opcodes:
-      # Read HW fuzz instruction
-      if "repeat" in instr:
-        opcode, addr, data, repeat = instr.values()
-      else:
-        opcode, addr, data = instr.values()
-        repeat = 1
+      hwf_instr = TLULFuzzInstr(args, instr)
       if args.verbose:
-        print("Opcode: ", opcode)
-        print("Address: 0x{:0>8X}".format(addr))
-        print("Data:    0x{:0>8X}".format(data))
-        print("Repeat: ", repeat)
-        print("-------------------")
-      # Translate instruction to binary
-      for _ in range(repeat):
-        if opcode == "wait":
-          write_bytes(out_file, 1, args.opcode_size)
-        elif opcode == "write":
-          write_bytes(out_file, WAIT_OPCODE_THRESHOLD, args.opcode_size)
-          write_bytes(out_file, addr, args.address_size)
-          write_bytes(out_file, data, args.data_size)
-        elif opcode == "read":
-          write_bytes(out_file, RW_OPCODE_THRESHOLD, args.opcode_size)
-          write_bytes(out_file, addr, args.address_size)
-        else:
-          print("ERROR: invalid opcode in input file. ABORTING!")
-          sys.exit(1)
-  print(_green("Seed file generated!"))
+        print(hwf_instr)
+      for _ in range(hwf_instr.repeat):
+        out_file.write(hwf_instr.to_bytes(args))
+  print(green("Seed file generated!"))
   if args.verbose:
     dump_seed_file_to_stdin(args)
 
@@ -116,34 +70,53 @@ def _print_configs(args):
 
   # Print table
   config_table.align = "l"
-  print(_yellow(config_table.get_string()))
+  print(yellow(config_table.get_string()))
 
 
 def _main(argv):
   # Parse cmd args
   module_description = "OpenTitan Fuzzing Seed Composer"
   parser = argparse.ArgumentParser(description=module_description)
-  parser.add_argument("--frame-type",
-                      default="mapped-variable",
+  parser.add_argument("--opcode-type",
+                      default="mapped",
                       choices=[
-                          "mapped-variable", "mapped-fixed",
-                          "constant-variable", "constant-fixed"
+                          "mapped",
+                          "constant",
                       ],
                       type=str,
-                      help="Fuzzing instruction frame size and configuration.")
+                      help="Fuzzing instruction opcode type.")
+  parser.add_argument("--instr-type",
+                      default="variable",
+                      choices=[
+                          "variable",
+                          "fixed",
+                      ],
+                      type=str,
+                      help="Fuzzing instruction frame type.")
+  parser.add_argument("--endianness",
+                      default=TLULFuzzInstr.default_endianness,
+                      choices=[
+                          "little",
+                          "big",
+                      ],
+                      type=str,
+                      help="Endianness of HW Fuzzing Instruction frames.")
   parser.add_argument("--opcode-size",
-                      default=OPCODE_SIZE,
+                      default=TLULFuzzInstr.default_opcode_size,
                       type=int,
                       help="Size of opcode field in bytes.")
   parser.add_argument("--address-size",
-                      default=OT_TLUL_ADDR_SIZE,
+                      default=TLULFuzzInstr.default_address_size,
                       type=int,
                       help="Size of address field in bytes")
   parser.add_argument("--data-size",
-                      default=OT_TLUL_DATA_SIZE,
+                      default=TLULFuzzInstr.default_data_size,
                       type=int,
                       help="Size of data field in bytes.")
-  # TODO(ttrippel): add argument to store direct external input bits
+  parser.add_argument("--direct-in-size",
+                      default=0,
+                      type=int,
+                      help="Size of direct inputs field in bytes.")
   parser.add_argument("-v",
                       "--verbose",
                       action="store_true",
@@ -152,14 +125,14 @@ def _main(argv):
                       metavar="input.yaml",
                       help="Input configuration YAML file.")
   parser.add_argument("output_filename",
-                      metavar="afl_seed.tf",
+                      metavar="afl_seed.hwf",
                       help="Name of output seed file (hex).")
   args = parser.parse_args(argv)
   if args.verbose:
     _print_configs(args)
 
   # Generate output seed file
-  generate_afl_seed(args)
+  gen_seed(args)
 
 
 if __name__ == "__main__":

@@ -23,13 +23,22 @@ RUN mkdir $HW
 
 # Copy over hardware fuzzing build scripts and common test bench code
 COPY common.mk exe.mk $HW/
-COPY seeder $HW/seeder
+COPY hwfutils $HW/hwfutils
 COPY tb $HW/tb
 COPY scripts/ $SCRIPTS/
-COPY requirements.txt $SRC/requirements.txt
+COPY opentitan-requirements.txt sim-requirements.txt $SRC/
 
 # Install python dependencies
 RUN apt-get install -y git xxd
-RUN python3 -m pip install -r $SRC/requirements.txt
+
+# Install OpenTitan and Python Dependencies
+RUN python3 -m pip install -r $SRC/opentitan-requirements.txt
+RUN python3 -m pip install -r $SRC/sim-requirements.txt
+
+# Install HW Fuzzing Utils Dependencies
+RUN python3 -m pip install -r $HW/hwfutils/requirements.txt
+ENV PYTHONPATH="$PYTHONPATH:$HW/hwfutils"
+
+# Remove uneeded packages and requirements files
 RUN apt-get remove --purge -y git && apt-get autoremove -y
-RUN rm $SRC/requirements.txt
+RUN rm $SRC/opentitan-requirements.txt $SRC/sim-requirements.txt
