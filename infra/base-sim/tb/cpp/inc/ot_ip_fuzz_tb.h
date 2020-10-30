@@ -32,13 +32,9 @@ enum class HWFuzzOpcode {
   kWrite = 3,
 };
 
-struct TLULAddress {
-  bool valid;
+struct HWFuzzInstruction {
+  HWFuzzOpcode opcode;
   uint32_t address;
-};
-
-struct TLULData {
-  bool valid;
   uint32_t data;
 };
 
@@ -50,9 +46,8 @@ class OTIPFuzzTb : public TLULHostTb {
 
  private:
   void InitializeDUT();
-  HWFuzzOpcode GetFuzzerOpcode();
-  TLULAddress GetTLULAddress();
-  TLULData GetTLULData();
+  bool GetFuzzOpcode(HWFuzzOpcode* opcode);
+  bool GetFuzzInstruction(HWFuzzInstruction* instr);
 };
 
 #endif  // HW_TB_CPP_INC_OT_IP_FUZZ_TB_H_

@@ -106,10 +106,10 @@ class TLULFuzzInstr:
   def _decode_opcode_str(self):
     if self.opcode_str == "wait":
       return TLULOpcode.wait
-    elif self.opcode_str == "write":
-      return TLULOpcode.write
     elif self.opcode_str == "read":
       return TLULOpcode.read
+    elif self.opcode_str == "write":
+      return TLULOpcode.write
     else:
       print("ERROR: invalid opcode (%s) encountered. ABORTING!" %
             self.opcode_str)

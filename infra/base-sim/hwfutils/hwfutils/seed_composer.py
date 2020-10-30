@@ -78,18 +78,18 @@ def _main(argv):
   module_description = "OpenTitan Fuzzing Seed Composer"
   parser = argparse.ArgumentParser(description=module_description)
   parser.add_argument("--opcode-type",
-                      default="mapped",
+                      default="constant",
                       choices=[
-                          "mapped",
                           "constant",
+                          "mapped",
                       ],
                       type=str,
                       help="Fuzzing instruction opcode type.")
   parser.add_argument("--instr-type",
                       default="variable",
                       choices=[
-                          "variable",
                           "fixed",
+                          "variable",
                       ],
                       type=str,
                       help="Fuzzing instruction frame type.")

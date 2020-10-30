@@ -26,7 +26,7 @@ if [ -d seed_descriptions ]; then
     IFS='.' read -ra OUTPUT_BASENAME <<<"$YAML"
     python3 $HW/hwfutils/hwfutils/seed_composer.py \
       seed_descriptions/$YAML \
-      seeds/$OUTPUT_BASENAME.tf
+      seeds/$OUTPUT_BASENAME.hwf
     NUM_SEEDS_CREATED=$((NUM_SEEDS_CREATED + 1))
   done
   echo "$LINE_SEP"
