@@ -134,6 +134,7 @@ void VerilatorTb::set_main_time(vluint64_t main_time) {
 // Enable Verilator VCD tracing
 void VerilatorTb::InitializeTracing(int argc, char** argv) {
   // If verilator was invoked with --trace argument enable VCD tracing
+  std::cout << "---------------------------------" << std::endl;
   std::cout << "Tracing enabled." << std::endl;
 
   // Check if VCD filename provided

@@ -16,12 +16,15 @@
 # Remove all DUT Docker images
 GCP_PROJECT_ID=$(gcloud config get-value project)
 FUZZERS="afl-term-on-crash afl sim"
-for DUT in aes lock rv_timer; do
-  for FUZZER in $FUZZERS; do
-    FUZZER_REGEX="gcr.io/$GCP_PROJECT_ID/$FUZZER-$DUT"
-    docker images | grep $FUZZER_REGEX | awk '{print $3}' | \
-      xargs docker rmi -f | >/dev/null
-  done
+for DUT in $(ls hw/); do
+  if [[ $DUT != "ot_template" ]]; then
+    echo "Cleaning up Docker images for fuzzing: $DUT ..."
+    for FUZZER in $FUZZERS; do
+      FUZZER_REGEX="gcr.io/$GCP_PROJECT_ID/$FUZZER-$DUT"
+      docker images | grep $FUZZER_REGEX | awk '{print $3}' |
+        xargs docker rmi -f | >/dev/null
+    done
+  fi
 done
 
 # Cleanup Docker containers/image layers

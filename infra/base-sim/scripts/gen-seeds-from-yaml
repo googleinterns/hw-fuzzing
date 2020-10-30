@@ -25,6 +25,8 @@ if [ -d seed_descriptions ]; then
   for YAML in $SEED_YAML_FILES; do
     IFS='.' read -ra OUTPUT_BASENAME <<<"$YAML"
     python3 $HW/hwfutils/hwfutils/seed_composer.py \
+      --opcode-type $OPCODE_TYPE \
+      --instr-type $INSTR_TYPE \
       seed_descriptions/$YAML \
       seeds/$OUTPUT_BASENAME.hwf
     NUM_SEEDS_CREATED=$((NUM_SEEDS_CREATED + 1))

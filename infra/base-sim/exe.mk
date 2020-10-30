@@ -97,7 +97,7 @@ $(BIN_DIR)/$(TOPLEVEL): $(ALL_OBJS)
 $(DUT_OBJS): $(BUILD_DIR)/%.o: %.cpp
 	$(DUT_CXX) $(DUT_CXXFLAGS) $(CPPFLAGS) $(DUT_OPT) -c -o $@ $<
 
-# Testbench code
+# Testbench code (don't want to instrument this when fuzzing)
 $(TB_OBJS): $(BUILD_DIR)/%.o: %.cpp
 	$(TB_CXX) $(TB_CXXFLAGS) $(CPPFLAGS) $(TB_OPT) -c -o $@ $<
 

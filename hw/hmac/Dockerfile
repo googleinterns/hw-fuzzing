@@ -24,7 +24,8 @@ RUN mkdir $DUT
 # Copy in HDL and testbench
 RUN apt-get install -y git
 ENV DUT_HDL_DIR=$HW/opentitan
-RUN git clone https://github.com/timothytrippel/opentitan.git $DUT_HDL_DIR
+RUN git clone --branch hwfuzz-checkpoint \
+      https://github.com/timothytrippel/opentitan.git $DUT_HDL_DIR
 ARG VERSION=HEAD
 RUN cd $DUT_HDL_DIR && git checkout ${VERSION}
 COPY hdl $DUT/hdl

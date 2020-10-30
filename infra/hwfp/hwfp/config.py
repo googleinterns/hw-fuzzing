@@ -80,7 +80,7 @@ class Config():
       self.instrument_vltrt = cdict["instrument_vltrt"]
       self.manual = cdict["manual"]
       self.run_on_gcp = cdict["run_on_gcp"]
-      self.env_var_params = [cdict["verilator_params"]]
+      self.env_var_params = [cdict["model_params"]]
       self.env_var_params.append(cdict["hdl_gen_params"])
       self.env_var_params.append(cdict["fuzzer_params"])
 

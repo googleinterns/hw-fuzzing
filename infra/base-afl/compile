@@ -38,6 +38,29 @@ else
 fi
 TB_CXXFLAGS=""
 
+# Check for HW Fuzzing Instruction Identifiers
+if [[ ${OPCODE_TYPE-} == "constant" ]]; then
+  if [ -z $TB_CXXFLAGS ]; then
+    TB_CXXFLAGS="-DOPCODE_TYPE_MAPPED=1"
+  else
+    TB_CXXFLAGS="$TB_CXXFLAGS -DOPCODE_TYPE_MAPPED=1"
+  fi
+fi
+if [[ ${INSTR_TYPE-} == "fixed" ]]; then
+  if [ -z $TB_CXXFLAGS ]; then
+    TB_CXXFLAGS="-DINSTR_TYPE_FIXED=1"
+  else
+    TB_CXXFLAGS="$TB_CXXFLAGS -DINSTR_TYPE_FIXED=1"
+  fi
+fi
+if [[ ${TERMINATE_ON_INVALID_OPCODE-} == "1" ]]; then
+  if [ -z $TB_CXXFLAGS ]; then
+    TB_CXXFLAGS="-DTERMINATE_ON_INVALID_OPCODE=1"
+  else
+    TB_CXXFLAGS="$TB_CXXFLAGS -DTERMINATE_ON_INVALID_OPCODE=1"
+  fi
+fi
+
 # Set Verilator Runtime compiler
 if (($INSTRUMENT_VLTRT == 1)); then
   VLTRT_CXX="$SRC/AFL/afl-clang-fast++"
@@ -58,11 +81,11 @@ echo $LINE_SEP
 make clean
 make \
   DUT_CXX=$DUT_CXX \
-  DUT_CXXFLAGS=$DUT_CXXFLAGS \
+  DUT_CXXFLAGS="$DUT_CXXFLAGS" \
   TB_CXX=$TB_CXX \
-  TB_CXXFLAGS=$TB_CXXFLAGS \
+  TB_CXXFLAGS="$TB_CXXFLAGS" \
   VLTRT_CXX=$VLTRT_CXX \
-  VLTRT_CXXFLAGS=$VLTRT_CXXFLAGS \
+  VLTRT_CXXFLAGS="$VLTRT_CXXFLAGS" \
   LINK=$LINK \
   TB_TYPE=$TB_TYPE \
   TB=$TB \
@@ -92,11 +115,11 @@ echo $LINE_SEP
 echo "Verilating/Compiling/Instrumenting the DUT ..."
 make \
   DUT_CXX=$DUT_CXX \
-  DUT_CXXFLAGS=$DUT_CXXFLAGS \
+  DUT_CXXFLAGS="$DUT_CXXFLAGS" \
   TB_CXX=$TB_CXX \
-  TB_CXXFLAGS=$TB_CXXFLAGS \
+  TB_CXXFLAGS="$TB_CXXFLAGS" \
   VLTRT_CXX=$VLTRT_CXX \
-  VLTRT_CXXFLAGS=$VLTRT_CXXFLAGS \
+  VLTRT_CXXFLAGS="$VLTRT_CXXFLAGS" \
   LINK=$LINK \
   TB_TYPE=$TB_TYPE \
   TB=$TB \

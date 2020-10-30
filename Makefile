@@ -21,6 +21,9 @@ build-infra:
 clean-infra:
 	infra/clean_infra.sh
 
+clean-fuzz-imgs:
+	infra/cleanup_fuzzing_images.sh
+
 rebuild-infra:
 	infra/cleanup_infra.sh; infra/build_infra.sh
 

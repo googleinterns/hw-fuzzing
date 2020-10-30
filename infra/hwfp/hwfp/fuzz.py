@@ -257,6 +257,14 @@ def run_docker_container_locally(config, exp_data_path):
     cmd.extend(
         ["-v",
          "%s/infra/base-sim/exe.mk:/src/hw/exe.mk" % config.root_path])
+    if config.fuzzer == "afl" or config.fuzzer == "afl-term-on-crash":
+      cmd.extend([
+          "-v",
+          "%s/infra/base-afl/compile:/scripts/compile" % config.root_path
+      ])
+      cmd.extend(
+          ["-v",
+           "%s/infra/base-afl/fuzz:/scripts/fuzz" % config.root_path])
   # Set target Docker image and run
   cmd.extend(["-t", config.docker_image])
   # If manual mode, start shell

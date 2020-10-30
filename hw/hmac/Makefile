@@ -49,6 +49,8 @@ export HDL := \
 	$(DUT_HDL_DIR)/hw/top_earlgrey/rtl/top_pkg.sv \
 	\
 	$(DUT_HDL_DIR)/hw/ip/prim/rtl/prim_util_pkg.sv \
+	$(DUT_HDL_DIR)/hw/ip/prim/rtl/prim_packer.sv \
+	$(DUT_HDL_DIR)/hw/ip/prim/rtl/prim_intr_hw.sv \
 	$(DUT_HDL_DIR)/hw/ip/prim/rtl/prim_intr_hw.sv \
 	$(DUT_HDL_DIR)/hw/ip/prim/rtl/prim_subreg_arb.sv \
 	$(DUT_HDL_DIR)/hw/ip/prim/rtl/prim_subreg_ext.sv \
@@ -59,7 +61,6 @@ export HDL := \
 	\
 	../tb/hdl/prim_assert_hwfuzzing_macros.svh \
 	../tb/hdl/prim_assert.sv \
-	../tb/hdl/prim_packer.sv \
   \
 	$(DUT_HDL_DIR)/hw/ip/tlul/rtl/tlul_pkg.sv \
 	$(DUT_HDL_DIR)/hw/ip/tlul/rtl/tlul_adapter_reg.sv \

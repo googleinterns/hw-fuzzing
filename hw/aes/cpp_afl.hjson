@@ -19,8 +19,12 @@
   // Launch container on GCP (1) or locally (0)
   run_on_gcp: 0
 
-  // Verilator Parameters
-  verilator_params: {}
+  // Parameters to pass model
+  model_params: {
+    opcode_type: constant
+    instr_type: variable
+    terminate_on_invalid_opcode: 0
+  }
 
   // HDL Generation Parameters (if any)
   hdl_gen_params: {}

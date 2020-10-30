@@ -42,7 +42,7 @@ void OTIPFuzzTb::InitializeDUT() {
   set_main_time(1);
 }
 
-#ifdef MAPPED_OPCODE
+#ifdef OPCODE_TYPE_MAPPED
 
 // This maps each opcode to a range of values rather than to a fixed value
 bool OTIPFuzzTb::GetFuzzOpcode(HWFuzzOpcode* opcode) {
@@ -89,7 +89,7 @@ bool OTIPFuzzTb::GetFuzzOpcode(HWFuzzOpcode* opcode) {
 
 #endif
 
-#ifdef FIXED_INSTRUCTION
+#ifdef INSTR_TYPE_FIXED
 
 // This reads a FIXED size HW fuzzing instruction frame from STDIN
 bool OTIPFuzzTb::GetFuzzInstruction(HWFuzzInstruction* instr) {
@@ -148,9 +148,32 @@ bool OTIPFuzzTb::GetFuzzInstruction(HWFuzzInstruction* instr) {
 #endif
 
 void OTIPFuzzTb::SimulateDUT() {
+  // Print fuzzing instruction configurations
+  std::cout << "---------------------------------" << std::endl;
+  std::cout << "Opcode Type:       ";
+#ifdef OPCODE_TYPE_MAPPED
+  std::cout << "mapped" << std::endl;
+#else
+  std::cout << "constant" << std::endl;
+#endif
+  std::cout << "Instruction Type:  ";
+#ifdef INSTR_TYPE_FIXED
+  std::cout << "fixed" << std::endl;
+#else
+  std::cout << "variable" << std::endl;
+#endif
+  std::cout << "Termination Style: ";
+#ifdef TERMINATE_ON_INVALID_OPCODE
+  std::cout << "invalid opcode" << std::endl;
+#else
+  std::cout << "eof" << std::endl;
+#endif
+  std::cout << "---------------------------------" << std::endl;
+
   // Reset the DUT (check if reset completes before reaching a $finish)
   bool reset_caused_finished =
       ResetDUT(&dut_.clk_i, &dut_.rst_ni, NUM_RESET_CLK_PERIODS);
+  std::cout << "---------------------------------" << std::endl;
 
   // Initialize AFL fork server
 #ifdef __AFL_HAVE_MANUAL_CONTROL
