@@ -1,0 +1,41 @@
+{
+  // Experiment Parameters
+  experiment_name: kmac-test
+  toplevel: kmac
+  // VCS commit hash of version of DUT
+  version: HEAD
+  // Options: [cpp, cocotb]
+  tb_type: cpp
+  // Options: [default]
+  tb: afl
+  // Options: [afl, afl-term-on-crash, sim]
+  fuzzer: afl
+  // Parts of the design that should be instrumented for fuzzing
+  instrument_dut: 1
+  instrument_tb: 0
+  instrument_vltrt: 0
+  // Open shell in container on launch for debugging
+  manual: 1
+  // Launch container on GCP (1) or locally (0)
+  run_on_gcp: 0
+
+  // Parameters to pass model
+  model_params: {
+    opcode_type: constant
+    instr_type: variable
+    terminate_on_invalid_opcode: 0
+  }
+
+  // HDL Generation Parameters (if any)
+  hdl_gen_params: {}
+
+  // AFL - Fuzzer Parameters
+  fuzzer_params: {
+    interactive_mode: 1
+    timeout_ms: null
+    memory_limit_mb: null
+    num_instances: 1
+    mode: m
+    duration_mins: 1440
+  }
+}
