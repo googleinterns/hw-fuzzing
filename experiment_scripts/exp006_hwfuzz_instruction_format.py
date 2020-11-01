@@ -29,12 +29,13 @@ from hwfutils.string_color import color_str_green as green
 
 from ot_config_dict import CONFIG_DICT
 
-EXPERIMENT_BASE_NAME = "exp008-cpp-afl-aes-%s-opcode-%s-instr-%s-term"
+EXPERIMENT_BASE_NAME = "exp008-cpp-afl-aes-%s-%s-%s-%d"
 TOPLEVEL = "aes"
 OPCODE_TYPES = ["constant", "mapped"]
 INSTR_TYPES = ["variable", "invalid"]
 TERMINATE_TYPES = ["invalidop", "never"]
-RUNS = range(0, 20)
+# RUNS = range(0, 20)
+RUNS = range(0, 1)
 
 LINE_SEP = "*******************************************************************"
 
@@ -68,7 +69,7 @@ def _main():
 
             # Set experiment name
             experiment_name = EXPERIMENT_BASE_NAME % (opcode_type, instr_type,
-                                                      term_type)
+                                                      term_type, run)
             print(experiment_name)
             cdict["experiment_name"] = experiment_name
             cdict["toplevel"] = TOPLEVEL

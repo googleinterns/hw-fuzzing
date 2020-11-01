@@ -367,7 +367,7 @@ def run_docker_container_on_gce(config):
   launch_vm = False
   while not launch_vm:
     # if above under $$$ threshold, create VM instance, else wait
-    if check_num_active_vm_instances(config) < config.args.max_vm_instnaces:
+    if check_num_active_vm_instances(config) < config.args.max_vm_instances:
       launch_vm = True
     else:
       time.sleep(config.args.vm_launch_wait_time_s)  # wait before trying again
