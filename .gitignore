@@ -27,7 +27,7 @@ tags
 # Text files except Python dependency lists
 *.txt
 !cpp-packages.txt
-!requirements.txt
+!*requirements.txt
 
 # Verilator Ouputs
 *model/
