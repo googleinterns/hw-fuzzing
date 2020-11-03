@@ -14,7 +14,7 @@
 
 # Docker image for with Verilator v4.040 installed
 
-FROM hw-fuzzing/base-clang-10.0.0
+FROM hw-fuzzing/base-clang-11.0.0
 MAINTAINER trippel@umich.edu
 
 # Putting installation steps in a script reduces the number of intermediate

@@ -19,7 +19,7 @@ build-infra:
 	infra/build_infra.sh
 
 clean-infra:
-	infra/clean_infra.sh
+	infra/cleanup_infra.sh
 
 clean-fuzz-imgs:
 	infra/cleanup_fuzzing_images.sh
@@ -30,6 +30,10 @@ rebuild-infra:
 # Fuzzing locally
 fuzz-%: hw/%/cpp_afl.hjson
 	python3 infra/hwfp/hwfp/fuzz.py $<
+
+# Synchronize GCS experiment data locally
+sync-data:
+	python3 infra/hwfp/hwfp/pull_data_from_gcs.py
 
 # Cleanup local fuzzing build/results
 clean:

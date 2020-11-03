@@ -1,4 +1,4 @@
-# Copyright 2020 Google LLC
+# Copyright 2020 Timothy Trippel
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-# Docker image with Clang version 10.0.0 installed.
+# Docker image with Clang version 11.0.0 installed.
 
 FROM hw-fuzzing/base-image
 MAINTAINER trippel@umich.edu

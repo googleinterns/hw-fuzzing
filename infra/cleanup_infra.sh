@@ -31,7 +31,7 @@ else
   # Only remove these when prompted since they take a long time to build
   if [[ ${1-} == "--all" ]]; then
     docker rmi -f $DOCKER_REPO_BASENAME/base-verilator:latest
-    docker rmi -f $DOCKER_REPO_BASENAME/base-clang-10.0.0:latest
+    docker rmi -f $DOCKER_REPO_BASENAME/base-clang-11.0.0:latest
     docker rmi -f $DOCKER_REPO_BASENAME/base-image:latest
     docker rmi -f ubuntu:20.04
   fi

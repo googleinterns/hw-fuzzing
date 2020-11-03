@@ -23,8 +23,8 @@ else
   if [[ ${1-} == "--all" ]]; then
     docker build --pull -t $DOCKER_REPO_BASENAME/base-image \
       $HW_FUZZING/infra/base-image
-    docker build -t $DOCKER_REPO_BASENAME/base-clang-10.0.0 \
-      $HW_FUZZING/infra/base-clang-10.0.0
+    docker build -t $DOCKER_REPO_BASENAME/base-clang-11.0.0 \
+      $HW_FUZZING/infra/base-clang-11.0.0
     docker build -t $DOCKER_REPO_BASENAME/base-verilator \
       $HW_FUZZING/infra/base-verilator
   fi
