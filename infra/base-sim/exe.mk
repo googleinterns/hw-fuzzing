@@ -76,13 +76,22 @@ VLTRT_CLASSES += $(VM_CLASSES_SLOW) \
 								 $(VM_SUPPORT_SLOW)
 
 ################################################################################
+# LLVM IR file lists
+################################################################################
+DUT_LLVM_IR    = $(addprefix $(BUILD_DIR)/, $(addsuffix .ll, $(DUT_CLASSES)))
+VLTRT_LLVM_IR  = $(addprefix $(BUILD_DIR)/, $(addsuffix .ll, $(VLTRT_CLASSES)))
+TB_LLVM_IR     = $(TB_SRCS:$(TB_SRCS_DIR)/%.cpp=$(BUILD_DIR)/%.ll)
+TB_LLVM_IR    += $(SHARED_TB_SRCS:$(SHARED_TB_SRCS_DIR)/%.cpp=$(BUILD_DIR)/%.ll)
+ALL_LLVM_IR    = $(DUT_LLVM_IR) $(VLTRT_LLVM_IR) $(TB_LLVM_IR)
+
+################################################################################
 # Object file lists
 ################################################################################
-DUT_OBJS    = $(addprefix $(BUILD_DIR)/, $(addsuffix .o, $(DUT_CLASSES)))
-VLTRT_OBJS  = $(addprefix $(BUILD_DIR)/, $(addsuffix .o, $(VLTRT_CLASSES)))
-TB_OBJS     = $(TB_SRCS:$(TB_SRCS_DIR)/%.cpp=$(BUILD_DIR)/%.o)
-TB_OBJS    += $(SHARED_TB_SRCS:$(SHARED_TB_SRCS_DIR)/%.cpp=$(BUILD_DIR)/%.o)
-ALL_OBJS    = $(DUT_OBJS) $(VLTRT_OBJS) $(TB_OBJS)
+DUT_OBJS     = $(addprefix $(BUILD_DIR)/, $(addsuffix .o, $(DUT_CLASSES)))
+VLTRT_OBJS   = $(addprefix $(BUILD_DIR)/, $(addsuffix .o, $(VLTRT_CLASSES)))
+TB_OBJS      = $(TB_SRCS:$(TB_SRCS_DIR)/%.cpp=$(BUILD_DIR)/%.o)
+TB_OBJS     += $(SHARED_TB_SRCS:$(SHARED_TB_SRCS_DIR)/%.cpp=$(BUILD_DIR)/%.o)
+ALL_OBJS     = $(DUT_OBJS) $(VLTRT_OBJS) $(TB_OBJS)
 
 ################################################################################
 # Linking rules
@@ -105,7 +114,26 @@ $(TB_OBJS): $(BUILD_DIR)/%.o: %.cpp
 $(VLTRT_OBJS): $(BUILD_DIR)/%.o: %.cpp
 	$(VLTRT_CXX) $(VLTRT_CXXFLAGS) $(CPPFLAGS) $(VLTRT_OPT) -c -o $@ $<
 
-.PHONY: debug-make
+################################################################################
+# Basic Block counting rules
+################################################################################
+bb-stats: $(ALL_LLVM_IR)
+	DUT_LLVM_IR="$(DUT_LLVM_IR)" \
+		TB_LLVM_IR="$(TB_LLVM_IR)" \
+		VLTRT_LLVM_IR="$(VLTRT_LLVM_IR)" \
+		$(SCRIPTS)/report-bb-complexities
+
+$(DUT_LLVM_IR): $(BUILD_DIR)/%.ll: %.cpp
+	$(DUT_CXX) $(DUT_CXXFLAGS) $(CPPFLAGS) $(DUT_OPT) -emit-llvm -S -o $@ $<;
+
+$(TB_LLVM_IR): $(BUILD_DIR)/%.ll: %.cpp
+	$(TB_CXX) $(TB_CXXFLAGS) $(CPPFLAGS) $(TB_OPT) -emit-llvm -S -o $@ $<;
+
+$(VLTRT_LLVM_IR): $(BUILD_DIR)/%.ll: %.cpp
+	$(VLTRT_CXX) $(VLTRT_CXXFLAGS) $(CPPFLAGS) $(VLTRT_OPT) \
+		-emit-llvm -S -o $@ $<;
+
+.PHONY: bb-stats debug-make
 
 ################################################################################
 # Debugging
@@ -136,9 +164,19 @@ debug-make:
 	@echo "----------------------------------------------------------------------"
 	@echo VK_USER_OBJS: $(VK_USER_OBJS)
 	@echo "----------------------------------------------------------------------"
-	@echo "All object files:"
+	@echo "Object files:"
 	@echo "----------------------------------------------------------------------"
-	@echo ALL_OBJS: $(ALL_OBJS)
+	@echo DUT_OBJS:   $(DUT_OBJS)
+	@echo TB_OBJS:    $(TB_OBJS)
+	@echo VLTRT_OBJS: $(VLTRT_OBJS)
+	@echo ALL_OBJS:   $(ALL_OBJS)
+	@echo "----------------------------------------------------------------------"
+	@echo "LLVM IR files:"
+	@echo "----------------------------------------------------------------------"
+	@echo DUT_LLVM_IR:   $(DUT_LLVM_IR)
+	@echo TB_LLVM_IR:    $(TB_LLVM_IR)
+	@echo VLTRT_LLVM_IR: $(VLTRT_LLVM_IR)
+	@echo ALL_LLVM_IR:   $(ALL_LLVM_IR)
 	@echo "----------------------------------------------------------------------"
 	@echo "DUT compiler configurations:"
 	@echo "----------------------------------------------------------------------"

@@ -1,0 +1,61 @@
+#!/bin/bash -eu
+# Copyright 2020 Timothy Trippel
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#      http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+LINE_SEP="---------------------------------------------------------------------"
+
+function extract_num_bbs() {
+  echo "# Basic Blocks for: $1"
+  echo $LINE_SEP
+  NUM_SUBTOTAL_BBS=0
+  for LLVM_IR_FILE in $2; do
+    IFS='/' read -ra FILE_NAME_ARR <<<"$LLVM_IR_FILE"
+    NUM_BBS=$(opt -instcount -stats $LLVM_IR_FILE 2>&1 |
+      grep --binary-files=text "basic blocks" | awk '{print $1}')
+    echo "${FILE_NAME_ARR[1]}: ${NUM_BBS:-0}"
+    NUM_SUBTOTAL_BBS=$((NUM_SUBTOTAL_BBS + NUM_BBS))
+  done
+  echo $LINE_SEP
+  echo "Subtotal # BBs: $NUM_TOTAL_BBS"
+}
+
+NUM_TOTAL_BBS=0
+
+# Create a CSV file with the data
+CSV_FILE_NAME="logs/bb_complexity.csv"
+echo "Design-Portion, #-BBs" >$CSV_FILE_NAME
+
+# Extract # of Basic Blocks in DUT
+echo $LINE_SEP
+extract_num_bbs "DUT" "$DUT_LLVM_IR"
+echo "DUT, ${NUM_SUBTOTAL_BBS}" >>$CSV_FILE_NAME
+NUM_TOTAL_BBS=$((NUM_TOTAL_BBS + NUM_SUBTOTAL_BBS))
+
+# Extract # of Basic Blocks in TB
+echo $LINE_SEP
+extract_num_bbs "TB" "$TB_LLVM_IR"
+echo "TB, ${NUM_SUBTOTAL_BBS}" >>$CSV_FILE_NAME
+NUM_TOTAL_BBS=$((NUM_TOTAL_BBS + NUM_SUBTOTAL_BBS))
+
+# Extract # of Basic Blocks in VLTRT
+echo $LINE_SEP
+extract_num_bbs "VLTRT" "$VLTRT_LLVM_IR"
+echo "VLTRT, ${NUM_SUBTOTAL_BBS}" >>$CSV_FILE_NAME
+NUM_TOTAL_BBS=$((NUM_TOTAL_BBS + NUM_SUBTOTAL_BBS))
+
+# Compute # of Basic Blocks in the ENTIRE DESIGN
+echo "ALL, ${NUM_TOTAL_BBS}" >>$CSV_FILE_NAME
+echo $LINE_SEP
+echo "Total # BBs: $NUM_TOTAL_BBS"
+echo $LINE_SEP
