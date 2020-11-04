@@ -388,7 +388,7 @@ def run_docker_container_on_gce(config):
       "--project=%s" % config.gcp_params["project_id"], "instances",
       "create-with-container", config.experiment_name, "--container-image",
       config.docker_image, "--container-stdin", "--container-tty",
-      "--container-restart-policy",
+      "--container-privileged", "--container-restart-policy",
       config.gcp_params["container_restart_policy"],
       "--zone=%s" % config.gcp_params["zone"],
       "--machine-type=%s" % config.gcp_params["machine_type"],
