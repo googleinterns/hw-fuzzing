@@ -13,26 +13,32 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-DOCKER_REPO_BASENAME="hw-fuzzing"
+DOCKER_REPO="hw-fuzzing"
+BASE_IMAGE_TAG="base-image"
+CLANG_IMAGE_TAG="base-clang-11.0.0"
+VERILATOR_IMAGE_TAG="base-verilator"
+SIM_IMAGE_TAG="base-sim"
+AFL_IMAGE_TAG="base-afl"
+AFL_TERM_ON_CRASH_IMAGE_TAG="base-afl-term-on-crash"
 
 if [ -z ${HW_FUZZING+x} ]; then
   echo "ERROR: Set HW_FUZZING path and try again."
 else
-  # Only rebuild these when prompted since they take a long time to build
-  # TODO(ttrippel): check if they exist first, and build them if they don't
-  if [[ ${1-} == "--all" ]]; then
-    docker build --pull -t $DOCKER_REPO_BASENAME/base-image \
-      $HW_FUZZING/infra/base-image
-    docker build -t $DOCKER_REPO_BASENAME/base-clang-11.0.0 \
-      $HW_FUZZING/infra/base-clang-11.0.0
-    docker build -t $DOCKER_REPO_BASENAME/base-verilator \
-      $HW_FUZZING/infra/base-verilator
-  fi
+  # Only (re)build these if they don't exist since they take a long time.
+  docker inspect $DOCKER_REPO/$BASE_IMAGE_TAG >/dev/null 2>&1 || \
+    docker build --pull -t $DOCKER_REPO/$BASE_IMAGE_TAG \
+    $HW_FUZZING/infra/$BASE_IMAGE_TAG
+  docker inspect $DOCKER_REPO/$CLANG_IMAGE_TAG >/dev/null 2>&1 || \
+    docker build -t $DOCKER_REPO/$CLANG_IMAGE_TAG \
+    $HW_FUZZING/infra/$CLANG_IMAGE_TAG
+  docker inspect $DOCKER_REPO/$VERILATOR_IMAGE_TAG >/dev/null 2>&1 || \
+    docker build -t $DOCKER_REPO/$VERILATOR_IMAGE_TAG \
+    $HW_FUZZING/infra/$VERILATOR_IMAGE_TAG
 
-  # Build all fuzzer/sim images (requires above to exist)
-  docker build -t $DOCKER_REPO_BASENAME/base-sim $HW_FUZZING/infra/base-sim
-  docker build -t $DOCKER_REPO_BASENAME/base-afl $HW_FUZZING/infra/base-afl
-  docker build -t $DOCKER_REPO_BASENAME/base-afl-term-on-crash \
+  # (Re)Build all fuzzer/sim images (requires above to exist).
+  docker build -t $DOCKER_REPO/$SIM_IMAGE_TAG $HW_FUZZING/infra/$SIM_IMAGE_TAG
+  docker build -t $DOCKER_REPO/$AFL_IMAGE_TAG $HW_FUZZING/infra/$AFL_IMAGE_TAG
+  docker build -t $DOCKER_REPO/$AFL_TERM_ON_CRASH_IMAGE_TAG \
     --build-arg AFL_REPO_URL="https://github.com/timothytrippel/AFL.git" \
-    $HW_FUZZING/infra/base-afl
+    $HW_FUZZING/infra/$AFL_IMAGE_TAG
 fi

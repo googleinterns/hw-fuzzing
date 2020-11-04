@@ -6,7 +6,7 @@
   container_restart_policy: never
   zone: us-central1-a
   machine_type: n1-standard-2
-  boot_disk_size: 10GB
+  boot_disk_size: 20GB
   scopes: default,compute-rw,storage-rw
   startup_script: gce_vm_startup.sh
 }

@@ -32,10 +32,10 @@ from ot_config_dict import CONFIG_DICT
 EXPERIMENT_BASE_NAME = "exp008-cpp-afl-aes-%s-%s-%s-%d"
 TOPLEVEL = "aes"
 OPCODE_TYPES = ["constant", "mapped"]
-INSTR_TYPES = ["variable", "invalid"]
+INSTR_TYPES = ["variable", "fixed"]
 TERMINATE_TYPES = ["invalidop", "never"]
 # RUNS = range(0, 20)
-RUNS = range(0, 1)
+RUNS = range(1, 2)
 
 LINE_SEP = "*******************************************************************"
 

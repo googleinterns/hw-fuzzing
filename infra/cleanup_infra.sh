@@ -13,7 +13,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-DOCKER_REPO_BASENAME="hw-fuzzing"
+DOCKER_REPO="hw-fuzzing"
 
 # Remove all DUT Docker images
 if [ -z ${HW_FUZZING+x} ]; then
@@ -24,15 +24,15 @@ else
   source $HW_FUZZING/infra/cleanup_fuzzing_images.sh
 
   # Remove all fuzzer/sim images
-  docker rmi -f $DOCKER_REPO_BASENAME/base-afl-term-on-crash:latest
-  docker rmi -f $DOCKER_REPO_BASENAME/base-afl:latest
-  docker rmi -f $DOCKER_REPO_BASENAME/base-sim:latest
+  docker rmi -f $DOCKER_REPO/base-afl-term-on-crash:latest
+  docker rmi -f $DOCKER_REPO/base-afl:latest
+  docker rmi -f $DOCKER_REPO/base-sim:latest
 
   # Only remove these when prompted since they take a long time to build
   if [[ ${1-} == "--all" ]]; then
-    docker rmi -f $DOCKER_REPO_BASENAME/base-verilator:latest
-    docker rmi -f $DOCKER_REPO_BASENAME/base-clang-11.0.0:latest
-    docker rmi -f $DOCKER_REPO_BASENAME/base-image:latest
+    docker rmi -f $DOCKER_REPO/base-verilator:latest
+    docker rmi -f $DOCKER_REPO/base-clang-11.0.0:latest
+    docker rmi -f $DOCKER_REPO/base-image:latest
     docker rmi -f ubuntu:20.04
   fi
 
