@@ -47,7 +47,7 @@ CPPFLAGS += \
 	-I$(VERILATOR_ROOT)/include/vltstd \
 	-DVM_COVERAGE=$(VM_COVERAGE) \
 	-DVM_TRACE=$(VM_TRACE) \
-	$(CFG_CXXFLAGS_NO_UNUSED) \
+	$(CFG_CXXFLAGS_NO_UNUSED)
 
 ################################################################################
 # Source paths
@@ -87,11 +87,11 @@ ALL_LLVM_IR    = $(DUT_LLVM_IR) $(VLTRT_LLVM_IR) $(TB_LLVM_IR)
 ################################################################################
 # Object file lists
 ################################################################################
-DUT_OBJS     = $(addprefix $(BUILD_DIR)/, $(addsuffix .o, $(DUT_CLASSES)))
-VLTRT_OBJS   = $(addprefix $(BUILD_DIR)/, $(addsuffix .o, $(VLTRT_CLASSES)))
-TB_OBJS      = $(TB_SRCS:$(TB_SRCS_DIR)/%.cpp=$(BUILD_DIR)/%.o)
-TB_OBJS     += $(SHARED_TB_SRCS:$(SHARED_TB_SRCS_DIR)/%.cpp=$(BUILD_DIR)/%.o)
-ALL_OBJS     = $(DUT_OBJS) $(VLTRT_OBJS) $(TB_OBJS)
+DUT_OBJS    = $(addprefix $(BUILD_DIR)/, $(addsuffix .o, $(DUT_CLASSES)))
+VLTRT_OBJS  = $(addprefix $(BUILD_DIR)/, $(addsuffix .o, $(VLTRT_CLASSES)))
+TB_OBJS     = $(TB_SRCS:$(TB_SRCS_DIR)/%.cpp=$(BUILD_DIR)/%.o)
+TB_OBJS    += $(SHARED_TB_SRCS:$(SHARED_TB_SRCS_DIR)/%.cpp=$(BUILD_DIR)/%.o)
+ALL_OBJS    = $(DUT_OBJS) $(VLTRT_OBJS) $(TB_OBJS)
 
 ################################################################################
 # Linking rules

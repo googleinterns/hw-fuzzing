@@ -39,6 +39,18 @@ RUN python3 -m pip install -r $SRC/sim-requirements.txt
 RUN python3 -m pip install -r $HW/hwfutils/requirements.txt
 ENV PYTHONPATH="$PYTHONPATH:$HW/hwfutils"
 
+# Install kcov for post-fuzzing coverage tracing
+RUN apt-get install -y \
+      binutils-dev \
+      cmake \
+      libcurl4-openssl-dev \
+      zlib1g-dev \
+      libdw-dev \
+      libiberty-dev \
+      libssl-dev
+RUN cd $SRC && git clone --depth=1 https://github.com/SimonKagstrom/kcov
+RUN cd $SRC/kcov && mkdir build && cd build && cmake .. && make
+
 # Remove uneeded packages and requirements files
 RUN apt-get remove --purge -y git && apt-get autoremove -y
 RUN rm $SRC/opentitan-requirements.txt $SRC/sim-requirements.txt

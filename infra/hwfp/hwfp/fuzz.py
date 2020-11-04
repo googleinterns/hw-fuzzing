@@ -217,7 +217,10 @@ def run_docker_container_locally(config, exp_data_path):
   print(LINE_SEP)
   print("Running Docker container to fuzz %s ..." % config.toplevel)
   print(LINE_SEP)
-  cmd = ["docker", "run", "-it", "--rm", "--name", config.experiment_name]
+  cmd = [
+      "docker", "run", "-it", "--rm", "--security-opt", "seccomp=unconfined",
+      "--name", config.experiment_name
+  ]
   # Set environment variables for general configs
   cmd.extend(["-e", "%s=%s" % ("TOPLEVEL", config.toplevel)])
   cmd.extend(["-e", "%s=%s" % ("VERSION", config.version)])
@@ -257,6 +260,10 @@ def run_docker_container_locally(config, exp_data_path):
     cmd.extend(
         ["-v",
          "%s/infra/base-sim/exe.mk:/src/hw/exe.mk" % config.root_path])
+    cmd.extend([
+        "-v",
+        "%s/infra/base-sim/scripts/run:/scripts/run" % config.root_path
+    ])
     if config.fuzzer == "afl" or config.fuzzer == "afl-term-on-crash":
       cmd.extend([
           "-v",

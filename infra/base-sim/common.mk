@@ -82,14 +82,11 @@ endif
 # Compilation rules
 ################################################################################
 $(BIN_DIR)/$(TOPLEVEL): $(MODEL_SRC) $(TB_SRCS) $(SHARED_TB_SRCS)
-	@python3 $(HW)/hwfutils/hwfutils/report_svas.py $(HDL); \
 	$(SCRIPTS)/gen-seeds-from-yaml; \
 	mkdir -p $(BUILD_DIR); \
 	mkdir -p $(BIN_DIR); \
 	$(MAKE) -f ../exe.mk debug-make; \
-	$(MAKE) -f ../exe.mk bb-stats; \
 	$(MAKE) -f ../exe.mk
-
 
 $(MODEL_SRC): $(HDL)
 	$(VERILATOR_ROOT)/bin/verilator $(VFLAGS) $^
@@ -101,10 +98,13 @@ $(MODEL_SRC): $(HDL)
 ################################################################################
 # Utility targets
 ################################################################################
-.PHONY: clean sim debug-make report-svas
+.PHONY: clean sim debug-make report-svas report-bbs
 
-report-svas:
-	@python3 $(HW)/seeder/report_svas.py $(HDL)
+report-svas: $(HDL)
+	@python3 $(HW)/hwfutils/hwfutils/report_svas.py $(HDL);
+
+report-bbs: $(MODEL_SRC) $(TB_SRCS) $(SHARED_TB_SRCS)
+	$(MAKE) -f ../exe.mk bb-stats; \
 
 ifeq ($(TB_TYPE), cocotb)
 sim: $(BIN_DIR)/$(TOPLEVEL)
@@ -118,7 +118,7 @@ clean:
 	@rm -rf $(BIN_DIR)
 	@rm -rf $(BUILD_DIR)
 	@rm -rf $(MODEL_DIR)
-	@rm -f logs/*
+	@rm -rf logs/*
 	@rm -rf out/*
 	@rm -f *.vcd
 	@rm -f *.xml

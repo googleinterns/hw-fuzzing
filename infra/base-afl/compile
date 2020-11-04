@@ -77,8 +77,8 @@ else
 fi
 
 # Print Fuzzer/Compiler/Linker Configurations
+echo "Done!"
 echo $LINE_SEP
-make clean
 make \
   DUT_CXX=$DUT_CXX \
   DUT_CXXFLAGS="$DUT_CXXFLAGS" \
@@ -91,7 +91,42 @@ make \
   TB=$TB \
   DISABLE_VCD_TRACING=1 \
   debug-make
-echo "Done!"
+
+################################################################################
+################################################################################
+## Cleanup any prior builds and report some design stats
+################################################################################
+################################################################################
+# Clean any prior builds
+make clean
+
+# Report # of embedded SVAs
+make \
+  DUT_CXX=$DUT_CXX \
+  DUT_CXXFLAGS="$DUT_CXXFLAGS" \
+  TB_CXX=$TB_CXX \
+  TB_CXXFLAGS="$TB_CXXFLAGS" \
+  VLTRT_CXX=$VLTRT_CXX \
+  VLTRT_CXXFLAGS="$VLTRT_CXXFLAGS" \
+  LINK=$LINK \
+  TB_TYPE=$TB_TYPE \
+  TB=$TB \
+  DISABLE_VCD_TRACING=1 \
+  report-svas
+
+# Report # of basic blocks in the model
+make \
+  DUT_CXX=$DUT_CXX \
+  DUT_CXXFLAGS="$DUT_CXXFLAGS" \
+  TB_CXX=$TB_CXX \
+  TB_CXXFLAGS="$TB_CXXFLAGS" \
+  VLTRT_CXX=$VLTRT_CXX \
+  VLTRT_CXXFLAGS="$VLTRT_CXXFLAGS" \
+  LINK=$LINK \
+  TB_TYPE=$TB_TYPE \
+  TB=$TB \
+  DISABLE_VCD_TRACING=1 \
+  report-bbs
 
 ################################################################################
 ################################################################################
