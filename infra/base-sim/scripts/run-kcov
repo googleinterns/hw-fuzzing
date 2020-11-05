@@ -15,7 +15,7 @@
 
 echo "Tracing LINE COVERAGE with kcov ..."
 rm -rf bin build model *.vcd
-CPPFLAGS="-g" make -j 4
+CPPFLAGS="-g" DISABLE_VCD_TRACING=1 make -j 4
 
 # Create output dirs
 KCOV_ROOT_DIR=logs/kcov
@@ -26,7 +26,10 @@ mkdir -p $KCOV_TEMP_MERGE_DIR
 
 # Trace coverage of each test case
 TEST_CASE_NUM=0
-for TEST_CASE in $(ls -1d out/*/queue/* | head -n 4); do
+# TODO(ttrippel): make sure we are processing seed files in the order they were
+# created. Right now we are relying on the alphabetical ordering of the seed
+# file names which all start with a unique ID number for AFL.
+for TEST_CASE in $(ls -1d out/*/queue/*); do
   echo -n "    Tracing test: $TEST_CASE ... "
   # make output dir
   TEST_CASE_COV_DIR=$KCOV_ROOT_DIR/test_case_$TEST_CASE_NUM

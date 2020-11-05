@@ -68,12 +68,12 @@ VLTRT_OPT = -O3
 ################################################################################
 # DUT/Verilator-Runtime/Testbench classes
 ################################################################################
-DUT_CLASSES   += $(VM_CLASSES_FAST)
-VLTRT_CLASSES += $(VM_CLASSES_SLOW) \
-								 $(VM_GLOBAL_FAST) \
+DUT_CLASSES += $(VM_CLASSES_FAST) \
+							 $(VM_CLASSES_SLOW) \
+							 $(VM_SUPPORT_FAST) \
+					  	 $(VM_SUPPORT_SLOW)
+VLTRT_CLASSES += $(VM_GLOBAL_FAST) \
 								 $(VM_GLOBAL_SLOW) \
-								 $(VM_SUPPORT_FAST) \
-								 $(VM_SUPPORT_SLOW)
 
 ################################################################################
 # LLVM IR file lists
@@ -167,15 +167,21 @@ debug-make:
 	@echo "Object files:"
 	@echo "----------------------------------------------------------------------"
 	@echo DUT_OBJS:   $(DUT_OBJS)
+	@echo
 	@echo TB_OBJS:    $(TB_OBJS)
+	@echo
 	@echo VLTRT_OBJS: $(VLTRT_OBJS)
+	@echo
 	@echo ALL_OBJS:   $(ALL_OBJS)
 	@echo "----------------------------------------------------------------------"
 	@echo "LLVM IR files:"
 	@echo "----------------------------------------------------------------------"
 	@echo DUT_LLVM_IR:   $(DUT_LLVM_IR)
+	@echo
 	@echo TB_LLVM_IR:    $(TB_LLVM_IR)
+	@echo
 	@echo VLTRT_LLVM_IR: $(VLTRT_LLVM_IR)
+	@echo
 	@echo ALL_LLVM_IR:   $(ALL_LLVM_IR)
 	@echo "----------------------------------------------------------------------"
 	@echo "DUT compiler configurations:"

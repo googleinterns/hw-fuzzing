@@ -72,6 +72,11 @@ fi
 # Trace coverage of fuzzer-generated inputs with kcov
 run-kcov
 
+# Extract coverage results into a plotting-friendly CSV file
+# TODO(ttrippel): make this script fuzzer-agnostic
+python3 $HW/hwfutils/hwfutils/extract_coverage.py $TOPLEVEL \
+  out/*/plot_data logs/kcov logs/coverage.csv
+
 # If on simulating/fuzzing on GCP, save data and tear down VM
 if [[ $RUN_ON_GCP == "1" ]]; then
   gcp-shutdown-vm
