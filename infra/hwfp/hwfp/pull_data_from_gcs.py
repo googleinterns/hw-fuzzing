@@ -28,6 +28,12 @@ from hwfutils.run_cmd import run_cmd
 
 def pull_data_from_gcs():
   """Pulls down fuzzer data from GCS to local machine."""
+  # Check if local DST path exists first, if not, create it
+  parent_dst = os.path.join(os.getenv("HW_FUZZING"), "data")
+  if not os.path.exists(parent_dst):
+    os.makedirs(parent_dst)
+
+  # Get list of experiment result directories stored in GCS fuzzing-data bucket
   gcs_bucket_path = _get_gcs_bucket_path()
   ls_cmd = ["gsutil", "ls", gcs_bucket_path]
   proc = subprocess.Popen(ls_cmd,
@@ -40,15 +46,13 @@ def pull_data_from_gcs():
     if not line:
       break
     src = line.decode("utf-8").rstrip("/\n")
-    parent_dst = os.path.join(os.getenv("HW_FUZZING"), "data")
     dst = os.path.join(parent_dst, src.split("/")[-1])
     if not _data_exists_locally(dst):
-      # TODO(ttrippel): speed up with -m option, timesout for some reason
+      # TODO(ttrippel): speed up with -m option (causes issues on MacOS)
       # cp_cmd = ["gsutil", "-m", "cp", "-r", src, parent_dst]
       cp_cmd = ["gsutil", "cp", "-r", src, parent_dst]
       print("Pulling down fuzzing data from %s ..." % src)
       run_cmd(cp_cmd, "ERROR: cannot copy data from GCS.")
-      # break
 
 
 def _get_gcs_bucket_path():
