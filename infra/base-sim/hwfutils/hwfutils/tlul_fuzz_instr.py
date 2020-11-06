@@ -37,12 +37,15 @@ class _YAMLTags:
 
 
 class TLULFuzzInstr:
-  default_opcode_size = 1
-  default_address_size = 4
-  default_data_size = 4
-  default_endianness = "little"
+  opcode_type = "constant"
+  instr_type = "variable"
+  opcode_size = 1
+  address_size = 4
+  data_size = 4
+  direct_in_size = 0
+  endianness = "little"
 
-  def __init__(self, args, instr):
+  def __init__(self, instr):
     # init attributes
     self.opcode_str = "invalid"
     self.opcode = TLULOpcode.invalid
@@ -75,17 +78,18 @@ class TLULFuzzInstr:
 
     # Validata address and data fields
     self._validate_instr_field_size(_YAMLTags.address, self.address,
-                                    args.address_size)
-    self._validate_instr_field_size(_YAMLTags.data, self.data, args.data_size)
+                                    TLULFuzzInstr.address_size)
+    self._validate_instr_field_size(_YAMLTags.data, self.data,
+                                    TLULFuzzInstr.data_size)
 
     # check if DIRECT_IN should exist in YAML and convert to int
-    if args.direct_in_size > 0:
+    if TLULFuzzInstr.direct_in_size > 0:
       if _YAMLTags.direct_in not in instr:
         print(red("ERROR: direct_in field required if size > 0. ABORTING!"))
       else:
         self.direct_in = int(instr[_YAMLTags.direct_in])
         self._validate_instr_field_size(_YAMLTags.direct_in, self.direct_in,
-                                        args.direct_in_size)
+                                        TLULFuzzInstr.direct_in_size)
 
     # check if REPEAT field exists in YAML and convert to int
     if _YAMLTags.repeat in instr:
@@ -122,39 +126,40 @@ class TLULFuzzInstr:
               field))
       sys.exit(1)
 
-  def _opcode2int(self, args):
-    if args.opcode_type == "constant":
+  def _opcode2int(self):
+    if TLULFuzzInstr.opcode_type == "constant":
       # Opcode is mapped to a fixed value
       opcode_int = int(self.opcode)
     else:
       # Opcode is mapped to a range
-      max_opcode_value = 2**(args.opcode_size * 8)
-      num_opcodes = len(TLULOpcode)
+      max_opcode_value = 2**(TLULFuzzInstr.opcode_size * 8)
+      num_opcodes = len(TLULOpcode) - 1  # subtract 1 since 0 is "invalid"
       opcode_int = (self.opcode - 1) * int(max_opcode_value / num_opcodes) + 1
     return opcode_int
 
-  def to_bytes(self, args):
+  def to_bytes(self):
     # create OPCODE bytes from integer
-    opcode_int = self._opcode2int(args)
-    opcode_bytes = opcode_int.to_bytes(args.opcode_size,
-                                       byteorder=args.endianness,
+    opcode_int = self._opcode2int()
+    opcode_bytes = opcode_int.to_bytes(TLULFuzzInstr.opcode_size,
+                                       byteorder=TLULFuzzInstr.endianness,
                                        signed=False)
     # create DATA bytes from integer value
-    address_bytes = self.address.to_bytes(args.address_size,
-                                          byteorder=args.endianness,
+    address_bytes = self.address.to_bytes(TLULFuzzInstr.address_size,
+                                          byteorder=TLULFuzzInstr.endianness,
                                           signed=False)
     # create DATA bytes from integer value
-    data_bytes = self.data.to_bytes(args.data_size,
-                                    byteorder=args.endianness,
+    data_bytes = self.data.to_bytes(TLULFuzzInstr.data_size,
+                                    byteorder=TLULFuzzInstr.endianness,
                                     signed=False)
     # create DIRECT_INTPUTS bytes from integer value (if any exist)
     if self.direct_in is not None:
-      direct_in_bytes = self.direct_in.to_bytes(args.direct_in_size,
-                                                byteorder=args.endianness,
-                                                signed=False)
+      direct_in_bytes = self.direct_in.to_bytes(
+          TLULFuzzInstr.direct_in_size,
+          byteorder=TLULFuzzInstr.endianness,
+          signed=False)
 
     # Build the instruction frame
-    if args.instr_type == "fixed":
+    if TLULFuzzInstr.instr_type == "fixed":
       if self.direct_in is not None:
         return opcode_bytes + address_bytes + data_bytes + direct_in_bytes
       else:
