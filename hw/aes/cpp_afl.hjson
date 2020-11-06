@@ -1,6 +1,6 @@
 {
   // Experiment Parameters
-  experiment_name: test-aes
+  experiment_name: aes-test
   toplevel: aes
   // VCS commit hash of version of DUT
   version: HEAD

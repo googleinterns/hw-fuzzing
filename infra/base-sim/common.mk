@@ -104,6 +104,8 @@ report-svas: $(HDL)
 	@python3 $(HW)/hwfutils/hwfutils/report_svas.py $(HDL);
 
 report-bbs: $(MODEL_SRC) $(TB_SRCS) $(SHARED_TB_SRCS)
+	mkdir -p $(BUILD_DIR); \
+	mkdir -p $(BIN_DIR); \
 	$(MAKE) -f ../exe.mk bb-stats; \
 
 ifeq ($(TB_TYPE), cocotb)

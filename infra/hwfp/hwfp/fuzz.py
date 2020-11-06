@@ -264,6 +264,11 @@ def run_docker_container_locally(config, exp_data_path):
         "-v",
         "%s/infra/base-sim/scripts/run:/scripts/run" % config.root_path
     ])
+    cmd.extend([
+        "-v",
+        "%s/infra/base-sim/scripts/run-kcov:/scripts/run-kcov" %
+        config.root_path
+    ])
     if config.fuzzer == "afl" or config.fuzzer == "afl-term-on-crash":
       cmd.extend([
           "-v",

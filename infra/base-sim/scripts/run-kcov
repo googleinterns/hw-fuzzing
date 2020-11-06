@@ -22,6 +22,7 @@ KCOV_ROOT_DIR=logs/kcov
 KCOV_TEMP_MERGE_DIR=logs/kcov/temp_merged
 rm -rf $KCOV_ROOT_DIR
 mkdir -p $KCOV_ROOT_DIR
+chmod 777 $KCOV_ROOT_DIR
 mkdir -p $KCOV_TEMP_MERGE_DIR
 
 # Trace coverage of each test case
@@ -48,6 +49,7 @@ for TEST_CASE in $(ls -1d out/*/queue/*); do
   # move out the JSON results (this is what we will save for plotting)
   mv $KCOV_TEMP_MERGE_DIR/kcov-merged/coverage.json \
     $KCOV_ROOT_DIR/cumulative_coverage_${TEST_CASE_NUM}.json
+  chmod 666 $KCOV_ROOT_DIR/cumulative_coverage_${TEST_CASE_NUM}.json
   echo "Done."
 
   # increment test number and update previous output dir
@@ -55,4 +57,14 @@ for TEST_CASE in $(ls -1d out/*/queue/*); do
 done
 rm -rf $KCOV_TEMP_MERGE_DIR
 echo "Done."
+
+# Move all individual test coverage traces out of parent dir and delete
+# parent dir as this data is useless (mostly HTML files for viewing web UX).
+NUM_TEST_CASES=$((TEST_CASE_NUM - 1))
+for IND in $(seq 0 $NUM_TEST_CASES); do
+  mv $KCOV_ROOT_DIR/test_case_$IND/$TOPLEVEL.*/coverage.json \
+    $KCOV_ROOT_DIR/coverage_$IND.json
+  chmod 666 $KCOV_ROOT_DIR/coverage_$IND.json
+  rm -rf $KCOV_ROOT_DIR/test_case_$IND
+done
 echo "Traced LINE COVERAGE from $TEST_CASE_NUM test cases."

@@ -14,27 +14,37 @@
 # limitations under the License.
 
 import copy
+import glob
 import os
+import shutil
+import sys
 
 import hjson
 from hwfp.fuzz import fuzz
 from hwfutils.string_color import color_str_green as green
+from hwfutils.string_color import color_str_red as red
 
-from ot_config_dict import CONFIG_DICT
+from lock_config_dict import CONFIG_DICT
 
-EXPERIMENT_BASE_NAME = "exp008-cpp-afl-aes-%s-%s-%s-%d"
-TOPLEVEL = "aes"
-OPCODE_TYPES = ["constant", "mapped"]
-INSTR_TYPES = ["variable", "fixed"]
-TERMINATE_TYPES = ["invalidop", "never"]
-# RUNS = range(0, 20)
-RUNS = range(1, 2)
+EXPERIMENT_BASE_NAMES = [
+    "exp002-cpp-afl-lock-%dstates-%dwidth-full-instr-%d",
+    "exp003-cpp-afl-lock-%dstates-%dwidth-duttb-instr-%d",
+    "exp004-cpp-afl-lock-%dstates-%dwidth-dut-instr-%d",
+    "exp005-cpp-afl-lock-%dstates-%dwidth-full-instr-wopt-%d",
+    "exp006-cpp-afl-lock-%dstates-%dwidth-duttb-instr-wopt-%d",
+    "exp007-cpp-afl-lock-%dstates-%dwidth-dut-instr-wopt-%d",
+]
+# NUM_STATES = [128]
+NUM_STATES = [16, 32, 64]
+COMP_WIDTHS = [4]
+RUNS = range(0, 50)
 
 LINE_SEP = "*******************************************************************"
 
 
 def _main():
-  num_experiments = len(OPCODE_TYPES) * len(INSTR_TYPES) * len(TERMINATE_TYPES)
+  num_experiments = len(NUM_STATES) * len(COMP_WIDTHS) * len(RUNS) * len(
+      EXPERIMENT_BASE_NAMES)
   print(LINE_SEP)
   print(LINE_SEP)
   print(LINE_SEP)
@@ -53,27 +63,43 @@ def _main():
     os.mkdir(tmp_dir)
 
     # create config files on the fly and launch experiments
-    for run in RUNS:
-      for opcode_type in OPCODE_TYPES:
-        for instr_type in INSTR_TYPES:
-          for term_type in TERMINATE_TYPES:
+    for experiment_base_name in EXPERIMENT_BASE_NAMES:
+      for states in NUM_STATES:
+        for width in COMP_WIDTHS:
+          for run in RUNS:
             # craft config dictionary
             cdict = copy.deepcopy(CONFIG_DICT)
 
             # Set experiment name
-            experiment_name = EXPERIMENT_BASE_NAME % (opcode_type, instr_type,
-                                                      term_type, run)
-            print(experiment_name)
+            experiment_name = experiment_base_name % (states, width, run)
             cdict["experiment_name"] = experiment_name
-            cdict["toplevel"] = TOPLEVEL
 
-            # Set configurations
-            cdict["model_params"]["opcode_type"] = opcode_type
-            cdict["model_params"]["instr_type"] = instr_type
-            if term_type == "invalidop":
-              cdict["model_params"]["terminate_on_invalid_opcode"] = 1
+            # Set test bench
+            if "wopt" in experiment_name:
+              cdict["tb"] = "afl_opt"
             else:
-              cdict["model_params"]["terminate_on_invalid_opcode"] = 0
+              cdict["tb"] = "afl"
+
+            # Set instrumentation amount
+            if "full-instr" in experiment_name:
+              cdict["instrument_dut"] = 1
+              cdict["instrument_tb"] = 1
+              cdict["instrument_vltrt"] = 1
+            elif "duttb-instr" in experiment_name:
+              cdict["instrument_dut"] = 1
+              cdict["instrument_tb"] = 1
+              cdict["instrument_vltrt"] = 0
+            elif "dut" in experiment_name:
+              cdict["instrument_dut"] = 1
+              cdict["instrument_tb"] = 0
+              cdict["instrument_vltrt"] = 0
+            else:
+              print(red("ERROR: invalid instrumentation config. ABORTING!"))
+              sys.exit(1)
+
+            # Set lock size
+            cdict["hdl_gen_params"]["num_lock_states"] = states
+            cdict["hdl_gen_params"]["lock_comp_width"] = width
 
             # write to HJSON file
             hjson_filename = experiment_name + ".hjson"
@@ -89,7 +115,8 @@ def _main():
 
   finally:
     # remove temp dir
-    os.rmdir(tmp_dir)
+    for tmp_dir in glob.glob("tmp*"):
+      shutil.rmtree(tmp_dir, ignore_errors=True)
 
   print(LINE_SEP)
   print(LINE_SEP)

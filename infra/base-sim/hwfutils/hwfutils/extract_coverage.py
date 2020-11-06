@@ -85,7 +85,7 @@ class Coverage:
     # in ascending numerical order, as this corresponds to the temporal order
     # in which each AFL test case was generated.
     sorted_cov_data_files = sorted(
-        glob.glob(os.path.join(args.kcov_dir, "*.json")),
+        glob.glob(os.path.join(args.kcov_dir, "cumulative_coverage_*.json")),
         key=lambda x: int(x.rstrip(".json").split("_")[-1]))
     for cov_data_file in sorted_cov_data_files:
       print("    Extracting coverage data from: %s" % cov_data_file)
