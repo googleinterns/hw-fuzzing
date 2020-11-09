@@ -38,28 +38,8 @@ else
 fi
 TB_CXXFLAGS=""
 
-# Check for HW Fuzzing Instruction Identifiers
-if [[ ${OPCODE_TYPE-} == "constant" ]]; then
-  if [ -z $TB_CXXFLAGS ]; then
-    TB_CXXFLAGS="-DOPCODE_TYPE_MAPPED=1"
-  else
-    TB_CXXFLAGS="$TB_CXXFLAGS -DOPCODE_TYPE_MAPPED=1"
-  fi
-fi
-if [[ ${INSTR_TYPE-} == "fixed" ]]; then
-  if [ -z $TB_CXXFLAGS ]; then
-    TB_CXXFLAGS="-DINSTR_TYPE_FIXED=1"
-  else
-    TB_CXXFLAGS="$TB_CXXFLAGS -DINSTR_TYPE_FIXED=1"
-  fi
-fi
-if [[ ${TERMINATE_ON_INVALID_OPCODE-} == "1" ]]; then
-  if [ -z $TB_CXXFLAGS ]; then
-    TB_CXXFLAGS="-DTERMINATE_ON_INVALID_OPCODE=1"
-  else
-    TB_CXXFLAGS="$TB_CXXFLAGS -DTERMINATE_ON_INVALID_OPCODE=1"
-  fi
-fi
+# Set HWF ISA
+source TB_CXXFLAGS=$TB_CXXFLAGS set_hwf_isa.sh
 
 # Set Verilator Runtime compiler
 if (($INSTRUMENT_VLTRT == 1)); then

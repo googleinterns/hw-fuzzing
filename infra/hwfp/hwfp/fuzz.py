@@ -260,23 +260,19 @@ def run_docker_container_locally(config, exp_data_path):
     cmd.extend(
         ["-v",
          "%s/infra/base-sim/exe.mk:/src/hw/exe.mk" % config.root_path])
-    cmd.extend([
-        "-v",
-        "%s/infra/base-sim/scripts/run:/scripts/run" % config.root_path
-    ])
-    cmd.extend([
-        "-v",
-        "%s/infra/base-sim/scripts/run-kcov:/scripts/run-kcov" %
-        config.root_path
-    ])
-    if config.fuzzer == "afl" or config.fuzzer == "afl-term-on-crash":
+    for script in ["run", "run-kcov", "set_hwf_isa.sh", "cpp-verilator-sim"]:
       cmd.extend([
           "-v",
-          "%s/infra/base-afl/compile:/scripts/compile" % config.root_path
+          "%s/infra/base-sim/scripts/%s:/scripts/%s" %
+          (config.root_path, script, script)
       ])
-      cmd.extend(
-          ["-v",
-           "%s/infra/base-afl/fuzz:/scripts/fuzz" % config.root_path])
+    if config.fuzzer == "afl" or config.fuzzer == "afl-term-on-crash":
+      for script in ["compile", "fuzz"]:
+        cmd.extend([
+            "-v",
+            "%s/infra/base-afl/%s:/scripts/%s" %
+            (config.root_path, script, script)
+        ])
   # Set target Docker image and run
   cmd.extend(["-t", config.docker_image])
   # If manual mode, start shell
