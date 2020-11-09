@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "hw/tb/cpp/inc/tlul_host_tb.h"
+#include "hw/tb/cpp/include/tlul_host_tb.h"
 
 #include <iomanip>
 #include <iostream>

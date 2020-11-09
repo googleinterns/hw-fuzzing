@@ -1,4 +1,4 @@
-// Copyright 2020 Timothy Trippel
+// Copyright 2020 Google LLC
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "hw/lock/tb/cpp/afl_opt/inc/lock_tb.h"
+#include "hw/lock/tb/cpp/afl/lock_tb.h"
 
 #include <bitset>
 #include <iostream>
@@ -50,10 +50,6 @@ void LockTb::SimulateDUT() {
 
   // Reset the DUT
   ResetDUT(&dut_.clk, &dut_.reset_n, NUM_RESET_CLK_PERIODS);
-
-#ifdef __AFL_HAVE_MANUAL_CONTROL
-  __AFL_INIT();
-#endif
 
   // Read tests and simulate DUT
   while (ReadBytes(test_input, INPUT_PORT_SIZE_BYTES) &&

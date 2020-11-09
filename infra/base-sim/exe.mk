@@ -41,7 +41,7 @@ CFG_CXXFLAGS_NO_UNUSED = \
 	-Wno-shadow
 
 CPPFLAGS += \
-	-I../.. \
+	-I/src \
 	-I$(MODEL_DIR) \
 	-I$(VERILATOR_ROOT)/include \
 	-I$(VERILATOR_ROOT)/include/vltstd \
@@ -53,7 +53,7 @@ CPPFLAGS += \
 # Source paths
 ################################################################################
 VPATH += $(SHARED_TB_SRCS_DIR)
-VPATH += $(TB_SRCS_DIR)
+VPATH += $(TB_DIR)
 VPATH += $(MODEL_DIR)
 VPATH += $(VERILATOR_ROOT)/include
 VPATH += $(VERILATOR_ROOT)/include/vltstd
@@ -80,7 +80,7 @@ VLTRT_CLASSES += $(VM_GLOBAL_FAST) \
 ################################################################################
 DUT_LLVM_IR    = $(addprefix $(BUILD_DIR)/, $(addsuffix .ll, $(DUT_CLASSES)))
 VLTRT_LLVM_IR  = $(addprefix $(BUILD_DIR)/, $(addsuffix .ll, $(VLTRT_CLASSES)))
-TB_LLVM_IR     = $(TB_SRCS:$(TB_SRCS_DIR)/%.cpp=$(BUILD_DIR)/%.ll)
+TB_LLVM_IR     = $(TB_SRCS:$(TB_DIR)/%.cpp=$(BUILD_DIR)/%.ll)
 TB_LLVM_IR    += $(SHARED_TB_SRCS:$(SHARED_TB_SRCS_DIR)/%.cpp=$(BUILD_DIR)/%.ll)
 ALL_LLVM_IR    = $(DUT_LLVM_IR) $(VLTRT_LLVM_IR) $(TB_LLVM_IR)
 
@@ -89,7 +89,7 @@ ALL_LLVM_IR    = $(DUT_LLVM_IR) $(VLTRT_LLVM_IR) $(TB_LLVM_IR)
 ################################################################################
 DUT_OBJS    = $(addprefix $(BUILD_DIR)/, $(addsuffix .o, $(DUT_CLASSES)))
 VLTRT_OBJS  = $(addprefix $(BUILD_DIR)/, $(addsuffix .o, $(VLTRT_CLASSES)))
-TB_OBJS     = $(TB_SRCS:$(TB_SRCS_DIR)/%.cpp=$(BUILD_DIR)/%.o)
+TB_OBJS     = $(TB_SRCS:$(TB_DIR)/%.cpp=$(BUILD_DIR)/%.o)
 TB_OBJS    += $(SHARED_TB_SRCS:$(SHARED_TB_SRCS_DIR)/%.cpp=$(BUILD_DIR)/%.o)
 ALL_OBJS    = $(DUT_OBJS) $(VLTRT_OBJS) $(TB_OBJS)
 
@@ -150,6 +150,12 @@ debug-make:
 	@echo LDFLAGS:  $(LDFLAGS)
 	@echo LDLIBS:   $(LDLIBS)
 	@echo VPATH:    $(VPATH)
+	@echo "----------------------------------------------------------------------"
+	@echo "Other configurations:"
+	@echo "----------------------------------------------------------------------"
+	@echo TB_DIR:         $(TB_DIR)
+	@echo TB_SRCS:        $(TB_SRCS)
+	@echo SHARED_TB_SRCS: $(SHARED_TB_SRCS)
 	@echo "----------------------------------------------------------------------"
 	@echo "Verilator generated classes:"
 	@echo "----------------------------------------------------------------------"

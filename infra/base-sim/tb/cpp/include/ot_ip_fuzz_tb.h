@@ -12,11 +12,11 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef HW_TB_CPP_INC_OT_IP_FUZZ_TB_H_
-#define HW_TB_CPP_INC_OT_IP_FUZZ_TB_H_
+#ifndef HW_TB_CPP_INCLUDE_OT_IP_FUZZ_TB_H_
+#define HW_TB_CPP_INCLUDE_OT_IP_FUZZ_TB_H_
 
-#include "hw/tb/cpp/inc/tlul_host_tb.h"
-#include "hw/tb/cpp/inc/verilator_tb.h"
+#include "hw/tb/cpp/include/tlul_host_tb.h"
+#include "hw/tb/cpp/include/verilator_tb.h"
 
 #define OPCODE_SIZE_BYTES 1   // number of opcode bytes to read from STDIN
 #define ADDRESS_SIZE_BYTES 4  // size of TL-UL address bus
@@ -50,4 +50,4 @@ class OTIPFuzzTb : public TLULHostTb {
   bool GetFuzzInstruction(HWFuzzInstruction* instr);
 };
 
-#endif  // HW_TB_CPP_INC_OT_IP_FUZZ_TB_H_
+#endif  // HW_TB_CPP_INCLUDE_OT_IP_FUZZ_TB_H_

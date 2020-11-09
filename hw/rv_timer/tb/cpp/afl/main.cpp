@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "hw/tb/cpp/inc/ot_ip_fuzz_tb.h"
+#include "hw/tb/cpp/include/ot_ip_fuzz_tb.h"
 
 // Testbench needs to be global for sc_time_stamp()
 OTIPFuzzTb* tb = NULL;

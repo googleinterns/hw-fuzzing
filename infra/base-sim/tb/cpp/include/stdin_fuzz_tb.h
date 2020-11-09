@@ -12,10 +12,10 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef HW_TB_CPP_INC_STDIN_FUZZ_TB_H_
-#define HW_TB_CPP_INC_STDIN_FUZZ_TB_H_
+#ifndef HW_TB_CPP_INCLUDE_STDIN_FUZZ_TB_H_
+#define HW_TB_CPP_INCLUDE_STDIN_FUZZ_TB_H_
 
-#include "hw/tb/cpp/inc/verilator_tb.h"
+#include "hw/tb/cpp/include/verilator_tb.h"
 
 class STDINFuzzTb : public VerilatorTb {
  public:
@@ -28,4 +28,4 @@ class STDINFuzzTb : public VerilatorTb {
   uint32_t test_num_;  // number of fuzz tests run read from STDIN
 };
 
-#endif  // HW_TB_CPP_INC_STDIN_FUZZ_TB_H_
+#endif  // HW_TB_CPP_INCLUDE_STDIN_FUZZ_TB_H_

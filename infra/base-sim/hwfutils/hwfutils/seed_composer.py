@@ -120,10 +120,10 @@ def parse_args(argv):
                       "--verbose",
                       action="store_true",
                       help="Enable verbose status messages.")
-  parser.add_argument("input_filename",
+  parser.add_argument("input_file_name",
                       metavar="input.yaml",
                       help="Input configuration YAML file.")
-  parser.add_argument("output_filename",
+  parser.add_argument("output_file_name",
                       metavar="afl_seed.hwf",
                       help="Name of output seed file (hex).")
   args = parser.parse_args(argv)

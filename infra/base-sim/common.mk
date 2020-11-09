@@ -17,17 +17,12 @@ SHELL := /bin/bash
 ################################################################################
 # Directories
 ################################################################################
-TB_DIR := tb/$(TB_TYPE)/$(TB)
+export TB_DIR := tb/$(TB_TYPE)/$(TB)
 ifeq ($(TB_TYPE), cocotb)
-export TB_SRCS_DIR        := $(shell cocotb-config --share)/lib/verilator
-export TB_INCS_DIR        :=
+export TB_DIR             := $(shell cocotb-config --share)/lib/verilator
 export SHARED_TB_SRCS_DIR :=
-export SHARED_TB_INCS_DIR :=
 else
-export TB_SRCS_DIR        := $(TB_DIR)/src
-export TB_INCS_DIR        := $(TB_DIR)/inc
-export SHARED_TB_SRCS_DIR := ../tb/$(TB_TYPE)/src
-export SHARED_TB_INCS_DIR := ../tb/$(TB_TYPE)/inc
+export SHARED_TB_SRCS_DIR := /src/hw/tb/$(TB_TYPE)/src
 endif
 export MODEL_DIR := model
 export BUILD_DIR := build
@@ -40,9 +35,9 @@ export SCRIPTS   ?= ./../scripts
 ifeq ($(TB_TYPE), cocotb)
 export TB_SRCS := $(shell cocotb-config --share)/lib/verilator/verilator.cpp
 export SHARED_TB_SRCS :=
-TB_MODULE      := tb.$(TB_TYPE).$(TB).$(TOPLEVEL)_tb
+TB_MODULE := tb.$(TB_TYPE).$(TB).$(TOPLEVEL)_tb
 else
-export TB_SRCS        := $(wildcard $(TB_SRCS_DIR)/*.cpp)
+export TB_SRCS        := $(wildcard $(TB_DIR)/*.cpp)
 export SHARED_TB_SRCS := $(addprefix $(SHARED_TB_SRCS_DIR)/, $(SHARED_TB_SRCS))
 endif
 MODEL_SRC := $(MODEL_DIR)/Vtop.cpp

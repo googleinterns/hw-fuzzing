@@ -12,15 +12,15 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef HW_TB_CPP_INC_TLUL_HOST_TB_H_
-#define HW_TB_CPP_INC_TLUL_HOST_TB_H_
+#ifndef HW_TB_CPP_INCLUDE_TLUL_HOST_TB_H_
+#define HW_TB_CPP_INCLUDE_TLUL_HOST_TB_H_
 
 #include <cmath>
 #include <unordered_map>
 #include <vector>
 
 #include "Vtop.h"
-#include "hw/tb/cpp/inc/stdin_fuzz_tb.h"
+#include "hw/tb/cpp/include/stdin_fuzz_tb.h"
 #include "verilated.h"
 
 // TODO(ttrippel): make these auto-configurable, maybe by parsing SV package?
@@ -216,4 +216,4 @@ class TLULHostTb : public STDINFuzzTb {
   void PrintD2HSignals();
 };
 
-#endif  // HW_TB_CPP_INC_TLUL_HOST_TB_H_
+#endif  // HW_TB_CPP_INCLUDE_TLUL_HOST_TB_H_

@@ -12,23 +12,23 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef HW_LOCK_TB_CPP_AFL_OPT_INC_LOCK_TB_H_
-#define HW_LOCK_TB_CPP_AFL_OPT_INC_LOCK_TB_H_
+#include "hw/tb/cpp/include/ot_ip_fuzz_tb.h"
 
-#include "hw/tb/cpp/inc/stdin_fuzz_tb.h"
+// Testbench needs to be global for sc_time_stamp()
+OTIPFuzzTb* tb = NULL;
 
-// DUT parameters
-#define INPUT_PORT_SIZE_BYTES 1
-#define NUM_RESET_CLK_PERIODS 1
+// needs to be defined so Verilog can call $time
+double sc_time_stamp() { return tb->get_main_time(); }
 
-class LockTb : public STDINFuzzTb {
- public:
-  LockTb(int argc, char** argv);
-  ~LockTb();
-  void SimulateDUT();
+int main(int argc, char** argv, char** env) {
+  // Instantiate testbench
+  tb = new OTIPFuzzTb(argc, argv);
 
- private:
-  void InitializeDUT();
-};
+  // Simulate the DUT
+  tb->SimulateDUT();
 
-#endif  // HW_LOCK_TB_CPP_AFL_OPT_INC_LOCK_TB_H_
+  // Teardown
+  delete (tb);
+  tb = NULL;
+  exit(0);
+}

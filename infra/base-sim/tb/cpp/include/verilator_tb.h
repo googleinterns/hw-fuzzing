@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef HW_TB_CPP_INC_VERILATOR_TB_H_
-#define HW_TB_CPP_INC_VERILATOR_TB_H_
+#ifndef HW_TB_CPP_INCLUDE_VERILATOR_TB_H_
+#define HW_TB_CPP_INCLUDE_VERILATOR_TB_H_
 
 #include <string>
 
@@ -49,4 +49,4 @@ class VerilatorTb {
   void InitializeVerilator(int argc, char** argv);
 };
 
-#endif  // HW_TB_CPP_INC_VERILATOR_TB_H_
+#endif  // HW_TB_CPP_INCLUDE_VERILATOR_TB_H_
