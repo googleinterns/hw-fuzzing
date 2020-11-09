@@ -46,12 +46,12 @@ source set_hwf_isa.sh
 ################################################################################
 echo $LINE_SEP
 echo "Verilating/Compiling/Instrumenting/Simulating the DUT ..."
-make clean
+#make clean
+#DISABLE_VCD_TRACING=0 \
 make \
   TB_CXXFLAGS="$TB_CXXFLAGS" \
   TB_TYPE=$TB_TYPE \
   TB=$TB \
-  DISABLE_VCD_TRACING=1 \
   sim
 
 ################################################################################

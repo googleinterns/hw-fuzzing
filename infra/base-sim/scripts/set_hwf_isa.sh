@@ -16,7 +16,7 @@
 LINE_SEP="-------------------------------------------------------------------"
 
 # Check for HW Fuzzing ISA Identifiers
-if [[ ${OPCODE_TYPE-} == "constant" ]]; then
+if [[ ${OPCODE_TYPE-} == "mapped" ]]; then
   if [ -z ${TB_CXXFLAGS-} ]; then
     TB_CXXFLAGS="-DOPCODE_TYPE_MAPPED=1"
   else
@@ -36,6 +36,11 @@ if [[ ${TERMINATE_ON_INVALID_OPCODE-} == "1" ]]; then
   else
     TB_CXXFLAGS="$TB_CXXFLAGS -DTERMINATE_ON_INVALID_OPCODE=1"
   fi
+fi
+
+# Export the settings
+if [[ -z ${TB_CXXFLAGS-} ]]; then
+  TB_CXXFLAGS=""
 fi
 echo "TB_CXXFLAGS: $TB_CXXFLAGS"
 export TB_CXXFLAGS
