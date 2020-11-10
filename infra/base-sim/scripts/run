@@ -13,10 +13,16 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-# Create logs dir if it does not exist
 if [ ! -d "logs" ]; then
+  # Create logs dir if it does not exist
   mkdir -p logs
+else
+  # Wipe it clean if it does exist
+  rm -rf logs/*
 fi
+
+# Wipe the out directory if it exists
+rm -rf out/*
 
 # Print DUT version hash to log
 echo | tee logs/exp.log

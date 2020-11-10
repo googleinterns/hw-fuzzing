@@ -115,8 +115,6 @@ clean:
 	@rm -rf $(BIN_DIR)
 	@rm -rf $(BUILD_DIR)
 	@rm -rf $(MODEL_DIR)
-	@rm -rf logs/*
-	@rm -rf out/*
 	@rm -f *.vcd
 	@rm -f *.xml
 	@rm -f *.dat

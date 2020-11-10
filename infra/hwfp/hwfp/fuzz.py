@@ -51,7 +51,7 @@ from hwfp.config import HWFUTILS_PATH, LINE_SEP, SHARED_TB_PATH, Config
 
 # Abort this fuzzing session
 def _abort(abort_msg):
-  print(red(abort_msg))
+  print(red(abort_msg), file=sys.stderr)
   sys.exit(1)
 
 
@@ -108,7 +108,7 @@ def delete_data_in_gcs(config):
        config.experiment_name)
   ]
   error_str = "ERROR: deleting existing data. Terminating Experiment!"
-  run_cmd(sub_cmd, error_str)
+  run_cmd(sub_cmd, error_str, silent=config.args.silent)
 
 
 def check_for_data_in_gcs(config):
@@ -133,7 +133,7 @@ def delete_gce_vm(config):
   cmd = ["gcloud", "compute", "instances", "delete", config.experiment_name]
   error_str = "ERROR: cannot delete GCE VM (%s). Aborting!" % (
       config.experiment_name)
-  run_cmd(cmd, error_str)
+  run_cmd(cmd, error_str, silent=config.args.silent)
 
 
 def check_if_gce_vm_up(config):
@@ -157,9 +157,10 @@ def check_if_gce_vm_up(config):
 
 def build_docker_image(config):
   """Creates docker image containing DUT to fuzz."""
-  print(LINE_SEP)
-  print("Building Docker image to fuzz %s ..." % config.toplevel)
-  print(LINE_SEP)
+  if not config.args.silent:
+    print(LINE_SEP)
+    print("Building Docker image to fuzz %s ..." % config.toplevel)
+    print(LINE_SEP)
   cmd = [
       "docker", "build", "--build-arg",
       "FUZZER=%s" % config.fuzzer, "--build-arg",
@@ -167,16 +168,18 @@ def build_docker_image(config):
       "%s/hw/%s" % (config.root_path, config.toplevel)
   ]
   error_str = "ERROR: image build FAILED. Terminating experiment!"
-  run_cmd(cmd, error_str)
-  print(green("IMAGE BUILD SUCCESSFUL -- Done!"))
+  run_cmd(cmd, error_str, silent=config.args.silent)
+  if not config.args.silent:
+    print(green("IMAGE BUILD SUCCESSFUL -- Done!"))
 
 
 # Create experiment data directories and copy over configs
 def create_local_experiment_data_dir(config):
   """Creates local directories to store fuzzing experiment data."""
-  print(LINE_SEP)
-  print("Creating local directories for fuzzing data ...")
-  print(LINE_SEP)
+  if not config.args.silent:
+    print(LINE_SEP)
+    print("Creating local directories for fuzzing data ...")
+    print(LINE_SEP)
   exp_data_path = "%s/data/%s" % \
       (config.root_path, config.experiment_name)
 
@@ -204,22 +207,32 @@ def create_local_experiment_data_dir(config):
     os.chmod(os.path.join(exp_data_path, "seed_descriptions"),
              stat.S_IRWXU | stat.S_IRGRP | stat.S_IROTH)
   else:
-    print(red("ERROR: no seeds found. Terminating experiment!"))
+    print(red("ERROR: no seeds found. Terminating experiment!"),
+          file=sys.stderr)
 
   # Copy over HJSON config file that was used
   shutil.copy2(config.config_filename, exp_data_path)
-  print(green("DIRECTORY CREATION SUCCESSFUL -- Done!"))
+  if not config.args.silent:
+    print(green("DIRECTORY CREATION SUCCESSFUL -- Done!"))
   return exp_data_path
 
 
 def run_docker_container_locally(config, exp_data_path):
   """Runs a Docker container to fuzz the DUT on the local machine."""
-  print(LINE_SEP)
-  print("Running Docker container to fuzz %s ..." % config.toplevel)
-  print(LINE_SEP)
+  if not config.args.silent:
+    print(LINE_SEP)
+    print("Running Docker container to fuzz %s ..." % config.toplevel)
+    print(LINE_SEP)
   cmd = [
-      "docker", "run", "-it", "--rm", "--security-opt", "seccomp=unconfined",
-      "--name", config.experiment_name
+      "docker",
+      "run",
+      "-it",
+      "--rm",
+      "--security-opt",
+      "seccomp=unconfined",
+      "--log-driver=%s" % config.args.log_driver,
+      "--name",
+      config.experiment_name,
   ]
   # Set environment variables for general configs
   cmd.extend(["-e", "%s=%s" % ("TOPLEVEL", config.toplevel)])
@@ -279,15 +292,17 @@ def run_docker_container_locally(config, exp_data_path):
   if config.manual:
     cmd.append("/bin/bash")
   error_str = "ERROR: container run FAILED. Terminating experiment!"
-  run_cmd(cmd, error_str)
-  print(green("CONTAINER RUN SUCCESSFUL -- Done!"))
+  run_cmd(cmd, error_str, silent=config.args.silent)
+  if not config.args.silent:
+    print(green("CONTAINER RUN SUCCESSFUL -- Done!"))
 
 
 def check_if_docker_image_exists_in_gcr(config):
   """Checks if docker image exists in GCR already."""
-  print(LINE_SEP)
-  print("Checking if Docker image exists in GCR already ...")
-  print(LINE_SEP)
+  if not config.args.silent:
+    print(LINE_SEP)
+    print("Checking if Docker image exists in GCR already ...")
+    print(LINE_SEP)
   cmd = [
       "gcloud", "container", "images", "list",
       "--repository=gcr.io/%s" % config.gcp_params["project"]
@@ -309,23 +324,27 @@ def check_if_docker_image_exists_in_gcr(config):
 
 def push_docker_image_to_gcr(config):
   """Pushes docker image to GCR if it does not exist there yet."""
-  print(LINE_SEP)
-  print("Pushing Docker image to GCR ...")
-  print(LINE_SEP)
+  if not config.args.silent:
+    print(LINE_SEP)
+    print("Pushing Docker image to GCR ...")
+    print(LINE_SEP)
   if config.args.update or not check_if_docker_image_exists_in_gcr(config):
     cmd = ["docker", "push", config.docker_image]
     error_str = "ERROR: pushing image to GCR FAILED. Terminating experiment!"
-    run_cmd(cmd, error_str)
-    print(green("IMAGE PUSH SUCCESSFUL -- Done!"))
+    run_cmd(cmd, error_str, silent=config.args.silent)
+    if not config.args.silent:
+      print(green("IMAGE PUSH SUCCESSFUL -- Done!"))
   else:
-    print(yellow("IMAGE ALREADY EXISTS IN GCR -- Done!"))
+    if not config.args.silent:
+      print(yellow("IMAGE ALREADY EXISTS IN GCR -- Done!"))
 
 
 def push_vm_management_scripts_to_gcs(config):
   """Pushes VM management (startup/shutdown scripts to GCS."""
-  print(LINE_SEP)
-  print("Copying VM management script to GCS ...")
-  print(LINE_SEP)
+  if not config.args.silent:
+    print(LINE_SEP)
+    print("Copying VM management script to GCS ...")
+    print(LINE_SEP)
   cmd = [
       "gsutil", "cp",
       "%s/infra/hwfp/%s" %
@@ -335,15 +354,17 @@ def push_vm_management_scripts_to_gcs(config):
                          config.gcp_params["startup_script"])
   ]
   error_str = "ERROR: pushing scripts to GCS FAILED. Terminating experiment!"
-  run_cmd(cmd, error_str)
-  print(green("COPY SUCCESSFUL -- Done!"))
+  run_cmd(cmd, error_str, silent=config.args.silent)
+  if not config.args.silent:
+    print(green("COPY SUCCESSFUL -- Done!"))
 
 
 def check_num_active_vm_instances(config):
   """Checks number of active VM instances on GCE as a $$$ safety measure."""
-  print(LINE_SEP)
-  print("Checking number of active VMs on GCE ...")
-  print(LINE_SEP)
+  if not config.args.silent:
+    print(LINE_SEP)
+    print("Checking number of active VMs on GCE ...")
+    print(LINE_SEP)
   cmd = [
       "gcloud", "compute", "instances", "list",
       "--zones=%s" % config.gcp_params["zone"]
@@ -360,12 +381,14 @@ def check_num_active_vm_instances(config):
       break
     num_active_vm_instances += 1
   if num_active_vm_instances < config.args.max_vm_instances:
-    print(green("%d active VM(s)" % num_active_vm_instances))
+    if not config.args.silent:
+      print(green("%d active VM(s)" % num_active_vm_instances))
   else:
-    print(red("%d active VM(s)" % num_active_vm_instances))
-    print(
-        yellow("waiting %d seconds and trying again ..." %
-               config.args.vm_launch_wait_time_s))
+    if not config.args.silent:
+      print(red("%d active VM(s)" % num_active_vm_instances))
+      print(
+          yellow("waiting %d seconds and trying again ..." %
+                 config.args.vm_launch_wait_time_s))
   return num_active_vm_instances
 
 
@@ -381,15 +404,23 @@ def run_docker_container_on_gce(config):
       time.sleep(config.args.vm_launch_wait_time_s)  # wait before trying again
 
   # Launch fuzzing container on VM
-  print(LINE_SEP)
-  print("Launching GCE VM to fuzz %s ..." % config.toplevel)
-  print(LINE_SEP)
+  if not config.args.silent:
+    print(LINE_SEP)
+    print("Launching GCE VM to fuzz %s ..." % config.toplevel)
+    print(LINE_SEP)
   cmd = [
-      "gcloud", "compute",
-      "--project=%s" % config.gcp_params["project_id"], "instances",
-      "create-with-container", config.experiment_name, "--container-image",
-      config.docker_image, "--container-stdin", "--container-tty",
-      "--container-privileged", "--container-restart-policy",
+      "gcloud",
+      "compute",
+      "--project=%s" % config.gcp_params["project_id"],
+      "instances",
+      "create-with-container",
+      config.experiment_name,
+      "--container-image",
+      config.docker_image,
+      "--container-stdin",
+      "--container-tty",
+      "--container-privileged",
+      "--container-restart-policy",
       config.gcp_params["container_restart_policy"],
       "--zone=%s" % config.gcp_params["zone"],
       "--machine-type=%s" % config.gcp_params["machine_type"],
@@ -398,7 +429,7 @@ def run_docker_container_on_gce(config):
       "--metadata=startup-script-url=gs://%s-%s/%s" %
       (config.gcp_params["project_id"],
        config.gcp_params["vm_management_bucket"],
-       config.gcp_params["startup_script"])
+       config.gcp_params["startup_script"]),
   ]
   # Open shell debugging
   if config.manual:
@@ -427,8 +458,9 @@ def run_docker_container_on_gce(config):
         cmd.extend(["--container-env", "%s=%s" % (param.upper(), value)])
   # launch container in VM instance
   error_str = "ERROR: launching VM on GCE FAILED. Terminating experiment!"
-  run_cmd(cmd, error_str)
-  print(green("VM LAUNCH SUCCESSFUL -- Done!"))
+  run_cmd(cmd, error_str, silent=config.args.silent)
+  if not config.args.silent:
+    print(green("VM LAUNCH SUCCESSFUL -- Done!"))
 
 
 # Main entry point
@@ -437,10 +469,26 @@ def fuzz(argv):
   # Parse cmd args
   module_description = "Hardware Fuzzing Pipeline"
   parser = argparse.ArgumentParser(description=module_description)
-  parser.add_argument("-s",
-                      "--fail-silently",
+  parser.add_argument("--fail-silently",
                       action="store_true",
                       help="Fail silently if data/VM already exists.")
+  parser.add_argument("-s",
+                      "--silent",
+                      action="store_true",
+                      help="Supress stdout messages printed by HWFP.")
+  parser.add_argument("--log-driver",
+                      choices=[
+                          "none",
+                          "json-file",
+                          "syslog",
+                          "journald",
+                          "gelf",
+                          "fluentd",
+                          "awslogs",
+                          "splunk",
+                      ],
+                      default="json-file",
+                      help="Docker logging driver to use.")
   parser.add_argument("-n",
                       "--no",
                       action="store_true",
@@ -470,14 +518,17 @@ def fuzz(argv):
   # Check if experiment data already exists
   if config.run_on_gcp == 0:
     if check_for_data_locally(config):
-      print(yellow("WARNING: experiment data exists locally... skipping."))
+      if not config.args.silent:
+        print(yellow("WARNING: experiment data exists locally... skipping."))
       return
   else:
     if check_for_data_in_gcs(config):
-      print(yellow("WARNING: experiment data exists in GCS... skipping."))
+      if not config.args.silent:
+        print(yellow("WARNING: experiment data exists in GCS... skipping."))
       return
     if check_if_gce_vm_up(config):
-      print(yellow("WARNING: experiment VM is already running... skipping."))
+      if not config.args.silent:
+        print(yellow("WARNING: experiment VM is already running... skipping."))
       return
 
   # Build docker image to fuzz target toplevel

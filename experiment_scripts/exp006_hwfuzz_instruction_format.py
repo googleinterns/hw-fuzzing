@@ -82,7 +82,7 @@ def _main():
               hjson.dump(cdict, fp)
 
             # launch fuzz the DUT
-            fuzz(["-s", hjson_file_path])
+            fuzz(["--fail-silently", hjson_file_path])
 
             # cleanup config file
             os.remove(hjson_file_path)

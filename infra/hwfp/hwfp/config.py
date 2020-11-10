@@ -59,14 +59,16 @@ class Config():
     self.root_path = os.getenv("HW_FUZZING")
 
     # Load GCP configurations
-    print(LINE_SEP)
-    print("Loading GCP configurations ...")
+    if not self.args.silent:
+      print(LINE_SEP)
+      print("Loading GCP configurations ...")
     with open(self.root_path + "/gcp_config.hjson", "r") as hjson_file:
       self.gcp_params = hjson.load(hjson_file)
 
     # Load experiment configurations
-    print(LINE_SEP)
-    print("Loading experiment configurations ...")
+    if not self.args.silent:
+      print(LINE_SEP)
+      print("Loading experiment configurations ...")
     with open(self.config_filename, "r") as hjson_file:
       cdict = hjson.load(hjson_file)
       self.experiment_name = cdict["experiment_name"]
@@ -97,7 +99,8 @@ class Config():
 
     # Validate and print configurations
     self._validate_configs()
-    self._print_configs()
+    if not self.args.silent:
+      self._print_configs()
 
   # TODO(ttrippel): make sure didn't make mistakes writing config file!
   def _validate_configs(self):
