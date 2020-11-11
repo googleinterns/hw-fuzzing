@@ -1,6 +1,6 @@
 # Experiment configs
 *.hjson
-!lock_*_test.hjson
+!tests/*.hjson
 !cpp_afl.hjson
 !gcp_config.hjson
 

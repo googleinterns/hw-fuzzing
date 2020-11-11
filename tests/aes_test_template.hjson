@@ -1,0 +1,34 @@
+{
+  // Experiment Parameters
+  experiment_name: aes-test
+  toplevel: aes
+  // VCS commit hash of version of DUT
+  version: HEAD
+  // Options: [cpp, cocotb]
+  tb_type: cpp
+  // Options: [default]
+  tb: afl
+  // Options: [afl, afl-term-on-crash, sim]
+  fuzzer: sim
+  // Parts of the design that should be instrumented for fuzzing
+  instrument_dut: 0
+  instrument_tb: 0
+  instrument_vltrt: 0
+  // Open shell in container on launch for debugging (0)
+  manual: 0
+  // Launch container on GCP (1) or locally (0)
+  run_on_gcp: 0
+
+  // Parameters to pass model
+  model_params: {
+    opcode_type: not-set
+    instr_type: not-set
+    terminate_on_invalid_opcode: not-set
+  }
+
+  // HDL Generation Parameters (if any)
+  hdl_gen_params: {}
+
+  // Fuzzer Parameters
+  fuzzer_params: {}
+}

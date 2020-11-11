@@ -37,26 +37,6 @@ DECRYPT_LOG = "decrypt.results.txt"
 TERMINAL_ROWS, TERMINAL_COLS = os.popen('stty size', 'r').read().split()
 LINE_SEP = "=" * int(TERMINAL_COLS)
 
-UPDATED_SET = set([
-    "auto_cbc_128bit_encrypt_1block.yml",
-    "auto_cbc_128bit_decrypt_1block.yml",
-    #
-    "auto_cbc_128bit_encrypt_2blocks.yml",
-    "auto_cbc_128bit_decrypt_2blocks.yml",
-    #
-    "auto_cbc_192bit_encrypt_2blocks.yml",
-    "auto_cbc_192bit_decrypt_2blocks.yml",
-    #
-    "auto_cbc_256bit_encrypt_2blocks.yml",
-    "auto_cbc_256bit_decrypt_2blocks.yml",
-    #
-    "auto_ctr_128bit_encrypt_1block.yml",
-    "auto_ctr_128bit_decrypt_1block.yml",
-    #
-    "auto_ctr_128bit_encrypt_2blocks.yml",
-    "auto_ctr_128bit_decrypt_2blocks.yml",
-])
-
 
 class AESTestParams:
   def __init__(self, num_crypts, data_block_size, data_in_line_starts,
@@ -149,23 +129,21 @@ def _extract_test_pairs(yaml_seeds_dir):
     print(red("ERROR: non-symmetric number of encrypt/decrypt seeds."),
           file=sys.stderr)
   for i in range(len(encrypt_seeds)):
-    if encrypt_seeds[i] in UPDATED_SET:
-      # Extract test details from comments in yaml file
-      encrypt_test_params = _extract_crypt_io_log_lines(
-          yaml_seeds_dir, encrypt_seeds[i])
-      decrypt_test_params = _extract_crypt_io_log_lines(
-          yaml_seeds_dir, decrypt_seeds[i])
-      # Check if the test params are equivalent
-      if encrypt_test_params != decrypt_test_params:
-        print(
-            red("ERROR: test parameters do not match for seeds (%s and %s)." %
+    # Extract test details from comments in yaml file
+    encrypt_test_params = _extract_crypt_io_log_lines(yaml_seeds_dir,
+                                                      encrypt_seeds[i])
+    decrypt_test_params = _extract_crypt_io_log_lines(yaml_seeds_dir,
+                                                      decrypt_seeds[i])
+    # Check if the test params are equivalent
+    if encrypt_test_params != decrypt_test_params:
+      print(red("ERROR: test parameters do not match for seeds (%s and %s)." %
                 (encrypt_seeds[i], decrypt_seeds[i])),
             file=sys.stderr)
-        sys.exit(1)
-      # Create test objects and pair them together
-      encrypt_test = AESTest("encrypt", encrypt_seeds[i], encrypt_test_params)
-      decrypt_test = AESTest("decrypt", decrypt_seeds[i], decrypt_test_params)
-      test_pairs.append(AESTestPair(encrypt_test, decrypt_test))
+      sys.exit(1)
+    # Create test objects and pair them together
+    encrypt_test = AESTest("encrypt", encrypt_seeds[i], encrypt_test_params)
+    decrypt_test = AESTest("decrypt", decrypt_seeds[i], decrypt_test_params)
+    test_pairs.append(AESTestPair(encrypt_test, decrypt_test))
   return test_pairs
 
 
@@ -290,7 +268,7 @@ def _main():
     # Perform E2E encryption/decryption simulation tests on OpenTitan AES block
     for tp in test_pairs:
       try:
-        print("(%s) - " % tp.test_id, end="")
+        print("(%s)\t- " % tp.test_id, end="")
         sys.stdout.flush()
 
         # Run encryption simulation
