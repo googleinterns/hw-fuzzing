@@ -46,19 +46,19 @@
 - {opcode: write, addr: 0x50, data: 0x00000000}
 
 # Write to input data registers
-- {opcode: write, addr: 0x54, data: 0x89b7a317}
-- {opcode: write, addr: 0x58, data: 0x3f030ce1}
-- {opcode: write, addr: 0x5C, data: 0x43e4dfd8}
-- {opcode: write, addr: 0x60, data: 0xc10afc6b}
+- {opcode: write, addr: 0x54, data: 0x5f5ebf29}
+- {opcode: write, addr: 0x58, data: 0xb9996859}
+- {opcode: write, addr: 0x5C, data: 0x6e639c82}
+- {opcode: write, addr: 0x60, data: 0x81d78941}
 
 # Wait for 1 clk cycle before loading new data
 - {opcode: wait, addr: 0, data: 0}
 
 # Write to input data registers
-- {opcode: write, addr: 0x54, data: 0x41d1198a}
-- {opcode: write, addr: 0x58, data: 0x8d8f96ea}
-- {opcode: write, addr: 0x5C, data: 0x413a5387}
-- {opcode: write, addr: 0x60, data: 0x2609fa81}
+- {opcode: write, addr: 0x54, data: 0xecb32d89}
+- {opcode: write, addr: 0x58, data: 0xd9a40584}
+- {opcode: write, addr: 0x5C, data: 0xe4795aca}
+- {opcode: write, addr: 0x60, data: 0xe45e64b2}
 
 # Wait before reading result
 - {opcode: wait, addr: 0, data: 0}

@@ -217,7 +217,10 @@ def _run_simulation(config_dict, output_log_file_name, aes_test):
   shutil.copy(exp_log, output_log_file_name)
 
 
-def _check_simulation_results(encrypt_results, decrypt_results, test_pair):
+def _check_simulation_results(encrypt_results,
+                              decrypt_results,
+                              test_pair,
+                              verbose=False):
   error = False
   for i in range(len(test_pair.encrypt.data_in_line_starts)):
     # Extract plaintexts/ciphertexts
@@ -243,26 +246,27 @@ def _check_simulation_results(encrypt_results, decrypt_results, test_pair):
         len(encrypt_in_data) != len(decrypt_out_data)):
       error = True
       error_msg = "data LENGTH MISMATCH for encrypt/decrypt data blocks."
-      # break
-    # Check inputs/outputs of encrypt/decrypt match
     if not error:
       for i in range(len(encrypt_out_data)):
-        print("   Encrypt Out =  0x{:0>8X}; Decrypt In = 0x{:0>8X}".format(
-            encrypt_out_data[i], decrypt_in_data[i]))
+        if verbose:
+          print("\n   Encrypt Out =  0x{:0>8X}; Decrypt In = 0x{:0>8X}".format(
+              encrypt_out_data[i], decrypt_in_data[i]))
         if encrypt_out_data[i] != decrypt_in_data[i]:
           error_msg = "encryption OUTPUT does not match decryption INPUT."
           error = True
           break
-    print("   --------------------------------------------")
+    if verbose:
+      print("   --------------------------------------------")
     if not error:
       for i in range(len(encrypt_in_data)):
-        print("   Encrypt In =  %d; Decrypt Out = %d" %
-        print("   Encrypt In =  0x{:0>8X}; Decrypt Out = 0x{:0>8X}".format(
+        if verbose:
+          print("   Encrypt In =  0x{:0>8X}; Decrypt Out = 0x{:0>8X}".format(
               encrypt_in_data[i], decrypt_out_data[i]))
         if encrypt_in_data[i] != decrypt_out_data[i]:
           error_msg = "encryption INPUT does not match decryption OUTPUT."
           break
-    print("   --------------------------------------------")
+    if verbose:
+      print("   --------------------------------------------")
     # If an error occured during any test, terminate
     if error:
       break
@@ -270,18 +274,27 @@ def _check_simulation_results(encrypt_results, decrypt_results, test_pair):
   if not error:
     print(green("PASS"))
   else:
-    print("".join([red("ERROR"), ":", error_msg]))
+    print("".join([red("ERROR"), ": ", error_msg]))
 
 
-def _main(argv):
-  # Part command line arguments
+def _parse_args(argv):
   parser = argparse.ArgumentParser(description="AES Smoke Test")
   parser.add_argument(
       "-t",
       "--testcase",
       default=None,
       help="Specific testcase to run, otherwise all tests are run.")
+  parser.add_argument("-v",
+                      "--verbose",
+                      action="store_true",
+                      help="Verbose printing for debugging errors.")
   args = parser.parse_args(argv)
+  return args
+
+
+def _main(argv):
+  # Part command line arguments
+  args = _parse_args(argv)
 
   # Print initial message with # of total tests
   isas = list(itertools.product(OPCODE_TYPES, INSTR_TYPES, TERMINATE_TYPES))
@@ -323,7 +336,7 @@ def _main(argv):
         # TEST_IS_EXECUTING = False
 
         # Check simulation results
-        _check_simulation_results(ENCRYPT_LOG, DECRYPT_LOG, tp)
+        _check_simulation_results(ENCRYPT_LOG, DECRYPT_LOG, tp, args.verbose)
 
       finally:
         try:
