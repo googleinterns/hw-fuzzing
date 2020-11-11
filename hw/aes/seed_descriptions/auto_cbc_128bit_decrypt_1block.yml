@@ -4,7 +4,7 @@
 ################################################################################
 # NUM_CRYPTS=1
 # DATA_BLOCK_SIZE=4
-# DATA_IN_LINE_START_1=-20
+# DATA_IN_LINE_START_1=-32
 # DATA_OUT_LINE_START_1=-4
 ################################################################################
 # Wait a 8 clk cycles for AES to go into IDLE state
