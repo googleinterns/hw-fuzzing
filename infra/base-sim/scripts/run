@@ -71,13 +71,14 @@ elif [[ $FUZZER == "afl" || $FUZZER == "afl-term-on-crash" ]]; then
   # Fuzz the DUT
   BIN_DIR=bin fuzz
 
-  # Trace coverage of fuzzer-generated inputs with kcov
+  # Trace coverage of fuzzer-generated inputs with kcov, and Verilator
   run-kcov
+  run-vlt-cov
 
-  # Extract coverage results into a plotting-friendly CSV file
+  # Extract kcov results into a plotting-friendly CSV file
   # TODO(ttrippel): make this script fuzzer-agnostic
   python3 $HW/hwfutils/hwfutils/extract_coverage.py $TOPLEVEL \
-    out/*/plot_data logs/kcov logs/coverage.csv
+    out/*/plot_data logs/kcov logs/kcov.csv
 
 else
   echo "ERROR: unsupported fuzzer. Aborting!" | tee -a logs/exp.log

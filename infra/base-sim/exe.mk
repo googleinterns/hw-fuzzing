@@ -61,9 +61,9 @@ VPATH += $(VERILATOR_ROOT)/include/vltstd
 ################################################################################
 # Optimization control (modified from VLT default to isolate TB, DUT, and VLTRT)
 ################################################################################
-DUT_OPT   = -O3
-TB_OPT    = -O3
-VLTRT_OPT = -O3
+DUT_OPT   ?= -O3
+TB_OPT    ?= -O3
+VLTRT_OPT ?= -O3
 
 ################################################################################
 # DUT/Verilator-Runtime/Testbench classes

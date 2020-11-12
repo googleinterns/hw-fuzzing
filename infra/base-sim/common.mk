@@ -69,6 +69,10 @@ ifdef HDL_INC_DIRS
 VFLAGS += $(addprefix -I, $(HDL_INC_DIRS))
 endif
 
+ifdef ENABLE_COVERAGE_TRACING
+VFLAGS += --coverage
+endif
+
 ifndef DISABLE_VCD_TRACING
 VFLAGS += --trace
 endif

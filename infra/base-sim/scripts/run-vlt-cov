@@ -1,0 +1,82 @@
+#!/bin/bash -eu
+# Copyright 2020 Timothy Trippel
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#      http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+function extract_vlt_coverage() {
+  # extact coverage for the current test
+  LINES_COVERED=$(echo $TOTAL_COVERAGE | awk '{print $3}' | awk -F/ '{print $1}' | tr -cd '[:alnum:]')
+  TOTAL_LINES=$(echo $TOTAL_COVERAGE | awk '{print $3}' | awk -F/ '{print $2}' | tr -cd '[:alnum:]')
+  COV_PERCENT=$(echo $TOTAL_COVERAGE | awk '{print $4}')
+}
+
+echo "Tracing COVERAGE with Verilator ..."
+rm -rf bin build model *.vcd
+
+# Verilate with coverage enabled
+ENABLE_COVERAGE_TRACING=1 DISABLE_VCD_TRACING=1 make -j 4
+
+# Create output dirs and coverage CSV file
+VLT_COV_ROOT_DIR=logs/vlt_cov
+VLT_TMP_ANNOTATE_DIR=$VLT_COV_ROOT_DIR/tmp_annotations
+VLT_LINE_COV_PER_TEST=logs/vlt_cov_per_test.csv
+VLT_LINE_CUM_COV_TEST=logs/vlt_cum_lcov.csv
+rm -rf $VLT_COV_ROOT_DIR
+mkdir -p $VLT_COV_ROOT_DIR
+chmod 777 $VLT_COV_ROOT_DIR
+mkdir -p $VLT_TMP_ANNOTATE_DIR
+
+# Write CSV headers
+echo "Test-ID,Lines-Covered,Total-Lines,Coverage-Percentage" >$VLT_LINE_COV_PER_TEST
+echo "Test-ID,Lines-Covered,Total-Lines,Coverage-Percentage" >$VLT_LINE_CUM_COV_TEST
+
+# Trace coverage of each test case
+TEST_CASE_NUM=0
+# TODO(ttrippel): make sure we are processing seed files in the order they were
+# created. Right now we are relying on the alphabetical ordering of the seed
+# file names which all start with a unique ID number for AFL.
+for TEST_CASE in $(ls -1d out/*/queue/*); do
+  echo -n "    Tracing test: $TEST_CASE ... "
+  # Set coverage data file names
+  TEST_COV_DATA=$VLT_COV_ROOT_DIR/coverage_${TEST_CASE_NUM}.dat
+  MERGED_COV_DATA=$VLT_COV_ROOT_DIR/merged_coverage_${TEST_CASE_NUM}.dat
+
+  # parse test case ID
+  # TODO(ttrippel): this is specific to AFL, make fuzzer agnostic
+  TEST_ID=$(echo $TEST_CASE | awk -F/ '{print $4}' | awk -F, '{print $1}')
+
+  # run simulation and move coverage data file
+  bin/$TOPLEVEL <$TEST_CASE >/dev/null
+  mv logs/coverage.dat $TEST_COV_DATA
+
+  # extract test-specific coverage to CSV file
+  TOTAL_COVERAGE=$(verilator_coverage --annotate $VLT_TMP_ANNOTATE_DIR $TEST_COV_DATA)
+  extract_vlt_coverage
+  echo "${TEST_ID},${LINES_COVERED},${TOTAL_LINES},${COV_PERCENT}" >>$VLT_LINE_COV_PER_TEST
+  rm $VLT_TMP_ANNOTATE_DIR/*
+
+  # extract cumulative coverage to CSV file
+  verilator_coverage -write $MERGED_COV_DATA $(ls -1 $VLT_COV_ROOT_DIR/coverage_*)
+  TOTAL_COVERAGE=$(verilator_coverage --annotate $VLT_TMP_ANNOTATE_DIR $MERGED_COV_DATA)
+  extract_vlt_coverage
+  echo "${TEST_ID},${LINES_COVERED},${TOTAL_LINES},${COV_PERCENT}" >>$VLT_LINE_CUM_COV_TEST
+  rm $VLT_TMP_ANNOTATE_DIR/*
+
+  echo "Done."
+
+  # increment test number and update previous output dir
+  TEST_CASE_NUM=$((TEST_CASE_NUM + 1))
+done
+rm -rf $VLT_TMP_ANNOTATE_DIR
+echo "Traced COVERAGE from $TEST_CASE_NUM test cases."
+echo "Done."

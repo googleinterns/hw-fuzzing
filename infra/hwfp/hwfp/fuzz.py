@@ -273,7 +273,14 @@ def run_docker_container_locally(config, exp_data_path):
     cmd.extend(
         ["-v",
          "%s/infra/base-sim/exe.mk:/src/hw/exe.mk" % config.root_path])
-    for script in ["run", "run-kcov", "set_hwf_isa.sh", "cpp-verilator-sim"]:
+    for script in [
+        "run",
+        "run-kcov",
+        "run-vlt-cov",
+        "set_hwf_isa.sh",
+        # "run", "run-kcov", "run-llvm-cov", "run-vlt-cov", "set_hwf_isa.sh",
+        "cpp-verilator-sim"
+    ]:
       cmd.extend([
           "-v",
           "%s/infra/base-sim/scripts/%s:/scripts/%s" %
