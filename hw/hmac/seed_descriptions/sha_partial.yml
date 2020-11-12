@@ -1,0 +1,48 @@
+---
+# Wait a few clk cycles for core to go idle
+- {opcode: wait, addr: 0x00000000, data: 0x00000000}
+- {opcode: wait, addr: 0x00000000, data: 0x00000000}
+- {opcode: wait, addr: 0x00000000, data: 0x00000000}
+- {opcode: wait, addr: 0x00000000, data: 0x00000000}
+
+# Enable SHA256 and No Endian Swap
+- {opcode: write, addr: 0x0000000C, data: 0x00000002}
+
+# Enable interrupts
+- {opcode: write, addr: 0x00000004, data: 0x00000007}
+
+# Start hash (tell HMAC we will start writing message)
+- {opcode: write, addr: 0x00000010, data: 0x00000001}
+
+# Clear interrupts (error interrupt fires here?)
+- {opcode: write, addr: 0x00000000, data: 0xFFFFFFFF}
+
+# Write 512-bit message
+- {opcode: write, addr: 0x00000800, data: 0xDEADBEEF}
+- {opcode: write, addr: 0x00000800, data: 0xCAFECAFE}
+- {opcode: write, addr: 0x00000800, data: 0x01010101}
+- {opcode: write, addr: 0x00000800, data: 0xFEEDFEED}
+- {opcode: write, addr: 0x00000800, data: 0xFACEFACE}
+- {opcode: write, addr: 0x00000800, data: 0x66666666}
+- {opcode: write, addr: 0x00000800, data: 0x11001100}
+- {opcode: write, addr: 0x00000800, data: 0x88888888}
+
+# Process hash (tell HMAC to start hashing the message)
+- {opcode: write, addr: 0x00000010, data: 0x00000002}
+
+# Wait for the hash to complete
+- {opcode: wait, addr: 0x00000000, data: 0x00000000, repeat: 130}
+
+# Clear interrupts
+- {opcode: write, addr: 0x00000000, data: 0xFFFFFFFF}
+
+# Read output
+- {opcode: read, addr: 0x00000040, data: 0x00000000}
+- {opcode: read, addr: 0x00000044, data: 0x00000000}
+- {opcode: read, addr: 0x00000048, data: 0x00000000}
+- {opcode: read, addr: 0x0000004C, data: 0x00000000}
+- {opcode: read, addr: 0x00000040, data: 0x00000000}
+- {opcode: read, addr: 0x00000044, data: 0x00000000}
+- {opcode: read, addr: 0x00000048, data: 0x00000000}
+- {opcode: read, addr: 0x0000004C, data: 0x00000000}
+...
