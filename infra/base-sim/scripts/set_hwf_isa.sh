@@ -42,5 +42,5 @@ fi
 if [[ -z ${TB_CXXFLAGS-} ]]; then
   TB_CXXFLAGS=""
 fi
-echo "TB_CXXFLAGS: $TB_CXXFLAGS"
+echo "HWF ISA Settings: TB_CXXFLAGS=$TB_CXXFLAGS"
 export TB_CXXFLAGS

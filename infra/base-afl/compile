@@ -39,7 +39,7 @@ fi
 TB_CXXFLAGS=""
 
 # Set HWF ISA
-source TB_CXXFLAGS=$TB_CXXFLAGS set_hwf_isa.sh
+source set_hwf_isa.sh
 
 # Set Verilator Runtime compiler
 if (($INSTRUMENT_VLTRT == 1)); then
