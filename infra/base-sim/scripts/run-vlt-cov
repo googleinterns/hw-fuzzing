@@ -46,7 +46,6 @@ TEST_CASE_NUM=0
 # created. Right now we are relying on the alphabetical ordering of the seed
 # file names which all start with a unique ID number for AFL.
 for TEST_CASE in $(ls -1d out/*/queue/*); do
-  echo -n "    Tracing test: $TEST_CASE ... "
   # Set coverage data file names
   TEST_COV_DATA=$VLT_COV_ROOT_DIR/coverage_${TEST_CASE_NUM}.dat
   MERGED_COV_DATA=$VLT_COV_ROOT_DIR/merged_coverage_${TEST_CASE_NUM}.dat
@@ -55,24 +54,34 @@ for TEST_CASE in $(ls -1d out/*/queue/*); do
   # TODO(ttrippel): this is specific to AFL, make fuzzer agnostic
   TEST_ID=$(echo $TEST_CASE | awk -F/ '{print $4}' | awk -F, '{print $1}')
 
+  # Trace current test case
   # run simulation and move coverage data file
+  echo -n "    Tracing test: $TEST_CASE ... "
   bin/$TOPLEVEL <$TEST_CASE >/dev/null
   mv logs/coverage.dat $TEST_COV_DATA
-
   # extract test-specific coverage to CSV file
   TOTAL_COVERAGE=$(verilator_coverage --annotate $VLT_TMP_ANNOTATE_DIR $TEST_COV_DATA)
   extract_vlt_coverage
   echo "${TEST_ID},${LINES_COVERED},${TOTAL_LINES},${COV_PERCENT}" >>$VLT_LINE_COV_PER_TEST
   rm $VLT_TMP_ANNOTATE_DIR/*
+  echo "Done."
 
+  # Merge all prior test case coverage to get cumulative coverage
   # extract cumulative coverage to CSV file
-  verilator_coverage -write $MERGED_COV_DATA $(ls -1 $VLT_COV_ROOT_DIR/coverage_*)
+  echo -n "    Merging $((TEST_CASE_NUM + 1)) coverage traces ... "
+  if [ $TEST_CASE_NUM -eq 0 ]; then
+    verilator_coverage -write $MERGED_COV_DATA $(ls -1 $VLT_COV_ROOT_DIR/coverage_*)
+  else
+    verilator_coverage -write $MERGED_COV_DATA $PRIOR_MERGED_COV_DATA $TEST_COV_DATA
+  fi
   TOTAL_COVERAGE=$(verilator_coverage --annotate $VLT_TMP_ANNOTATE_DIR $MERGED_COV_DATA)
   extract_vlt_coverage
   echo "${TEST_ID},${LINES_COVERED},${TOTAL_LINES},${COV_PERCENT}" >>$VLT_LINE_CUM_COV_TEST
   rm $VLT_TMP_ANNOTATE_DIR/*
-
   echo "Done."
+
+  # Set prior merged coverage data filename
+  PRIOR_MERGED_COV_DATA=$MERGED_COV_DATA
 
   # increment test number and update previous output dir
   TEST_CASE_NUM=$((TEST_CASE_NUM + 1))

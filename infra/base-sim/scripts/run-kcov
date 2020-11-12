@@ -18,12 +18,16 @@ rm -rf bin build model *.vcd
 CPPFLAGS="-g" DISABLE_VCD_TRACING=1 make -j 4
 
 # Create output dirs
-KCOV_ROOT_DIR=logs/kcov
-KCOV_TEMP_MERGE_DIR=logs/kcov/temp_merged
-rm -rf $KCOV_ROOT_DIR
-mkdir -p $KCOV_ROOT_DIR
-chmod 777 $KCOV_ROOT_DIR
-mkdir -p $KCOV_TEMP_MERGE_DIR
+KCOV_ROOT=logs/kcov
+KCOV_TMP_CURR=$KCOV_ROOT/tmp_curr
+KCOV_TMP_MERGE_1=$KCOV_ROOT/tmp_merge_1
+KCOV_TMP_MERGE_2=$KCOV_ROOT/tmp_merge_2
+rm -rf $KCOV_ROOT
+mkdir -p $KCOV_ROOT
+chmod 777 $KCOV_ROOT
+mkdir -p $KCOV_TMP_CURR
+mkdir -p $KCOV_TMP_MERGE_1
+mkdir -p $KCOV_TMP_MERGE_2
 
 # Trace coverage of each test case
 TEST_CASE_NUM=0
@@ -31,40 +35,44 @@ TEST_CASE_NUM=0
 # created. Right now we are relying on the alphabetical ordering of the seed
 # file names which all start with a unique ID number for AFL.
 for TEST_CASE in $(ls -1d out/*/queue/*); do
-  echo -n "    Tracing test: $TEST_CASE ... "
-  # make output dir
-  TEST_CASE_COV_DIR=$KCOV_ROOT_DIR/test_case_$TEST_CASE_NUM
-  mkdir -p $TEST_CASE_COV_DIR
+  
   # run kcov
-  /src/kcov/build/src/kcov $TEST_CASE_COV_DIR bin/$TOPLEVEL <$TEST_CASE \
-    >/dev/null
+  echo -n "    Tracing test: $TEST_CASE ... "
+  /src/kcov/build/src/kcov $KCOV_TMP_CURR bin/$TOPLEVEL <$TEST_CASE >/dev/null
   echo "Done."
 
-  echo -n "    Merging $TEST_CASE_NUM coverage traces ... "
-  # clear out contents of temp merged coverage data dir
-  rm -rf $KCOV_TEMP_MERGE_DIR/*
+  # merge all prior tracing results
+  echo -n "    Merging $((TEST_CASE_NUM + 1)) coverage traces ... "
+  # select which tmp directory to output too: even -> 2, odd -> 1
+  if [ $((TEST_CASE_NUM % 2)) -eq 0 ]; then
+    CURR_MERGE_OUT=$KCOV_TMP_MERGE_2
+    PRIOR_MERGE_OUT=$KCOV_TMP_MERGE_1
+  else
+    CURR_MERGE_OUT=$KCOV_TMP_MERGE_1
+    PRIOR_MERGE_OUT=$KCOV_TMP_MERGE_2
+  fi
   # merge all existing coverage traces
-  /src/kcov/build/src/kcov --merge $KCOV_TEMP_MERGE_DIR \
-    $KCOV_ROOT_DIR/test_case_*
+  /src/kcov/build/src/kcov --merge $CURR_MERGE_OUT $PRIOR_MERGE_OUT $KCOV_TMP_CURR
+  
   # move out the JSON results (this is what we will save for plotting)
-  mv $KCOV_TEMP_MERGE_DIR/kcov-merged/coverage.json \
-    $KCOV_ROOT_DIR/cumulative_coverage_${TEST_CASE_NUM}.json
-  chmod 666 $KCOV_ROOT_DIR/cumulative_coverage_${TEST_CASE_NUM}.json
+  # results from curr test case
+  mv $KCOV_TMP_CURR/$TOPLEVEL.*/coverage.json $KCOV_ROOT/kcov_$TEST_CASE_NUM.json
+  chmod 666 $KCOV_ROOT/kcov_$TEST_CASE_NUM.json
+  # results from merged test cases
+  mv $CURR_MERGE_OUT/kcov-merged/coverage.json \
+    $KCOV_ROOT/kcov_cum_${TEST_CASE_NUM}.json
+  chmod 666 $KCOV_ROOT/kcov_cum_${TEST_CASE_NUM}.json
   echo "Done."
+
+  # Wipe the prior merge output dir and tmp_curr dir
+  rm -rf $PRIOR_MERGE_OUT/*
+  rm -rf $KCOV_TMP_CURR/*
 
   # increment test number and update previous output dir
   TEST_CASE_NUM=$((TEST_CASE_NUM + 1))
 done
-rm -rf $KCOV_TEMP_MERGE_DIR
+rm -rf $KCOV_TMP_CURR
+rm -rf $KCOV_TMP_MERGE_1
+rm -rf $KCOV_TMP_MERGE_2
 echo "Done."
-
-# Move all individual test coverage traces out of parent dir and delete
-# parent dir as this data is useless (mostly HTML files for viewing web UX).
-NUM_TEST_CASES=$((TEST_CASE_NUM - 1))
-for IND in $(seq 0 $NUM_TEST_CASES); do
-  mv $KCOV_ROOT_DIR/test_case_$IND/$TOPLEVEL.*/coverage.json \
-    $KCOV_ROOT_DIR/coverage_$IND.json
-  chmod 666 $KCOV_ROOT_DIR/coverage_$IND.json
-  rm -rf $KCOV_ROOT_DIR/test_case_$IND
-done
 echo "Traced LINE COVERAGE from $TEST_CASE_NUM test cases."
