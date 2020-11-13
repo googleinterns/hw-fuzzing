@@ -71,18 +71,20 @@ export HDL := \
 	$(DUT_HDL_DIR)/hw/ip/tlul/rtl/tlul_fifo_sync.sv \
 	$(DUT_HDL_DIR)/hw/ip/tlul/rtl/tlul_socket_1n.sv \
 	\
+	$(DUT_HDL_DIR)/hw/ip/$(TOPLEVEL)/rtl/sha3_pkg.sv \
 	$(DUT_HDL_DIR)/hw/ip/$(TOPLEVEL)/rtl/$(TOPLEVEL)_pkg.sv \
 	$(DUT_HDL_DIR)/hw/ip/$(TOPLEVEL)/rtl/$(TOPLEVEL)_reg_pkg.sv \
 	$(DUT_HDL_DIR)/hw/ip/$(TOPLEVEL)/rtl/$(TOPLEVEL)_reg_top.sv \
 	\
-	$(DUT_HDL_DIR)/hw/ip/$(TOPLEVEL)/rtl/keccak_round.sv \
 	$(DUT_HDL_DIR)/hw/ip/$(TOPLEVEL)/rtl/keccak_2share.sv \
-	$(DUT_HDL_DIR)/hw/ip/$(TOPLEVEL)/rtl/sha3core.sv \
+	$(DUT_HDL_DIR)/hw/ip/$(TOPLEVEL)/rtl/keccak_round.sv \
+	$(DUT_HDL_DIR)/hw/ip/$(TOPLEVEL)/rtl/sha3.sv \
 	$(DUT_HDL_DIR)/hw/ip/$(TOPLEVEL)/rtl/sha3pad.sv \
+	$(DUT_HDL_DIR)/hw/ip/$(TOPLEVEL)/rtl/$(TOPLEVEL).sv \
 	$(DUT_HDL_DIR)/hw/ip/$(TOPLEVEL)/rtl/kmac_core.sv \
+	$(DUT_HDL_DIR)/hw/ip/$(TOPLEVEL)/rtl/kmac_keymgr.sv \
 	$(DUT_HDL_DIR)/hw/ip/$(TOPLEVEL)/rtl/kmac_msgfifo.sv \
 	$(DUT_HDL_DIR)/hw/ip/$(TOPLEVEL)/rtl/kmac_staterd.sv \
-	$(DUT_HDL_DIR)/hw/ip/$(TOPLEVEL)/rtl/$(TOPLEVEL).sv \
 	\
 	hdl/$(TOPLEVEL)_tb.sv
 export SHARED_TB_SRCS := \
