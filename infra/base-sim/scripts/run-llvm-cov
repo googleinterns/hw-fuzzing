@@ -1,0 +1,92 @@
+#!/bin/bash -eu
+# Copyright 2020 Timothy Trippel
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#      http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+echo "Tracing BB COVERAGE with llvm-cov ..."
+rm -rf bin build model *.vcd
+
+# Compile with debugging, coverage tracing, and NO optimizations or VCD tracing
+CPPFLAGS="-fprofile-instr-generate -fcoverage-mapping" \
+  LDFLAGS="-fprofile-instr-generate" DISABLE_VCD_TRACING=1 make -j 2
+
+# Create output dirs
+LLVM_ROOT=logs/llvm-cov
+MERGE_PROF_1=$LLVM_ROOT/merge_1.profdata
+MERGE_PROF_2=$LLVM_ROOT/merge_2.profdata
+CURR_PROF=$LLVM_ROOT/curr.profdata
+rm -rf $LLVM_ROOT
+mkdir -p $LLVM_ROOT
+chmod 777 $LLVM_ROOT
+
+# Trace coverage of each test case
+TEST_CASE_NUM=0
+# TODO(ttrippel): make sure we are processing seed files in the order they were
+# created. Right now we are relying on the alphabetical ordering of the seed
+# file names which all start with a unique ID number for AFL.
+for TEST_CASE in $(ls -1d out/*/queue/*); do
+  # run simulation generate a raw profile (default.profraw)
+  echo -n "    Tracing test: $TEST_CASE ... "
+  bin/$TOPLEVEL <$TEST_CASE >/dev/null
+  echo "Done."
+
+  # index the current raw profile
+  llvm-profdata merge -output=$CURR_PROF default.profraw
+
+  # index/merge the current raw profile with previous test case profiles
+  if [ $((TEST_CASE_NUM % 2)) -eq 0 ]; then
+    CURR_MERGE_PROF=$MERGE_PROF_2
+    if [ $TEST_CASE_NUM -eq 0 ]; then
+      PRIOR_MERGE_PROF=""
+    else
+      PRIOR_MERGE_PROF=$MERGE_PROF_1
+    fi
+  else
+    CURR_MERGE_PROF=$MERGE_PROF_1
+    PRIOR_MERGE_PROF=$MERGE_PROF_2
+  fi
+  llvm-profdata merge -output=$CURR_MERGE_PROF default.profraw $PRIOR_MERGE_PROF
+
+  # dump current coverage txt report to a file
+  mkdir -p $LLVM_ROOT/cov_$TEST_CASE_NUM
+  llvm-cov show -instr-profile=$CURR_PROF bin/$TOPLEVEL \
+    -output-dir=$LLVM_ROOT/cov_$TEST_CASE_NUM
+  mv $LLVM_ROOT/cov_$TEST_CASE_NUM/index.txt $LLVM_ROOT/cov_$TEST_CASE_NUM.report.txt
+  rm -rf $LLVM_ROOT/cov_$TEST_CASE_NUM
+  mkdir -p $LLVM_ROOT/cum_cov_$TEST_CASE_NUM
+
+  # dump cumulative coverage txt report to a file
+  llvm-cov show -instr-profile=$CURR_MERGE_PROF bin/$TOPLEVEL \
+    -output-dir=$LLVM_ROOT/cum_cov_$TEST_CASE_NUM
+  mv $LLVM_ROOT/cum_cov_$TEST_CASE_NUM/index.txt $LLVM_ROOT/cum_cov_$TEST_CASE_NUM.report.txt
+  rm -rf $LLVM_ROOT/cum_cov_$TEST_CASE_NUM
+
+  # TODO(ttrippel): generate JSON reports, excluding for now b/c they are large
+  #llvm-cov export -format=text -instr-profile=$CURR_PROF bin/$TOPLEVEL \
+  #>$LLVM_ROOT/cov_$TEST_CASE_NUM.json
+  #llvm-cov export -format=text -instr-profile=$CURR_MERGE_PROF bin/$TOPLEVEL \
+  #>$LLVM_ROOT/cum_cov_$TEST_CASE_NUM.json
+
+  # Wipe the prior merge/curr profile data
+  if [ $TEST_CASE_NUM -ne 0 ]; then
+    rm $PRIOR_MERGE_PROF
+  fi
+  rm $CURR_PROF
+  rm default.profraw
+
+  # increment test number and update previous output dir
+  TEST_CASE_NUM=$((TEST_CASE_NUM + 1))
+done
+rm $CURR_MERGE_PROF
+echo "Done."
+echo "Traced LINE COVERAGE from $TEST_CASE_NUM test cases."

@@ -77,11 +77,17 @@ elif [[ $FUZZER == "afl" || $FUZZER == "afl-term-on-crash" ]]; then
   else
     # Extract kcov results into a plotting-friendly CSV file
     # TODO(ttrippel): make this script fuzzer-agnostic
-    python3 $HW/hwfutils/hwfutils/extract_coverage.py $TOPLEVEL \
-      out/*/plot_data logs/kcov logs/kcov.csv
+    python3 $HW/hwfutils/hwfutils/extract_kcov.py $TOPLEVEL logs/kcov
   fi
   if ! run-vlt-cov 2>&1 | tee -a logs/exp.log; then
     echo "WARNING: run-vlt-cov did not finish... probably ran out of disk space."
+  fi
+  if ! run-llvm-cov 2>&1 | tee -a logs/exp.log; then
+    echo "WARNING: run-llvm-cov did not finish... probably ran out of disk space."
+  else
+    # Extract kcov results into a plotting-friendly CSV file
+    # TODO(ttrippel): make this script fuzzer-agnostic
+    python3 $HW/hwfutils/hwfutils/extract_llvm_cov.py $TOPLEVEL logs/llvm-cov
   fi
 
 else

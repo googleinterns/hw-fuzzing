@@ -23,8 +23,8 @@ export TOPLEVEL      := # OpenTitan IP Toplevel
 export TOPLEVEL_LANG := verilog
 export TB_TYPE       ?= cpp
 export TB            ?= afl
-export CPPFLAGS      := -std=c++11
-export LDFLAGS       :=
+export CPPFLAGS      += -std=c++11
+export LDFLAGS       +=
 export LDLIBS        :=
 export SEED          ?= example.hwf
 

@@ -24,21 +24,21 @@ echo "Tracing COVERAGE with Verilator ..."
 rm -rf bin build model *.vcd
 
 # Verilate with coverage enabled
-ENABLE_COVERAGE_TRACING=1 DISABLE_VCD_TRACING=1 make -j 4
+ENABLE_COVERAGE_TRACING=1 DISABLE_VCD_TRACING=1 make -j 2
 
 # Create output dirs and coverage CSV file
-VLT_COV_ROOT_DIR=logs/vlt_cov
+VLT_COV_ROOT_DIR=logs/vlt-cov
 VLT_TMP_ANNOTATE_DIR=$VLT_COV_ROOT_DIR/tmp_annotations
-VLT_LINE_COV_PER_TEST=logs/vlt_cov_per_test.csv
-VLT_LINE_CUM_COV_TEST=logs/vlt_cum_lcov.csv
+VLT_LINE_COV_PER_TEST=logs/vlt_cov.csv
+VLT_LINE_CUM_COV_TEST=logs/vlt_cov_cum.csv
 rm -rf $VLT_COV_ROOT_DIR
 mkdir -p $VLT_COV_ROOT_DIR
 chmod 777 $VLT_COV_ROOT_DIR
 mkdir -p $VLT_TMP_ANNOTATE_DIR
 
 # Write CSV headers
-echo "Test-ID,Lines-Covered,Total-Lines,Coverage-Percentage" >$VLT_LINE_COV_PER_TEST
-echo "Test-ID,Lines-Covered,Total-Lines,Coverage-Percentage" >$VLT_LINE_CUM_COV_TEST
+echo "Test-ID,Lines-Covered,Total-Lines,Line-Coverage-(%)" >$VLT_LINE_COV_PER_TEST
+echo "Test-ID,Lines-Covered,Total-Lines,Line-Coverage-(%)" >$VLT_LINE_CUM_COV_TEST
 
 # Trace coverage of each test case
 TEST_CASE_NUM=0

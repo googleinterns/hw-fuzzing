@@ -276,10 +276,10 @@ def run_docker_container_locally(config, exp_data_path):
     for script in [
         "run",
         "run-kcov",
+        "run-llvm-cov",
         "run-vlt-cov",
         "set_hwf_isa.sh",
-        # "run", "run-kcov", "run-llvm-cov", "run-vlt-cov", "set_hwf_isa.sh",
-        "cpp-verilator-sim"
+        "cpp-verilator-sim",
     ]:
       cmd.extend([
           "-v",

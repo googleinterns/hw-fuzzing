@@ -15,7 +15,7 @@
 
 echo "Tracing LINE COVERAGE with kcov ..."
 rm -rf bin build model *.vcd
-CPPFLAGS="-g" DISABLE_VCD_TRACING=1 make -j 4
+CPPFLAGS="-g" DISABLE_VCD_TRACING=1 make -j 2
 
 # Create output dirs
 KCOV_ROOT=logs/kcov
@@ -35,7 +35,7 @@ TEST_CASE_NUM=0
 # created. Right now we are relying on the alphabetical ordering of the seed
 # file names which all start with a unique ID number for AFL.
 for TEST_CASE in $(ls -1d out/*/queue/*); do
-  
+
   # run kcov
   echo -n "    Tracing test: $TEST_CASE ... "
   /src/kcov/build/src/kcov $KCOV_TMP_CURR bin/$TOPLEVEL <$TEST_CASE >/dev/null
@@ -53,7 +53,7 @@ for TEST_CASE in $(ls -1d out/*/queue/*); do
   fi
   # merge all existing coverage traces
   /src/kcov/build/src/kcov --merge $CURR_MERGE_OUT $PRIOR_MERGE_OUT $KCOV_TMP_CURR
-  
+
   # move out the JSON results (this is what we will save for plotting)
   # results from curr test case
   mv $KCOV_TMP_CURR/$TOPLEVEL.*/coverage.json $KCOV_ROOT/kcov_$TEST_CASE_NUM.json
