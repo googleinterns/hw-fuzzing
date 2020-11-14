@@ -203,7 +203,7 @@ class TLULHostTb : public STDINFuzzTb {
 
   // TL-UL transaction helper methods
   bool WaitForDeviceReady();
-  bool ClearRequestAfterDelay(uint32_t num_clk_cycles);
+  void ClearRequest();
   bool WaitForDeviceResponse();
   bool SendTLULRequest(OpcodeA opcode, uint32_t address, uint32_t data,
                        uint32_t size, uint32_t mask);

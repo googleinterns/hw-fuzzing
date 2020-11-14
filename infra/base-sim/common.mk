@@ -75,6 +75,7 @@ endif
 
 ifndef DISABLE_VCD_TRACING
 VFLAGS += --trace
+VFLAGS += -DUNPACK_TLUL
 endif
 
 ################################################################################

@@ -208,7 +208,6 @@ void OTIPFuzzTb::SimulateDUT() {
           read_data = Get(instr.address);
           std::cout << " --> data: 0x" << std::setw(OT_TL_DW >> 2) << std::hex
                     << read_data << std::endl;
-          ToggleClock(&dut_.clk_i, 2);
           break;
         }
 
@@ -218,7 +217,6 @@ void OTIPFuzzTb::SimulateDUT() {
                     << "; data: 0x" << std::setw(OT_TL_DW >> 2) << std::hex
                     << instr.data << std::endl;
           PutFull(instr.address, instr.data);
-          ToggleClock(&dut_.clk_i, 2);
           break;
         }
 

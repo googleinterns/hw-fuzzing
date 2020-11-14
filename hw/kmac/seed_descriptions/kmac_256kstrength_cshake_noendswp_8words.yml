@@ -51,20 +51,20 @@
 - {opcode: write, addr: 0x00000014, data: 0x00000002}
 
 # Wait for the hash to complete
-- {opcode: wait, addr: 0x00000000, data: 0x00000000, repeat: 50}
+- {opcode: wait, addr: 0x00000000, data: 0x00000000, repeat: 80}
 
 # Clear interrupts
 - {opcode: write, addr: 0x00000000, data: 0xFFFFFFFF}
 
   # Read some of the output
-- {opcode: read, addr: 0x00000500, data: 0x0}
-- {opcode: read, addr: 0x00000504, data: 0x0}
-- {opcode: read, addr: 0x00000508, data: 0x0}
-- {opcode: read, addr: 0x0000050C, data: 0x0}
-- {opcode: read, addr: 0x00000510, data: 0x0}
-- {opcode: read, addr: 0x00000514, data: 0x0}
+- {opcode: read, addr: 0x00000400, data: 0x0}
+- {opcode: read, addr: 0x00000404, data: 0x0}
+- {opcode: read, addr: 0x00000408, data: 0x0}
+- {opcode: read, addr: 0x0000040C, data: 0x0}
+- {opcode: read, addr: 0x00000410, data: 0x0}
+- {opcode: read, addr: 0x00000414, data: 0x0}
 
-# Issue DONE command (to start hashing)
+# Issue DONE command
 - {opcode: write, addr: 0x00000014, data: 0x00000008}
 - {opcode: wait, addr: 0, data: 0}
 - {opcode: wait, addr: 0, data: 0}

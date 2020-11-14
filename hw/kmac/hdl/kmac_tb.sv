@@ -31,9 +31,9 @@ module kmac_tb (
   output logic intr_kmac_err_o
 );
 
-  ////////////////
-  //    DUT     //
-  ////////////////
+  //////////////////
+  //     DUT      //
+  //////////////////
   kmac dut (
     .clk_i,
     .rst_ni,
@@ -50,8 +50,18 @@ module kmac_tb (
     .intr_kmac_err_o
   );
 
-  ////////////////
-  // Assertions //
-  ////////////////
+`ifdef UNPACK_TLUL
+  //////////////////
+  // Unpack TL-UL //
+  //////////////////
+  tlul_inspect inspect (
+    .tl_i,
+    .tl_o
+  );
+`endif
+
+  //////////////////
+  //  Assertions  //
+  //////////////////
 
 endmodule

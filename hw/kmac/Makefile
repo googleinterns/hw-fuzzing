@@ -26,7 +26,7 @@ export TB            ?= afl
 export CPPFLAGS      += -std=c++11
 export LDFLAGS       +=
 export LDLIBS        :=
-export SEED          ?= example.hwf
+export SEED          ?= hash_128kstrength_sha3_noendswp_10words.hwf
 
 ################################################################################
 # Simulation Environment Vars
@@ -92,6 +92,10 @@ export SHARED_TB_SRCS := \
 	stdin_fuzz_tb.cpp \
 	tlul_host_tb.cpp \
 	ot_ip_fuzz_tb.cpp
+
+ifndef DISABLE_VCD_TRACING
+HDL += ../tb/hdl/tlul_inspect.sv
+endif
 
 ################################################################################
 # Verilator Flags (optional)

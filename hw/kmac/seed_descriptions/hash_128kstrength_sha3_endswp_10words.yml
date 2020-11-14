@@ -41,7 +41,7 @@
 - {opcode: read, addr: 0x00000410, data: 0x0}
 - {opcode: read, addr: 0x00000414, data: 0x0}
 
-# Issue DONE command (to start hashing)
+# Issue DONE command
 - {opcode: write, addr: 0x00000014, data: 0x00000008}
 - {opcode: wait, addr: 0, data: 0}
 - {opcode: wait, addr: 0, data: 0}

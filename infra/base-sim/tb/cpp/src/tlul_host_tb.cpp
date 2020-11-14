@@ -45,22 +45,19 @@ uint32_t TLULHostTb::Get(uint32_t address) {
   // if (d_error || d_opcode != (uint32_t)OpcodeD::kAccessAckData) {
   //}
 
+  // Clear transaction from bus
+  ClearRequest();
+
   return d_data;
 }
 
-bool TLULHostTb::ClearRequestAfterDelay(uint32_t num_clk_cycles) {
-  for (uint32_t i = 0; i < num_clk_cycles; i++) {
-    if (ToggleClock(&dut_.clk_i, 2)) {
-      return true;
-    }
-  }
+void TLULHostTb::ClearRequest() {
   ResetH2DSignals();
   SetH2DSignal("D_READY", 1);
 #ifdef DEBUG
   std::cout << "Clearing TL-UL request ..." << std::endl;
   PrintH2DSignals();
 #endif
-  return false;
 }
 
 // Prints a row in the H2D or D2H tables
@@ -163,6 +160,8 @@ bool TLULHostTb::ReceiveTLULPutResponse() {
   if (WaitForDeviceResponse()) {
     return true;
   }
+
+  // Unpack the data from the device
   uint32_t d_opcode = UnpackSignal(dut_.tl_o, "D_OPCODE");
   uint32_t d_error = UnpackSignal(dut_.tl_o, "D_ERROR");
 
@@ -171,6 +170,10 @@ bool TLULHostTb::ReceiveTLULPutResponse() {
   // if (d_error || d_opcode != OpcodeD::kAccessAck) {
   // continue;
   //}
+
+  // Clear transaction from bus
+  ClearRequest();
+
   return false;
 }
 
@@ -190,6 +193,11 @@ void TLULHostTb::ResetH2DSignals() {
 // cycle before resetting all the host-to-device bus signals.
 bool TLULHostTb::SendTLULRequest(OpcodeA opcode, uint32_t address,
                                  uint32_t data, uint32_t size, uint32_t mask) {
+  // Sync with rising clock edge
+  if (dut_.clk_i) {
+    ToggleClock(&dut_.clk_i, 1);
+  }
+
   // Put request on the bus
   SetH2DSignal("A_VALID", 1);
   SetH2DSignal("A_OPCODE", (uint32_t)opcode);
@@ -205,9 +213,6 @@ bool TLULHostTb::SendTLULRequest(OpcodeA opcode, uint32_t address,
 
   // Wait for request to be received by the device
   if (WaitForDeviceReady()) {
-    return true;
-  }
-  if (ClearRequestAfterDelay(1)) {
     return true;
   }
   return false;
@@ -265,14 +270,14 @@ uint32_t TLULHostTb::UnpackSignal(uint32_t* packed_signals,
   uint8_t start_bit_ind = index - (start_word_ind * OT_TL_O_WORD_SIZE_BITS);
   uint8_t end_bit_ind =
       index + width - 1 - (end_word_ind * OT_TL_O_WORD_SIZE_BITS);
-  uint32_t signal = 0;
+  uint32_t sig = 0;
 
   // If word indices are the same, signal bits resides in the same word,
   // otherwise, the bits straddle two words. Numeric values of individual TLUL
   // signals are unpacked by shifting and masking.
   if (start_word_ind == end_word_ind) {
-    signal = packed_signals[start_word_ind] >> start_bit_ind;
-    signal &= (1U << width) - 1;
+    sig = packed_signals[start_word_ind] >> start_bit_ind;
+    sig &= (1U << width) - 1;
   } else if ((end_word_ind - 1) == start_word_ind) {
     // Compute width of the low portion of the signal
     uint8_t low_width = OT_TL_O_WORD_SIZE_BITS - start_bit_ind;
@@ -285,20 +290,20 @@ uint32_t TLULHostTb::UnpackSignal(uint32_t* packed_signals,
     uint32_t high_mask = (1U << (end_bit_ind + 1)) - 1;
     uint32_t signal_high = (packed_signals[end_word_ind] & high_mask)
                            << low_width;
-    signal = signal_low | signal_high;
+    sig = signal_low | signal_high;
   }
   // TODO(ttrippel): RAISE ERROR
   // else {
   // continue;
   //}
 
-  return signal;
+  return sig;
 }
 
 // Waits for the device to be ready to receive a host transaction request.
 bool TLULHostTb::WaitForDeviceReady() {
   while (!UnpackSignal(dut_.tl_o, "A_READY")) {
-    if (ToggleClock(&dut_.clk_i, ONE_CLK_CYCLE)) {
+    if (ToggleClock(&dut_.clk_i, 1)) {
       return true;
     }
   }
@@ -312,7 +317,7 @@ bool TLULHostTb::WaitForDeviceReady() {
 // Waits until the device transaction response is valid.
 bool TLULHostTb::WaitForDeviceResponse() {
   while (!UnpackSignal(dut_.tl_o, "D_VALID")) {
-    if (ToggleClock(&dut_.clk_i, ONE_CLK_CYCLE)) {
+    if (ToggleClock(&dut_.clk_i, 1)) {
       return true;
     }
 
