@@ -106,6 +106,10 @@ export SHARED_TB_SRCS := \
 	tlul_host_tb.cpp \
 	ot_ip_fuzz_tb.cpp
 
+ifndef DISABLE_VCD_TRACING
+HDL += ../tb/hdl/tlul_inspect.sv
+endif
+
 ################################################################################
 # Verilator Flags (optional)
 ################################################################################

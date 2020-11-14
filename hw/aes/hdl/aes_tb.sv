@@ -46,6 +46,16 @@ module aes_tb
     .alert_tx_o
   );
 
+`ifdef UNPACK_TLUL
+  //////////////////
+  // Unpack TL-UL //
+  //////////////////
+  tlul_inspect inspect (
+    .tl_i,
+    .tl_o
+  );
+`endif
+
   ////////////////
   // Assertions //
   ////////////////
