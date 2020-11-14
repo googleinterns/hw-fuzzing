@@ -34,6 +34,16 @@ module /*<OpenTitan IP Toplevel>*/_tb (
     //.tl_o,
   );
 
+`ifdef UNPACK_TLUL
+  //////////////////
+  // Unpack TL-UL //
+  //////////////////
+  tlul_inspect inspect (
+    .tl_i,
+    .tl_o
+  );
+`endif
+
   ////////////////
   // Assertions //
   ////////////////
