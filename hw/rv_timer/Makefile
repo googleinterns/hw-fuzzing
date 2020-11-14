@@ -64,7 +64,6 @@ export HDL := \
 	$(DUT_HDL_DIR)/hw/ip/$(TOPLEVEL)/rtl/$(TOPLEVEL)_reg_top.sv \
 	$(DUT_HDL_DIR)/hw/ip/$(TOPLEVEL)/rtl/$(TOPLEVEL).sv \
 	\
-	hdl/timer_core_wbug.sv \
 	hdl/$(TOPLEVEL)_tb.sv
 export SHARED_TB_SRCS := \
 	verilator_tb.cpp \
@@ -72,10 +71,24 @@ export SHARED_TB_SRCS := \
 	tlul_host_tb.cpp \
 	ot_ip_fuzz_tb.cpp
 
+ifndef DISABLE_VCD_TRACING
+HDL += ../tb/hdl/tlul_inspect.sv
+endif
+
+ifdef DEMO
+HDL += hdl/timer_core_wbug.sv
+else
+HDL += $(DUT_HDL_DIR)/hw/ip/$(TOPLEVEL)/rtl/timer_core.sv
+endif
+
 ################################################################################
 # Verilator Flags (optional)
 ################################################################################
 export VFLAGS := --assert
+
+ifdef DEMO
+VFLAGS += -DDEMO
+endif
 
 ################################################################################
 # Include common build targets
