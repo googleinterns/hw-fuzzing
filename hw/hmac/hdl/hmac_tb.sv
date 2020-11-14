@@ -46,6 +46,16 @@ module hmac_tb (
     .idle_o
   );
 
+`ifdef UNPACK_TLUL
+  //////////////////
+  // Unpack TL-UL //
+  //////////////////
+  tlul_inspect inspect (
+    .tl_i,
+    .tl_o
+  );
+`endif
+
   ////////////////
   // Assertions //
   ////////////////

@@ -14,9 +14,6 @@
 # Start hash (tell HMAC we will start writing message)
 - {opcode: write, addr: 0x00000010, data: 0x00000001}
 
-# Clear interrupts (error interrupt fires here?)
-- {opcode: write, addr: 0x00000000, data: 0xFFFFFFFF}
-
 # Write message
 - {opcode: write, addr: 0x00000800, data: 0xDEADBEEF}
 - {opcode: write, addr: 0x00000810, data: 0xCAFECAFE}
@@ -31,7 +28,7 @@
 - {opcode: write, addr: 0x00000010, data: 0x00000002}
 
 # Wait for the hash to complete
-- {opcode: wait, addr: 0x00000000, data: 0x00000000, repeat: 400}
+- {opcode: wait, addr: 0x00000000, data: 0x00000000, repeat: 320}
 
 # Clear interrupts
 - {opcode: write, addr: 0x00000000, data: 0xFFFFFFFF}
