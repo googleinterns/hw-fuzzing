@@ -32,14 +32,16 @@ EXPERIMENT_BASE_NAME = "exp009-cpp-afl-%s-%s-%s-%s-%d"
 DURATION_MINS = 60
 # DURATION_MINS = 1440  # 24 hours
 # TOPLEVELS = ["aes", "hmac", "kmac", "rv_timer"]
-TOPLEVELS = ["aes", "hmac", "kmac"]
-# TOPLEVELS = ["aes", "hmac"]
+TOPLEVELS = ["rv_timer"]
+# OPCODE_TYPES = ["constant"]
+# INSTR_TYPES = ["fixed"]
+# TERMINATE_TYPES = ["invalidop"]
 OPCODE_TYPES = ["constant", "mapped"]
 INSTR_TYPES = ["variable", "fixed"]
 TERMINATE_TYPES = ["invalidop", "never"]
 # RUNS = range(0, 20)
 # RUNS = range(0, 2)
-RUNS = range(2, 5)
+RUNS = range(0, 5)
 # ------------------------------------------------------------------------------
 
 TERMINAL_ROWS, TERMINAL_COLS = os.popen('stty size', 'r').read().split()
@@ -71,7 +73,9 @@ def _main():
         # Set experiment name
         experiment_name = EXPERIMENT_BASE_NAME % (
             toplevel, opcode_type, instr_type, terminate_type, run)
-        print(experiment_name)
+        experiment_name = experiment_name.replace("_", "-")
+        # print(experiment_name)
+        # continue
         cdict["experiment_name"] = experiment_name
         cdict["toplevel"] = toplevel
 
