@@ -1,5 +1,5 @@
 #!/bin/bash -eu
-# Copyright 2020 Google LLC
+# Copyright 2020 Timothy Trippel
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -16,8 +16,11 @@
 # Get GCP project details
 source get_gcp_config.sh
 
-# Delete GCE VM instance
-GCE_API_URL="https://www.googleapis.com/compute/v1/projects"
-GCE_INSTANCE_URL="$GCE_API_URL/$PROJECT_ID/zones/$ZONE/instances/$INSTANCE_NAME"
-curl -XDELETE -H "Authorization: Bearer $TOKEN" $GCE_INSTANCE_URL
+# Save fuzzing data to GCS
+BUCKET_NAME="${PROJECT_ID}-fuzzing-data"
+GCS_API_URL="https://storage.googleapis.com/upload/storage/v1/b"
+find logs -type f -exec curl -X POST --data-binary @{} \
+  -H "Authorization: Bearer $TOKEN" \
+  -H "Content-Type: text" \
+  "$GCS_API_URL/$BUCKET_NAME/o?uploadType=media&name=$INSTANCE_NAME/{}" \; >/dev/null
 exit 0

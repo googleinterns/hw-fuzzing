@@ -58,6 +58,10 @@ if [[ $FUZZER == "sim" ]]; then
   else
     echo "ERROR: unsupported testbench type. Aborting!" | tee -a logs/exp.log
   fi
+
+  # Save simulation results to GCS
+  save-fuzzing-data
+
 elif [[ $FUZZER == "afl" || $FUZZER == "afl-term-on-crash" ]]; then
   if [[ $TB_TYPE == "cocotb" ]]; then
     # cocotb Required Environment Vars.
@@ -71,30 +75,39 @@ elif [[ $FUZZER == "afl" || $FUZZER == "afl-term-on-crash" ]]; then
   # Fuzz the DUT
   BIN_DIR=bin fuzz
 
+  # Save fuzzing results to GCS
+  save-fuzzing-data
+
   # Trace coverage of fuzzer-generated inputs with kcov, and Verilator
   if ! run-kcov 2>&1 | tee -a logs/exp.log; then
-    echo "WARNING: run-kcov did not finish... probably ran out of disk space."
+    echo "WARNING: run-kcov did not finish... probably ran out of disk space." |
+      tee -a logs/exp.log
   else
     # Extract kcov results into a plotting-friendly CSV file
     # TODO(ttrippel): make this script fuzzer-agnostic
     python3 $HW/hwfutils/hwfutils/extract_kcov.py $TOPLEVEL logs/kcov
   fi
   if ! run-vlt-cov 2>&1 | tee -a logs/exp.log; then
-    echo "WARNING: run-vlt-cov did not finish... probably ran out of disk space."
+    echo "WARNING: run-vlt-cov did not finish... probably ran out of disk space." |
+      tee -a logs/exp.log
   fi
   if ! run-llvm-cov 2>&1 | tee -a logs/exp.log; then
-    echo "WARNING: run-llvm-cov did not finish... probably ran out of disk space."
+    echo "WARNING: run-llvm-cov did not finish... probably ran out of disk space." |
+      tee -a logs/exp.log
   else
     # Extract kcov results into a plotting-friendly CSV file
     # TODO(ttrippel): make this script fuzzer-agnostic
     python3 $HW/hwfutils/hwfutils/extract_llvm_cov.py $TOPLEVEL logs/llvm-cov
   fi
 
+  # Save coverage tracing data
+  save-coverage-data
+
 else
   echo "ERROR: unsupported fuzzer. Aborting!" | tee -a logs/exp.log
 fi
 
-# If on simulating/fuzzing on GCP, save data and tear down VM
+# If simulating/fuzzing on GCP, save data and tear down VM
 if [[ $RUN_ON_GCP == "1" ]]; then
   gcp-shutdown-vm
 fi
