@@ -220,35 +220,46 @@ def plot_coverage_vs_time(coverage_dfs):
   ]
   num_cores = len(TOPLEVELS)
   num_cov_metrics = len(cov_metrics)
-  fig, axes = plt.subplots(num_cov_metrics, num_cores)
-  for cov_df in coverage_dfs:
+  sns.set_theme(context="notebook", style="darkgrid")
+  fig, axes = plt.subplots(num_cov_metrics,
+                           num_cores,
+                           sharex=True,
+                           sharey=False)
+  for trial in range(len(coverage_dfs)):
+    # Select experiment trial number
+    cov_df = coverage_dfs[trial]
     for row in range(len(axes)):
       # select portion of data corresponding to current COVERAGE METRIC
       sub_cov_df = cov_df[cov_df[COVERAGE_TYPE_LABEL] == cov_metrics[row]]
       for col in range(len(axes[row])):
         # select portion of data corresponding to current core
         plt_df = sub_cov_df[sub_cov_df[TOPLEVEL_LABEL] == TOPLEVELS[col]]
-        sns.lineplot(data=plt_df,
-                     x=TIME_LABEL,
-                     y=COVERAGE_LABEL,
-                     hue=GRAMMAR_LABEL,
-                     ax=axes[row][col],
-                     legend=False)
+        # if row == 0 and col == 0 and trial == 0:
+        # show_legend = True
+        # else:
+        # show_legend = False
+        # sns.set_context("paper")
+        curr_ax = sns.lineplot(data=plt_df,
+                               x=TIME_LABEL,
+                               y=COVERAGE_LABEL,
+                               hue=GRAMMAR_LABEL,
+                               ax=axes[row][col],
+                               legend=False)
+        if row == 0 and col == 0 and trial == 0:
+          lines = curr_ax.get_lines()
         axes[row][col].set_title("Coverage = %s | Core = %s" %
                                  (cov_metrics[row], TOPLEVELS[col]))
-  # sns.set()
-  plt.tight_layout()
-
-  # Plot coverage data for first trial
-  # sns.set()
-  # fg = sns.FacetGrid(coverage_dfs[0],
-  # col=TOPLEVEL_LABEL,
-  # row=COVERAGE_TYPE_LABEL,
-  # hue=GRAMMAR_LABEL,
-  # sharey=False)
-  # fg.map_dataframe(sns.lineplot, x=TIME_LABEL, y=COVERAGE_LABEL)
-  # fg.add_legend()
-  # fg.tight_layout()
+  fig.legend(
+      lines,
+      [
+          "Const. Opcode & Variable Frame",
+          "Const. Opcode & Fixed Frame",
+          "Mapped Opcode & Variable Frame",
+          "Mapped Opcode & Fixed Frame",
+      ],
+      loc="lower center",
+      ncol=4,
+  )
   print(green("Done."))
   print(LINE_SEP)
   plt.show()
