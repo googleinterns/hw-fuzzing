@@ -14,11 +14,12 @@
 # limitations under the License.
 
 import argparse
+import collections
 import glob
 import itertools
 import os
 import sys
-from collections import defaultdict
+from dataclasses import dataclass
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -39,25 +40,18 @@ ZSCORE_THRESHOLD = 3
 # Plot labels
 # ------------------------------------------------------------------------------
 TIME_LABEL = "Time (s)"
-TOPLEVEL_LABEL = "IP Block"
-ISA_LABEL = "Grammar"
-AFL_TEST_ID_LABEL = "Test ID"
-COVERAGE_TYPE_LABEL = "Coverage Type"
+TOPLEVEL_LABEL = "Core"
+GRAMMAR_LABEL = "Grammar"
+COVERAGE_TYPE_LABEL = "Coverage"
 COVERAGE_LABEL = "Coverage (%)"
-
-# LINES_COVERED_LABEL = "Lines Covered"
-# TOTAL_LINES_LABEL = "Total Lines"
-# LINE_COVERAGE_LABEL = "Line Coverage"
-# REGIONS_COVERED_LABEL = "Regions Covered"
-# TOTAL_REGIONS_LABEL = "Total Regions"
-# REGION_COVERAGE_LABEL = "Region Coverage"
+HW_LINE_COVERAGE_LABEL = "HW Line (VLT)"
+SW_LINE_COVERAGE_LABEL = "SW Line (kcov)"
+SW_REGION_COVERAGE_LABEL = "SW Region (LLVM)"
 
 # ------------------------------------------------------------------------------
-# Experiment Status Labels
+# Other Labels
 # ------------------------------------------------------------------------------
-
-NUM_TRIALS_COMPLETED_LABEL = "# Trials Completed"
-TRIALS_MISSING_LABEL = "Trials Missing"
+AFL_TEST_ID_LABEL = "Test-ID"
 
 # ------------------------------------------------------------------------------
 # Experiment Parameters
@@ -67,7 +61,8 @@ EXPERIMENT_BASE_NAME = "exp009-cpp-afl-%s-%s-%s-%s"
 TOPLEVELS = ["aes", "hmac", "rv_timer"]
 OPCODE_TYPES = ["constant", "mapped"]
 INSTR_TYPES = ["variable", "fixed"]
-TERMINATE_TYPES = ["invalidop", "never"]
+# TERMINATE_TYPES = ["invalidop", "never"]
+TERMINATE_TYPES = ["never"]
 TRIALS = range(0, 5)
 
 # ------------------------------------------------------------------------------
@@ -77,138 +72,186 @@ TERMINAL_ROWS, TERMINAL_COLS = os.popen('stty size', 'r').read().split()
 LINE_SEP = "=" * int(TERMINAL_COLS)
 
 
-def build_coverage_df(kcov_dfs, vlt_cov_dfs, llvm_cov_dfs):
+@dataclass
+class FuzzingData:
+  toplevel: str = ""
+  opcode_type: str = ""
+  instr_type: str = ""
+  terminate_type: str = ""
+  trial_num: int = -1
+  data_path: str = ""
+
+  def __post_init__(self):
+    self.afl_data = self._load_afl_data()
+    self.kcov_data = self._load_cov_data("kcov")
+    self.llvm_cov_data = self._load_cov_data("llvm_cov")
+    self.vlt_cov_data = self._load_cov_data("vlt_cov")
+
+  def _load_afl_data(self):
+    afl_glob_path = os.path.join(self.data_path, "out", "afl_*_interactive",
+                                 "plot_data")
+    afl_plot_data_files = glob.glob(afl_glob_path)
+    if len(afl_plot_data_files) != 1:
+      print(red("ERROR: AFL plot_data file no found."))
+      sys.exit(1)
+    # Load data into Pandas DataFrame
+    afl_df = self._load_csv_data(afl_plot_data_files[0])
+    # Remove leading/trailing white space from column names
+    afl_df = afl_df.rename(columns=lambda x: x.strip())
+    # Adjust time stamps to be relative to start time
+    afl_df.loc[:, "# unix_time"] -= afl_df.loc[0, "# unix_time"]
+    return afl_df
+
+  @staticmethod
+  def _id_str_to_int(id_str):
+    return int(id_str.lstrip("id:"))
+
+  def _load_cov_data(self, cov_type):
+    cov_data_path = "%s/logs/%s_cum.csv" % (self.data_path, cov_type)
+    if not os.path.exists(cov_data_path):
+      print(red("ERROR: coverage data (%s) does not exist." % cov_data_path))
+      sys.exit(1)
+    # Load data into Pandas DataFrame
+    cov_df = self._load_csv_data(cov_data_path)
+    # Convert Test-ID labels to ints
+    cov_df.loc[:, AFL_TEST_ID_LABEL] = cov_df.loc[:, AFL_TEST_ID_LABEL].apply(
+        FuzzingData._id_str_to_int)
+    # Set ID column as the row indicies
+    cov_df = cov_df.set_index(AFL_TEST_ID_LABEL)
+    return cov_df
+
+  def _load_csv_data(self, csv_file):
+    return pd.read_csv(csv_file,
+                       delimiter=',',
+                       index_col=None,
+                       engine='python')
+
+  @property
+  def grammar(self):
+    return "%s-%s-%s" % (self.opcode_type, self.instr_type,
+                         self.terminate_type)
+
+
+def build_coverage_df(exp2data, trial):
   print(yellow("Building coverage dataframe ..."))
-  all_cov_data = {
-      "kcov": kcov_dfs,
-      "Verilator": vlt_cov_dfs,
-      "LLVM": llvm_cov_dfs,
+  # Create empty dictionary that will be used to create a Pandas DataFrame that
+  # looks like the following:
+  # +--------------------------------------------------------------------+
+  # | toplevel | isa (grammar) | coverage type | time (s) | coverage (%) |
+  # +--------------------------------------------------------------------+
+  # |   ...    |        ...    |      ...      |   ...    |      ...     |
+  coverage_dict = {
+      TOPLEVEL_LABEL: [],
+      GRAMMAR_LABEL: [],
+      COVERAGE_TYPE_LABEL: [],
+      TIME_LABEL: [],
+      COVERAGE_LABEL: [],
   }
-  # Create empty dataframe
-  column_names = [
-      TOPLEVEL_LABEL,
-      ISA_LABEL,
-      COVERAGE_TYPE_LABEL,
-      AFL_TEST_ID_LABEL,
-      COVERAGE_LABEL,
-  ]
-  coverage_df = pd.DataFrame(columns=column_names)
+
   # Add rows to the dataframe
-  for cov_type, cov_dfs in all_cov_data.items():
-    for exp_name, cov_df in cov_dfs.items():
-      # Extract experiment details from name
-      exp_name_list = exp_name.split("-")
-      toplevel = exp_name_list[3]
-      if toplevel == "rv":
-        toplevel += "_%s" % exp_name_list[4]
-        opcode_type = exp_name_list[5]
-        instr_type = exp_name_list[6]
-        terminate_type = exp_name_list[7]
-      else:
-        opcode_type = exp_name_list[4]
-        instr_type = exp_name_list[5]
-        terminate_type = exp_name_list[6]
-      isa = "%s-%s-%s" % (opcode_type, instr_type, terminate_type)
-      for _, row in cov_df.iterrows():
-        test_id = int(row["Test-ID"].lstrip("id:"))
-        if cov_type == "Verilator":
-          line_coverage = float(row["Lines-Covered"]) / float(
-              row["Total-Lines"])
-        else:
-          line_coverage = row["Line-Coverage-(%)"]
-        # Update dataframe
-        coverage_df = coverage_df.append(
-            {
-                TOPLEVEL_LABEL: toplevel,
-                ISA_LABEL: isa,
-                COVERAGE_TYPE_LABEL: cov_type,
-                AFL_TEST_ID_LABEL: test_id,
-                COVERAGE_LABEL: line_coverage,
-            },
-            ignore_index=True)
+  for exp_name, fd_list in exp2data.items():
+    # TODO: deal with more than one experiment trial
+    fd = fd_list[trial]
+    for _, row in fd.afl_data.iterrows():
+      time = row["# unix_time"]
+      cov_df_idx = row["paths_total"] - 1
+      for _ in range(3):
+        coverage_dict[TOPLEVEL_LABEL].append(fd.toplevel)
+        coverage_dict[GRAMMAR_LABEL].append(fd.grammar)
+        coverage_dict[TIME_LABEL].append(time)
+
+      # Add kcov coverage
+      coverage_dict[COVERAGE_TYPE_LABEL].append(SW_LINE_COVERAGE_LABEL)
+      kcov = fd.kcov_data.loc[cov_df_idx, "Line-Coverage-(%)"] * 100.0
+      coverage_dict[COVERAGE_LABEL].append(kcov)
+
+      # Add LLVM coverage
+      coverage_dict[COVERAGE_TYPE_LABEL].append(SW_REGION_COVERAGE_LABEL)
+      llvm_cov = fd.llvm_cov_data.loc[cov_df_idx,
+                                      "Region-Coverage-(%)"] * 100.0
+      coverage_dict[COVERAGE_LABEL].append(llvm_cov)
+
+      # Add Verilator coverage
+      coverage_dict[COVERAGE_TYPE_LABEL].append(HW_LINE_COVERAGE_LABEL)
+      vlt_cov = (float(fd.vlt_cov_data.loc[cov_df_idx, "Lines-Covered"]) /
+                 float(fd.vlt_cov_data.loc[cov_df_idx, "Total-Lines"])) * 100.0
+      coverage_dict[COVERAGE_LABEL].append(vlt_cov)
+
   print(green("Done."))
   print(LINE_SEP)
-  return coverage_df
+  return pd.DataFrame.from_dict(coverage_dict)
 
 
-def load_all_afl_data(data_root):
-  print(yellow("Loading all AFL plot data into dataframes ..."))
-  # create dictionary for tracking missing experiment data
-  exp_status_dict = defaultdict(int)
-  exps_missing = defaultdict(list)
+def build_coverage_dfs(exp2data):
+  coverage_dfs = []
+  for trial in TRIALS:
+    coverage_dfs.append(build_coverage_df(exp2data, trial))
+  return coverage_dfs
 
-  # create dictionary to hold AFL plot dataframes
-  afl_plot_dfs = {}
 
+def load_fuzzing_data(data_root):
+  print(yellow("Loading data ..."))
+  exp2data = collections.defaultdict(list)
+
+  # TODO: change this to automatically extract names from a single exp. number
   # extract each data file into a Pandas dataframe
   isas = list(
       itertools.product(TOPLEVELS, OPCODE_TYPES, INSTR_TYPES, TERMINATE_TYPES))
   for toplevel, opcode_type, instr_type, terminate_type in isas:
     for trial in TRIALS:
-      # Build complete path of AFL plot data file
+      # Build complete path to data files
       exp_name_wo_trialnum = EXPERIMENT_BASE_NAME % (
           toplevel, opcode_type, instr_type, terminate_type)
       exp_name_wo_trialnum = exp_name_wo_trialnum.replace("_", "-")
       exp_name = "%s-%d" % (exp_name_wo_trialnum, trial)
-      afl_plot_data_files = glob.glob(
-          os.path.join(data_root, exp_name, "out", "afl_*_interactive",
-                       "plot_data"))
-      if len(afl_plot_data_files) > 1:
-        print(
-            red("ERROR: more than one possible AFL plot data file for: %s" %
-                exp_name))
-        sys.exit(1)
+      data_path = os.path.join(data_root, exp_name)
 
-      # Check if experiment data exists locally
-      if afl_plot_data_files:
-        exp_status_dict[exp_name_wo_trialnum] += 1
-        # parse AFL plot data file
-        afl_plot_dfs[exp_name] = pd.read_csv(afl_plot_data_files[0],
-                                             delimiter=',',
-                                             index_col=None,
-                                             engine='python')
-      else:
-        exps_missing[exp_name_wo_trialnum].append(trial)
+      # Load fuzzing data into an object
+      exp2data[exp_name_wo_trialnum].append(
+          FuzzingData(toplevel, opcode_type, instr_type, terminate_type, trial,
+                      data_path))
+  return exp2data
 
-  # report missing experiment data and return data we found
-  # report_missing_exp_data(exp_status_dict, exps_missing)
+
+def plot_coverage_vs_time(coverage_dfs):
+  print(yellow("Generating plots ..."))
+  cov_metrics = [
+      SW_LINE_COVERAGE_LABEL, SW_REGION_COVERAGE_LABEL, HW_LINE_COVERAGE_LABEL
+  ]
+  num_cores = len(TOPLEVELS)
+  num_cov_metrics = len(cov_metrics)
+  fig, axes = plt.subplots(num_cov_metrics, num_cores)
+  for cov_df in coverage_dfs:
+    for row in range(len(axes)):
+      # select portion of data corresponding to current COVERAGE METRIC
+      sub_cov_df = cov_df[cov_df[COVERAGE_TYPE_LABEL] == cov_metrics[row]]
+      for col in range(len(axes[row])):
+        # select portion of data corresponding to current core
+        plt_df = sub_cov_df[sub_cov_df[TOPLEVEL_LABEL] == TOPLEVELS[col]]
+        sns.lineplot(data=plt_df,
+                     x=TIME_LABEL,
+                     y=COVERAGE_LABEL,
+                     hue=GRAMMAR_LABEL,
+                     ax=axes[row][col],
+                     legend=False)
+        axes[row][col].set_title("Coverage = %s | Core = %s" %
+                                 (cov_metrics[row], TOPLEVELS[col]))
+  # sns.set()
+  plt.tight_layout()
+
+  # Plot coverage data for first trial
+  # sns.set()
+  # fg = sns.FacetGrid(coverage_dfs[0],
+  # col=TOPLEVEL_LABEL,
+  # row=COVERAGE_TYPE_LABEL,
+  # hue=GRAMMAR_LABEL,
+  # sharey=False)
+  # fg.map_dataframe(sns.lineplot, x=TIME_LABEL, y=COVERAGE_LABEL)
+  # fg.add_legend()
+  # fg.tight_layout()
   print(green("Done."))
   print(LINE_SEP)
-  return afl_plot_dfs
-
-
-def load_all_coverage_data(data_root, csv_filename):
-  print(yellow("Loading all %s data into dataframes ..." % csv_filename))
-  # create dictionary to hold coverage dataframes
-  cov_dfs = {}
-
-  # extract each data file into a Pandas dataframe
-  isas = list(
-      itertools.product(TOPLEVELS, OPCODE_TYPES, INSTR_TYPES, TERMINATE_TYPES))
-  for toplevel, opcode_type, instr_type, terminate_type in isas:
-    for trial in TRIALS:
-      # Build complete path of AFL plot data file
-      exp_name_wo_trialnum = EXPERIMENT_BASE_NAME % (
-          toplevel, opcode_type, instr_type, terminate_type)
-      exp_name_wo_trialnum = exp_name_wo_trialnum.replace("_", "-")
-      exp_name = "%s-%d" % (exp_name_wo_trialnum, trial)
-      data_file = os.path.join(data_root, exp_name, "logs", csv_filename)
-      if not os.path.exists(data_file):
-        print(red("ERROR: coverage data file (%s) does not exist." %
-                  data_file))
-        sys.exit(1)
-
-      # load coverage data file
-      cov_dfs[exp_name] = pd.read_csv(data_file,
-                                      delimiter=',',
-                                      index_col=None,
-                                      engine='python')
-
-  # report missing experiment data and return data we found
-  # report_missing_exp_data(exp_status_dict, exps_missing)
-  print(green("Done."))
-  print(LINE_SEP)
-  return cov_dfs
+  plt.show()
 
 
 def main(argv):
@@ -217,40 +260,13 @@ def main(argv):
   args = parser.parse_args()
 
   # Load runtime data
-  # afl_plot_dfs = load_all_afl_data(args.data_root)
-  kcov_dfs = load_all_coverage_data(args.data_root, "kcov_cum.csv")
-  vlt_cov_dfs = load_all_coverage_data(args.data_root, "vlt_cov_cum.csv")
-  llvm_cov_dfs = load_all_coverage_data(args.data_root, "llvm_cov_cum.csv")
-  coverage_df = build_coverage_df(kcov_dfs, vlt_cov_dfs, llvm_cov_dfs)
-  print(coverage_df.head(10))
-  # runtimes_df.to_csv("temp.csv", index=False)
-  # runtimes_df = pd.read_csv("temp.csv",
-  # delimiter=',',
-  # index_col=None,
-  # engine='python')
-
-  # Condition the data
+  exp2data = load_fuzzing_data(args.data_root)
+  coverage_dfs = build_coverage_dfs(exp2data)
 
   # Compute stats
 
-  # # Plot the instrumentation complexity data
-  # sns.set()
-  # fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(7, 4))
-  # sns.stripplot(x=NUM_STATES_LABEL,
-  # y=RUN_TIME_LABEL,
-  # hue=INSTR_TYPE_LABEL,
-  # data=instr_type_runtimes_df,
-  # dodge=True,
-  # size=MARKER_SIZE,
-  # ax=ax1)
-  # sns.stripplot(x=NUM_STATES_LABEL,
-  # y=RUN_TIME_LABEL,
-  # hue=OPT_TYPE_LABEL,
-  # data=fs_opt_runtimes_df,
-  # dodge=True,
-  # size=MARKER_SIZE,
-  # ax=ax2)
-  # plt.show()
+  # Plot data
+  plot_coverage_vs_time(coverage_dfs)
 
 
 if __name__ == "__main__":
