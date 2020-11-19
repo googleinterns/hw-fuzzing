@@ -14,10 +14,12 @@
 # limitations under the License.
 
 import argparse
+import collections
 import glob
+import itertools
 import os
 import sys
-from collections import defaultdict
+from dataclasses import dataclass
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -28,34 +30,42 @@ from hwfutils.string_color import color_str_red as red
 from hwfutils.string_color import color_str_yellow as yellow
 from scipy import stats
 
+# ------------------------------------------------------------------------------
 # Plot parameters
+# ------------------------------------------------------------------------------
 MARKER_SIZE = 5
 ZSCORE_THRESHOLD = 3
 
-# Plot labels
+# ------------------------------------------------------------------------------
+# Plot Labels
+# ------------------------------------------------------------------------------
 RUN_TIME_LABEL = "Time to Full FSM Coverage (Relative)"
 NUM_STATES_LABEL = "# FSM states"
 WIDTH_LABEL = "width"
 INSTR_TYPE_LABEL = "Components Instrumented"
 OPT_TYPE_LABEL = "Fork Server Init."
 INSTR_TYPE_MAPPINGS = {
-    # "full": "All",
-    # "duttb": "DUT & TB",
-    # "dut": "DUT only",
-    "full": "full",
-    "duttb": "duttb",
-    "dut": "dut",
+    "full": "All",
+    "duttb": "DUT & TB",
+    "dut": "DUT only",
+    # "full": "full",
+    # "duttb": "duttb",
+    # "dut": "dut",
 }
 OPT_TYPE_MAPPINGS = {
     False: "TB Startup",
     True: "After DUT Reset",
 }
 
+# ------------------------------------------------------------------------------
 # Experiment Status Labels
+# ------------------------------------------------------------------------------
 NUM_TRIALS_COMPLETED_LABEL = "# Trials Completed"
 TRIALS_MISSING_LABEL = "Trials Missing"
 
-# Experiment selection
+# ------------------------------------------------------------------------------
+# Experiment Parameters
+# ------------------------------------------------------------------------------
 EXP_BASE_NAMES = [
     "exp002-cpp-afl-lock-%dstates-%dwidth-full-instr",
     "exp003-cpp-afl-lock-%dstates-%dwidth-duttb-instr",
@@ -69,152 +79,215 @@ STATES = [16, 32, 64]
 WIDTHS = [4]
 TRIALS = range(50)
 
+# ------------------------------------------------------------------------------
 # Other defines
+# ------------------------------------------------------------------------------
 TERMINAL_ROWS, TERMINAL_COLS = os.popen('stty size', 'r').read().split()
 LINE_SEP = "=" * int(TERMINAL_COLS)
 
 
-def build_runtime_df(afl_plot_dfs):
-  # Create empty dataframe
-  column_names = [
-      NUM_STATES_LABEL,
-      WIDTH_LABEL,
-      INSTR_TYPE_LABEL,
-      OPT_TYPE_LABEL,
-      RUN_TIME_LABEL,
-  ]
-  runtimes_df = pd.DataFrame(columns=column_names)
-  # Add rows to the dataframe
-  for exp_name, exp_df in afl_plot_dfs.items():
-    # Extract experiment details from name
-    exp_name_list = exp_name.split("-")
-    num_states = int(exp_name_list[4].rstrip("states"))
-    width = int(exp_name_list[5].rstrip("width"))
-    instr_type = exp_name_list[6]
-    if len(exp_name_list) > 9:
-      fs_opt = True
-    else:
-      fs_opt = False
-    # Compute fuzzing runtime
-    start_time = exp_df["# unix_time"].iloc[0]
-    stop_time = exp_df["# unix_time"].iloc[-1]
-    runtime = stop_time - start_time
-    # Update dataframe
-    runtimes_df = runtimes_df.append(
-        {
-            NUM_STATES_LABEL: num_states,
-            WIDTH_LABEL: width,
-            INSTR_TYPE_LABEL: INSTR_TYPE_MAPPINGS[instr_type],
-            OPT_TYPE_LABEL: OPT_TYPE_MAPPINGS[fs_opt],
-            RUN_TIME_LABEL: runtime,
-        },
-        ignore_index=True)
-  return runtimes_df
+@dataclass
+class FuzzingData:
+  num_states: int = -1
+  width: int = -1
+  instr_type: str = ""
+  fs_opt: bool = False
+  trial_num: int = -1
+  data_path: str = ""
+
+  def __post_init__(self):
+    self.afl_data = self._load_afl_data()
+
+  def _load_csv_data(self, csv_file):
+    return pd.read_csv(csv_file,
+                       delimiter=',',
+                       index_col=None,
+                       engine='python')
+
+  def _load_afl_data(self):
+    afl_glob_path = os.path.join(self.data_path, "out", "afl_*_interactive",
+                                 "plot_data")
+    afl_plot_data_files = glob.glob(afl_glob_path)
+    if len(afl_plot_data_files) != 1:
+      print(red("ERROR: AFL plot_data file no found."))
+      sys.exit(1)
+    # Load data into Pandas DataFrame
+    afl_df = self._load_csv_data(afl_plot_data_files[0])
+    # Remove leading/trailing white space from column names
+    afl_df = afl_df.rename(columns=lambda x: x.strip())
+    # Adjust time stamps to be relative to start time
+    afl_df.loc[:, "# unix_time"] -= afl_df.loc[0, "# unix_time"]
+    return afl_df
+
+  @property
+  def runtime(self):
+    return float(self.afl_data["# unix_time"].max() -
+                 self.afl_data["# unix_time"].min())
 
 
-def report_missing_exp_data(exp_status_dict, exps_missing):
-  # Format status tracking dict to create dataframe to print to console
-  status_dict = {
+def _drop_outliers_in_range(values, lower_percentile=30, upper_percentile=70):
+  median = np.median(values)
+  mean = np.mean(values)
+  lower_bound, upper_bound = np.percentile(
+      values, [lower_percentile, upper_percentile])
+  trimmed_values = []
+  for i in range(len(values)):
+    if lower_bound <= values[i] < upper_bound:
+      trimmed_values.append(values[i])
+    # else:
+    # trimmed_values.append(median)
+    # trimmed_values.append(mean)
+  return trimmed_values
+
+
+def _aggregrate_instr_complex_rts(exp2data):
+  exp2rts = {}
+  for exp_name, fd_list in exp2data.items():
+    # if fd_list[0].instr_type != "duttb" and fd_list[0].fs_opt is False:
+    if fd_list[0].fs_opt is False:
+      runtimes = []
+      for trial in TRIALS:
+        fd = fd_list[trial]
+        runtimes.append(fd.runtime)
+      runtimes = _drop_outliers_in_range(runtimes)
+      exp2rts[(fd.num_states, fd.instr_type, fd.fs_opt)] = runtimes
+  return exp2rts
+
+
+def build_instr_complex_rts_df(exp2data):
+  print(yellow("Building instruction complexity dataframe ..."))
+  INSTR_TYPE_BASELINE = "dut"
+  # Create empty dictionary that will be used to create Pandas
+  # a DataFrame that look like the following:
+  # +-------------------------------------------------+
+  # | # states | instrumenttation level | runtime (s) |
+  # +-------------------------------------------------+
+  # |   ...    |           ...          |     ...     |
+  runtimes_dict = {
       NUM_STATES_LABEL: [],
-      WIDTH_LABEL: [],
       INSTR_TYPE_LABEL: [],
-      OPT_TYPE_LABEL: [],
-      NUM_TRIALS_COMPLETED_LABEL: [],
-      TRIALS_MISSING_LABEL: [],
+      RUN_TIME_LABEL: [],
   }
-  for width in WIDTHS:
-    for state in STATES:
-      for exp_base_name in EXP_BASE_NAMES:
-        exp_name_wo_trialnum = exp_base_name % (state, width)
-        exp_name_list = exp_name_wo_trialnum.split("-")
-        status_dict[NUM_STATES_LABEL].append(state)
-        status_dict[WIDTH_LABEL].append(width)
-        status_dict[INSTR_TYPE_LABEL].append(exp_name_list[6])
-        if len(exp_name_list) > 8:
-          status_dict[OPT_TYPE_LABEL].append(True)
-        else:
-          status_dict[OPT_TYPE_LABEL].append(False)
-        status_dict[NUM_TRIALS_COMPLETED_LABEL].append(
-            exp_status_dict[exp_name_wo_trialnum])
-        status_dict[TRIALS_MISSING_LABEL].append(
-            exps_missing[exp_name_wo_trialnum])
-  status_df = pd.DataFrame.from_dict(status_dict)
-  print(status_df)
-
-
-def load_all_afl_data(data_root):
-  print(yellow("Loading all AFL plot data into dataframes ..."))
-  # create dictionary for tracking missing experiment data
-  exp_status_dict = defaultdict(int)
-  exps_missing = defaultdict(list)
-
-  # create dictionary to hold AFL plot dataframes
-  afl_plot_dfs = {}
-
-  # extract each data file into a Pandas dataframe
-  for width in WIDTHS:
-    for num_states in STATES:
-      for exp_base_name in EXP_BASE_NAMES:
-        for trial in TRIALS:
-          # Build complete path of AFL plot data file
-          exp_name_wo_trialnum = exp_base_name % (num_states, width)
-          exp_name = "%s-%d" % (exp_name_wo_trialnum, trial)
-          afl_plot_data_files = glob.glob(
-              os.path.join(data_root, exp_name, "out", "afl_*_interactive",
-                           "plot_data"))
-          if len(afl_plot_data_files) > 1:
-            print(
-                red("ERROR: more than one possible AFL plot data file for: %s"
-                    % exp_name))
-            sys.exit(1)
-
-          # Check if experiment data exists locally
-          if afl_plot_data_files:
-            exp_status_dict[exp_name_wo_trialnum] += 1
-            # parse AFL plot data file
-            afl_plot_dfs[exp_name] = pd.read_csv(afl_plot_data_files[0],
-                                                 delimiter=',',
-                                                 index_col=None,
-                                                 engine='python')
-          else:
-            exps_missing[exp_name_wo_trialnum].append(trial)
-
-  # report missing experiment data and return data we found
-  report_missing_exp_data(exp_status_dict, exps_missing)
+  # Aggregate data into a dictionary
+  exp2rts = _aggregrate_instr_complex_rts(exp2data)
+  # Compute scale factors for each set of num_states experiments
+  states2scales = {}
+  for (num_states, instr_type, fs_opt), runtimes in exp2rts.items():
+    if instr_type == INSTR_TYPE_BASELINE and fs_opt is False:
+      scale_factor = np.median(runtimes)
+      states2scales[num_states] = scale_factor
+  # Build the dataframe for plotting
+  for (num_states, instr_type, fs_opt), runtimes in exp2rts.items():
+    runtimes = list(map(lambda x: x / states2scales[num_states], runtimes))
+    runtimes_dict[NUM_STATES_LABEL].extend([num_states] * len(runtimes))
+    runtimes_dict[INSTR_TYPE_LABEL].extend([INSTR_TYPE_MAPPINGS[instr_type]] *
+                                           len(runtimes))
+    runtimes_dict[RUN_TIME_LABEL].extend(runtimes)
   print(green("Done."))
   print(LINE_SEP)
-  return afl_plot_dfs
+  return pd.DataFrame.from_dict(runtimes_dict)
 
 
-def normalize_instr_type_runtimes(runtimes_df, zscore_threshold=3):
+def _aggregrate_fs_opt_rts(exp2data):
+  exp2rts = {}
+  for exp_name, fd_list in exp2data.items():
+    if fd_list[0].instr_type == "full":
+      runtimes = []
+      for trial in TRIALS:
+        fd = fd_list[trial]
+        runtimes.append(fd.runtime)
+      runtimes = _drop_outliers_in_range(runtimes)
+      exp2rts[(fd.num_states, fd.instr_type, fd.fs_opt)] = runtimes
+  return exp2rts
+
+
+def build_fs_opt_rts_df(exp2data):
+  print(yellow("Building fork server optimization dataframe ..."))
+  FS_OPT_BASELINE = False
+  # Create empty dictionary that will be used to create Pandas
+  # a DataFrame that look like the following:
+  # +----------------------------------------------------+
+  # | # states | fork server optimization? | runtime (s) |
+  # +----------------------------------------------------+
+  # |   ...    |            ...            |     ...     |
+  runtimes_dict = {
+      NUM_STATES_LABEL: [],
+      OPT_TYPE_LABEL: [],
+      RUN_TIME_LABEL: [],
+  }
+  # Aggregate data into a dictionary
+  exp2rts = _aggregrate_fs_opt_rts(exp2data)
+  # Compute scale factors for each set of num_states experiments
+  states2scales = {}
+  for (num_states, instr_type, fs_opt), runtimes in exp2rts.items():
+    if instr_type == "full" and fs_opt is FS_OPT_BASELINE:
+      scale_factor = np.median(runtimes)
+      states2scales[num_states] = scale_factor
+  # Build the dataframe for plotting
+  for (num_states, instr_type, fs_opt), runtimes in exp2rts.items():
+    runtimes = list(map(lambda x: x / states2scales[num_states], runtimes))
+    runtimes_dict[NUM_STATES_LABEL].extend([num_states] * len(runtimes))
+    runtimes_dict[OPT_TYPE_LABEL].extend([OPT_TYPE_MAPPINGS[fs_opt]] *
+                                         len(runtimes))
+    runtimes_dict[RUN_TIME_LABEL].extend(runtimes)
+  print(green("Done."))
+  print(LINE_SEP)
+  return pd.DataFrame.from_dict(runtimes_dict)
+
+
+def load_fuzzing_data(data_root):
+  print(yellow("Loading data ..."))
+  exp2data = collections.defaultdict(list)
+
+  # TODO: change this to automatically extract names from a single exp. number
+  # extract each data file into a Pandas dataframe
+  exp_combos = list(itertools.product(STATES, WIDTHS, EXP_BASE_NAMES))
+  for num_states, width, exp_base_name in exp_combos:
+    for trial in TRIALS:
+      # Build complete path to data files
+      exp_name_wo_trialnum = exp_base_name % (num_states, width)
+      exp_name = "%s-%d" % (exp_name_wo_trialnum, trial)
+      data_path = os.path.join(data_root, exp_name)
+
+      # Extract experiment info.
+      exp_name_list = exp_name.split("-")
+      instr_type = exp_name_list[6]
+      if len(exp_name_list) > 9:
+        fs_opt = True
+      else:
+        fs_opt = False
+
+      # Load fuzzing data into an object
+      exp2data[exp_name_wo_trialnum].append(
+          FuzzingData(num_states, width, instr_type, fs_opt, trial, data_path))
+  print(green("Done."))
+  print(LINE_SEP)
+  return exp2data
+
+
+def normalize_instr_type_runtimes(df, zscore_threshold=3):
   print(yellow("Normalizing instrumentation complexity data ..."))
   # Parameters
   INSTR_TYPE_BASELINE = INSTR_TYPE_MAPPINGS["full"]
-  FS_OPT_BASELINE = OPT_TYPE_MAPPINGS[False]
-  # extract only instrumentation only data from dataframe
-  runtimes_df = runtimes_df.loc[runtimes_df[OPT_TYPE_LABEL] ==
-                                FS_OPT_BASELINE, :]
-  # print(runtimes_df.head(10))
-  normalized_df = pd.DataFrame(columns=runtimes_df.columns)
+
   for num_states in STATES:
-    sub_rt_df = runtimes_df[runtimes_df[NUM_STATES_LABEL] == num_states].copy()
     for instr_type in INSTR_TYPE_MAPPINGS.values():
-      sub_sub_rt_df = sub_rt_df[sub_rt_df[INSTR_TYPE_LABEL] ==
-                                instr_type].copy()
+      if instr_type != INSTR_TYPE_BASELINE:
+        continue
+
+      # extract only data with specific number of states and instr_type
+      mean = df[(df[NUM_STATES_LABEL] == num_states) &
+                (df[INSTR_TYPE_LABEL] == instr_type)].mean()
       # drop outliers
-      sub_sub_rt_df = sub_sub_rt_df[
-          np.abs(stats.zscore(sub_sub_rt_df[RUN_TIME_LABEL].astype(
-              float))) < zscore_threshold]
-      # compute mean
-      if instr_type == INSTR_TYPE_BASELINE:
-        mean = sub_sub_rt_df[RUN_TIME_LABEL].mean()
-      # normalize to mean of full instrumentation
-      sub_sub_rt_df.loc[:, RUN_TIME_LABEL] /= float(mean)
-      normalized_df = normalized_df.append(sub_sub_rt_df, ignore_index=True)
+      # sub_df = sub_df[np.abs(stats.zscore(sub_df[RUN_TIME_LABEL].astype(
+      # float))) < zscore_threshold]
+      for it in INSTR_TYPE_MAPPINGS.values():
+        df["relative"] = df.apply(lambda row: (row[RUN_TIME_LABEL] / mean)
+                                  if ((row[NUM_STATES_LABEL] == num_states) and
+                                      (row[INSTR_TYPE_LABEL] == it)) else None,
+                                  axis=1)
   print(green("Done."))
-  # print(normalized_df.head(10))
   print(LINE_SEP)
-  return normalized_df
 
 
 def normalize_fsopt_runtimes(runtimes_df, zscore_threshold=3):
@@ -246,7 +319,7 @@ def normalize_fsopt_runtimes(runtimes_df, zscore_threshold=3):
   return normalized_df
 
 
-def compute_instr_type_mann_whitney(runtimes_df, zscore_threshold=3):
+def compute_instr_type_mann_whitney(cleaned_df, zscore_threshold=3):
   print(
       yellow(
           "Computing Mann-Whitney U-test on instrumentation complexity data ..."
@@ -254,19 +327,18 @@ def compute_instr_type_mann_whitney(runtimes_df, zscore_threshold=3):
   # Parameters
   FS_OPT_BASELINE = OPT_TYPE_MAPPINGS[False]
   # extract only instrumentation only data from dataframe
-  runtimes_df = runtimes_df.loc[runtimes_df[OPT_TYPE_LABEL] ==
-                                FS_OPT_BASELINE, :]
+  cleaned_df = cleaned_df.loc[cleaned_df[OPT_TYPE_LABEL] == FS_OPT_BASELINE, :]
   # drop outliers
-  cleaned_df = pd.DataFrame(columns=runtimes_df.columns)
-  for num_states in STATES:
-    sub_rt_df = runtimes_df[runtimes_df[NUM_STATES_LABEL] == num_states].copy()
-    for instr_type in INSTR_TYPE_MAPPINGS.values():
-      sub_sub_rt_df = sub_rt_df[sub_rt_df[INSTR_TYPE_LABEL] ==
-                                instr_type].copy()
-      sub_sub_rt_df = sub_sub_rt_df[
-          np.abs(stats.zscore(sub_sub_rt_df[RUN_TIME_LABEL].astype(
-              float))) < zscore_threshold]
-      cleaned_df = cleaned_df.append(sub_sub_rt_df, ignore_index=True)
+  # cleaned_df = pd.DataFrame(columns=runtimes_df.columns)
+  # for num_states in STATES:
+  # sub_rt_df = runtimes_df[runtimes_df[NUM_STATES_LABEL] == num_states].copy()
+  # for instr_type in INSTR_TYPE_MAPPINGS.values():
+  # sub_sub_rt_df = sub_rt_df[sub_rt_df[INSTR_TYPE_LABEL] ==
+  # instr_type].copy()
+  # sub_sub_rt_df = sub_sub_rt_df[
+  # np.abs(stats.zscore(sub_sub_rt_df[RUN_TIME_LABEL].astype(
+  # float))) < zscore_threshold]
+  # cleaned_df = cleaned_df.append(sub_sub_rt_df, ignore_index=True)
   # Compute Mann-Whitney U-test
   for num_states in STATES:
     sub_rt_df = cleaned_df[cleaned_df[NUM_STATES_LABEL] == num_states]
@@ -295,48 +367,49 @@ def compute_instr_type_mann_whitney(runtimes_df, zscore_threshold=3):
   print(LINE_SEP)
 
 
+def plot_opt_strategies(instr_rts, fsopt_rts):
+  print(yellow("Generating plots ..."))
+  sns.set()
+  fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(7, 4))
+  sns.stripplot(x=NUM_STATES_LABEL,
+                y=RUN_TIME_LABEL,
+                hue=INSTR_TYPE_LABEL,
+                data=instr_rts,
+                dodge=True,
+                jitter=0.2,
+                size=MARKER_SIZE,
+                ax=ax1)
+  ax1.axhline(y=1.0, color='r', linestyle='-')
+  sns.stripplot(x=NUM_STATES_LABEL,
+                y=RUN_TIME_LABEL,
+                hue=OPT_TYPE_LABEL,
+                data=fsopt_rts,
+                dodge=True,
+                jitter=0.2,
+                size=MARKER_SIZE,
+                ax=ax2)
+  ax2.axhline(y=1.0, color='r', linestyle='-')
+  print(green("Done."))
+  print(LINE_SEP)
+  plt.show()
+
+
 def main(argv):
   parser = argparse.ArgumentParser(description="Plotting script for exp. 004.")
   parser.add_argument("data_root")
   args = parser.parse_args()
 
   # Load runtime data
-  afl_plot_dfs = load_all_afl_data(args.data_root)
-  runtimes_df = build_runtime_df(afl_plot_dfs)
-  # runtimes_df.to_csv("temp.csv", index=False)
-  # runtimes_df = pd.read_csv("temp.csv",
-  # delimiter=',',
-  # index_col=None,
-  # engine='python')
-
-  # Condition the data
-  instr_type_runtimes_df = normalize_instr_type_runtimes(
-      runtimes_df, zscore_threshold=ZSCORE_THRESHOLD)
-  fs_opt_runtimes_df = normalize_fsopt_runtimes(
-      runtimes_df, zscore_threshold=ZSCORE_THRESHOLD)
+  exp2data = load_fuzzing_data(args.data_root)
+  instr_rts = build_instr_complex_rts_df(exp2data)
+  fsopt_rts = build_fs_opt_rts_df(exp2data)
 
   # Compute stats
-  compute_instr_type_mann_whitney(runtimes_df,
-                                  zscore_threshold=ZSCORE_THRESHOLD)
+  # compute_instr_type_mann_whitney(runtimes_df,
+  # zscore_threshold=ZSCORE_THRESHOLD)
 
-  # Plot the instrumentation complexity data
-  sns.set()
-  fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(7, 4))
-  sns.stripplot(x=NUM_STATES_LABEL,
-                y=RUN_TIME_LABEL,
-                hue=INSTR_TYPE_LABEL,
-                data=instr_type_runtimes_df,
-                dodge=True,
-                size=MARKER_SIZE,
-                ax=ax1)
-  sns.stripplot(x=NUM_STATES_LABEL,
-                y=RUN_TIME_LABEL,
-                hue=OPT_TYPE_LABEL,
-                data=fs_opt_runtimes_df,
-                dodge=True,
-                size=MARKER_SIZE,
-                ax=ax2)
-  plt.show()
+  # Plot the data
+  plot_opt_strategies(instr_rts, fsopt_rts)
 
 
 if __name__ == "__main__":

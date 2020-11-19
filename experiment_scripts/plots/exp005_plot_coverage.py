@@ -22,13 +22,14 @@ import sys
 from dataclasses import dataclass
 
 import matplotlib.pyplot as plt
-import numpy as np
+# import numpy as np
 import pandas as pd
 import seaborn as sns
 from hwfutils.string_color import color_str_green as green
 from hwfutils.string_color import color_str_red as red
 from hwfutils.string_color import color_str_yellow as yellow
-from scipy import stats
+
+# from scipy import stats
 
 # ------------------------------------------------------------------------------
 # Plot parameters
@@ -150,7 +151,6 @@ def build_coverage_df(exp2data, trial):
 
   # Add rows to the dataframe
   for exp_name, fd_list in exp2data.items():
-    # TODO: deal with more than one experiment trial
     fd = fd_list[trial]
     for _, row in fd.afl_data.iterrows():
       time = row["# unix_time"]
