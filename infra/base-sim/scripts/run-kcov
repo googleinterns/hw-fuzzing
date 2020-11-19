@@ -13,12 +13,16 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+: ${KCOV_PATH:=/src/kcov/build/src}
+: ${LOGS_PATH:=logs}
+: ${OUT_PATH:=out}
+
 echo "Tracing LINE COVERAGE with kcov ..."
 rm -rf bin build model *.vcd
 CPPFLAGS="-g" DISABLE_VCD_TRACING=1 make -j 2
 
 # Create output dirs
-KCOV_ROOT=logs/kcov
+KCOV_ROOT=$LOGS_PATH/kcov
 KCOV_TMP_CURR=$KCOV_ROOT/tmp_curr
 KCOV_TMP_MERGE_1=$KCOV_ROOT/tmp_merge_1
 KCOV_TMP_MERGE_2=$KCOV_ROOT/tmp_merge_2
@@ -34,11 +38,11 @@ TEST_CASE_NUM=0
 # TODO(ttrippel): make sure we are processing seed files in the order they were
 # created. Right now we are relying on the alphabetical ordering of the seed
 # file names which all start with a unique ID number for AFL.
-for TEST_CASE in $(ls -1d out/*/queue/*); do
+for TEST_CASE in $OUT_PATH/*/queue/*; do
 
   # run kcov
   echo -n "    Tracing test: $TEST_CASE ... "
-  /src/kcov/build/src/kcov $KCOV_TMP_CURR bin/$TOPLEVEL <$TEST_CASE >/dev/null
+  $KCOV_PATH/kcov $KCOV_TMP_CURR bin/$TOPLEVEL <"$TEST_CASE" >/dev/null
   echo "Done."
 
   # merge all prior tracing results
@@ -52,7 +56,7 @@ for TEST_CASE in $(ls -1d out/*/queue/*); do
     PRIOR_MERGE_OUT=$KCOV_TMP_MERGE_2
   fi
   # merge all existing coverage traces
-  /src/kcov/build/src/kcov --merge $CURR_MERGE_OUT $PRIOR_MERGE_OUT $KCOV_TMP_CURR
+  $KCOV_PATH/kcov --merge $CURR_MERGE_OUT $PRIOR_MERGE_OUT $KCOV_TMP_CURR
 
   # move out the JSON results (this is what we will save for plotting)
   # results from curr test case

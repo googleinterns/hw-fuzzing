@@ -94,7 +94,7 @@
 // Other defines
 // -----------------------------------------------------------------------------
 #define FULL_MASK ((1U << OT_TL_DBW) - 1)
-#define DEV_RESPONSE_TIMEOUT 100000000000000000  // number of clk cycles
+#define DEV_RESPONSE_TIMEOUT 100  // number of clk cycles
 #define ONE_CLK_CYCLE 2
 #define OT_TL_I_WORD_SIZE_BITS 32
 #define OT_TL_O_WORD_SIZE_BITS 32

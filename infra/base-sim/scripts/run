@@ -76,11 +76,13 @@ elif [[ $FUZZER == "afl" || $FUZZER == "afl-term-on-crash" ]]; then
   BIN_DIR=bin fuzz
 
   # Save fuzzing results to GCS
-  save-fuzzing-data
+  if [[ $RUN_ON_GCP == "1" ]]; then
+    save-fuzzing-data
+  fi
 
   # Trace coverage of fuzzer-generated inputs with kcov, and Verilator
   if ! run-kcov 2>&1 | tee -a logs/exp.log; then
-    echo "WARNING: run-kcov did not finish... probably ran out of disk space." |
+    echo "WARNING: run-kcov did not finish... probably ran out of resources." |
       tee -a logs/exp.log
   else
     # Extract kcov results into a plotting-friendly CSV file
@@ -88,11 +90,11 @@ elif [[ $FUZZER == "afl" || $FUZZER == "afl-term-on-crash" ]]; then
     python3 $HW/hwfutils/hwfutils/extract_kcov.py $TOPLEVEL logs/kcov
   fi
   if ! run-vlt-cov 2>&1 | tee -a logs/exp.log; then
-    echo "WARNING: run-vlt-cov did not finish... probably ran out of disk space." |
+    echo "WARNING: run-vlt-cov did not finish... probably ran out of resources." |
       tee -a logs/exp.log
   fi
   if ! run-llvm-cov 2>&1 | tee -a logs/exp.log; then
-    echo "WARNING: run-llvm-cov did not finish... probably ran out of disk space." |
+    echo "WARNING: run-llvm-cov did not finish... probably ran out of resources." |
       tee -a logs/exp.log
   else
     # Extract kcov results into a plotting-friendly CSV file
@@ -101,7 +103,9 @@ elif [[ $FUZZER == "afl" || $FUZZER == "afl-term-on-crash" ]]; then
   fi
 
   # Save coverage tracing data
-  save-coverage-data
+  if [[ $RUN_ON_GCP == "1" ]]; then
+    save-coverage-data
+  fi
 
 else
   echo "ERROR: unsupported fuzzer. Aborting!" | tee -a logs/exp.log

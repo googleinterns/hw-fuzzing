@@ -13,6 +13,9 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+: ${LOGS_PATH:=logs}
+: ${OUT_PATH:=out}
+
 echo "Tracing BB COVERAGE with llvm-cov ..."
 rm -rf bin build model *.vcd
 
@@ -21,7 +24,7 @@ CPPFLAGS="-fprofile-instr-generate -fcoverage-mapping" \
   LDFLAGS="-fprofile-instr-generate" DISABLE_VCD_TRACING=1 make -j 2
 
 # Create output dirs
-LLVM_ROOT=logs/llvm-cov
+LLVM_ROOT=$LOGS_PATH/llvm-cov
 MERGE_PROF_1=$LLVM_ROOT/merge_1.profdata
 MERGE_PROF_2=$LLVM_ROOT/merge_2.profdata
 CURR_PROF=$LLVM_ROOT/curr.profdata
@@ -34,10 +37,10 @@ TEST_CASE_NUM=0
 # TODO(ttrippel): make sure we are processing seed files in the order they were
 # created. Right now we are relying on the alphabetical ordering of the seed
 # file names which all start with a unique ID number for AFL.
-for TEST_CASE in $(ls -1d out/*/queue/*); do
+for TEST_CASE in $OUT_PATH/*/queue/*; do
   # run simulation generate a raw profile (default.profraw)
   echo -n "    Tracing test: $TEST_CASE ... "
-  bin/$TOPLEVEL <$TEST_CASE >/dev/null
+  bin/$TOPLEVEL <"$TEST_CASE" >/dev/null
   echo "Done."
 
   # index the current raw profile

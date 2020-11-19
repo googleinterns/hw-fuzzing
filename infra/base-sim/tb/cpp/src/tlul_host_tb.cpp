@@ -302,10 +302,19 @@ uint32_t TLULHostTb::UnpackSignal(uint32_t* packed_signals,
 
 // Waits for the device to be ready to receive a host transaction request.
 bool TLULHostTb::WaitForDeviceReady() {
+  uint32_t timeout = DEV_RESPONSE_TIMEOUT;
   while (!UnpackSignal(dut_.tl_o, "A_READY")) {
     if (ToggleClock(&dut_.clk_i, 1)) {
       return true;
     }
+    if (timeout == 0) {
+#ifdef DEBUG
+      std::cout << "TIMEOUT waiting for device ready." << std::endl;
+      PrintD2HSignals();
+#endif
+      return false;
+    }
+    timeout--;
   }
 #ifdef DEBUG
   std::cout << "Device is ready!" << std::endl;
@@ -316,14 +325,22 @@ bool TLULHostTb::WaitForDeviceReady() {
 
 // Waits until the device transaction response is valid.
 bool TLULHostTb::WaitForDeviceResponse() {
+  uint32_t timeout = DEV_RESPONSE_TIMEOUT;
   while (!UnpackSignal(dut_.tl_o, "D_VALID")) {
     if (ToggleClock(&dut_.clk_i, 1)) {
       return true;
     }
-
     // Check if error signal raised --> invalid address access?
     // TODO(ttrippel): currently it seems the data bus is set to 0xFFFFFFFF on
     // an invalid address
+    if (timeout == 0) {
+#ifdef DEBUG
+      std::cout << "TIMEOUT waiting for device response." << std::endl;
+      PrintD2HSignals();
+#endif
+      return false;
+    }
+    timeout--;
   }
 
 #ifdef DEBUG

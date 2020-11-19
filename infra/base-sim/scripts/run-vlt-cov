@@ -20,6 +20,9 @@ function extract_vlt_coverage() {
   COV_PERCENT=$(echo $TOTAL_COVERAGE | awk '{print $4}')
 }
 
+: ${LOGS_PATH:=logs}
+: ${OUT_PATH:=out}
+
 echo "Tracing COVERAGE with Verilator ..."
 rm -rf bin build model *.vcd
 
@@ -27,10 +30,10 @@ rm -rf bin build model *.vcd
 ENABLE_COVERAGE_TRACING=1 DISABLE_VCD_TRACING=1 make -j 2
 
 # Create output dirs and coverage CSV file
-VLT_COV_ROOT_DIR=logs/vlt-cov
+VLT_COV_ROOT_DIR=$LOGS_PATH/vlt-cov
 VLT_TMP_ANNOTATE_DIR=$VLT_COV_ROOT_DIR/tmp_annotations
-VLT_LINE_COV_PER_TEST=logs/vlt_cov.csv
-VLT_LINE_CUM_COV_TEST=logs/vlt_cov_cum.csv
+VLT_LINE_COV_PER_TEST=$LOGS_PATH/vlt_cov.csv
+VLT_LINE_CUM_COV_TEST=$LOGS_PATH/vlt_cov_cum.csv
 rm -rf $VLT_COV_ROOT_DIR
 mkdir -p $VLT_COV_ROOT_DIR
 chmod 777 $VLT_COV_ROOT_DIR
@@ -45,20 +48,20 @@ TEST_CASE_NUM=0
 # TODO(ttrippel): make sure we are processing seed files in the order they were
 # created. Right now we are relying on the alphabetical ordering of the seed
 # file names which all start with a unique ID number for AFL.
-for TEST_CASE in $(ls -1d out/*/queue/*); do
+for TEST_CASE in $OUT_PATH/*/queue/*; do
   # Set coverage data file names
   TEST_COV_DATA=$VLT_COV_ROOT_DIR/coverage_${TEST_CASE_NUM}.dat
   MERGED_COV_DATA=$VLT_COV_ROOT_DIR/merged_coverage_${TEST_CASE_NUM}.dat
 
   # parse test case ID
   # TODO(ttrippel): this is specific to AFL, make fuzzer agnostic
-  TEST_ID=$(echo $TEST_CASE | awk -F/ '{print $4}' | awk -F, '{print $1}')
+  TEST_ID=$(echo "$TEST_CASE" | awk -F/ '{print $4}' | awk -F, '{print $1}')
 
   # Trace current test case
   # run simulation and move coverage data file
   echo -n "    Tracing test: $TEST_CASE ... "
-  bin/$TOPLEVEL <$TEST_CASE >/dev/null
-  mv logs/coverage.dat $TEST_COV_DATA
+  bin/$TOPLEVEL <"$TEST_CASE" >/dev/null
+  mv $LOGS_PATH/coverage.dat $TEST_COV_DATA
   # extract test-specific coverage to CSV file
   TOTAL_COVERAGE=$(verilator_coverage --annotate $VLT_TMP_ANNOTATE_DIR $TEST_COV_DATA)
   extract_vlt_coverage
