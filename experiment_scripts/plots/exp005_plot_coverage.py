@@ -57,9 +57,10 @@ AFL_TEST_ID_LABEL = "Test-ID"
 # ------------------------------------------------------------------------------
 # Experiment Parameters
 # ------------------------------------------------------------------------------
-EXPERIMENT_BASE_NAME = "exp009-cpp-afl-%s-%s-%s-%s"
-# TOPLEVELS = ["aes", "hmac", "kmac", "rv_timer"]
-TOPLEVELS = ["aes", "hmac", "rv_timer"]
+# EXPERIMENT_BASE_NAME = "exp010-cpp-afl-%s-%s-%s-%s"
+EXPERIMENT_BASE_NAME = "exp011-cpp-afl-%s-%s-%s-%s"
+TOPLEVELS = ["aes", "hmac", "kmac", "rv_timer"]
+# TOPLEVELS = ["aes", "hmac", "rv_timer"]
 OPCODE_TYPES = ["constant", "mapped"]
 INSTR_TYPES = ["variable", "fixed"]
 # TERMINATE_TYPES = ["invalidop", "never"]
@@ -111,7 +112,8 @@ class FuzzingData:
     cov_data_path = "%s/logs/%s_cum.csv" % (self.data_path, cov_type)
     if not os.path.exists(cov_data_path):
       print(red("ERROR: coverage data (%s) does not exist." % cov_data_path))
-      sys.exit(1)
+      # sys.exit(1)
+      return None
     # Load data into Pandas DataFrame
     cov_df = self._load_csv_data(cov_data_path)
     # Convert Test-ID labels to ints
@@ -224,7 +226,7 @@ def plot_coverage_vs_time(coverage_dfs):
   fig, axes = plt.subplots(num_cov_metrics,
                            num_cores,
                            sharex=True,
-                           sharey=False)
+                           sharey=True)
   for trial in range(len(coverage_dfs)):
     # Select experiment trial number
     cov_df = coverage_dfs[trial]
