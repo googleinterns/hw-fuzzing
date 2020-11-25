@@ -51,7 +51,6 @@ export HDL := \
 	$(DUT_HDL_DIR)/hw/ip/prim/rtl/prim_util_pkg.sv \
 	$(DUT_HDL_DIR)/hw/ip/prim/rtl/prim_packer.sv \
 	$(DUT_HDL_DIR)/hw/ip/prim/rtl/prim_intr_hw.sv \
-	$(DUT_HDL_DIR)/hw/ip/prim/rtl/prim_intr_hw.sv \
 	$(DUT_HDL_DIR)/hw/ip/prim/rtl/prim_subreg_arb.sv \
 	$(DUT_HDL_DIR)/hw/ip/prim/rtl/prim_subreg_ext.sv \
 	$(DUT_HDL_DIR)/hw/ip/prim/rtl/prim_subreg.sv \

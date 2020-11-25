@@ -56,7 +56,6 @@ export HDL := \
 	$(DUT_HDL_DIR)/hw/ip/prim/rtl/prim_subreg_ext.sv \
 	$(DUT_HDL_DIR)/hw/ip/prim/rtl/prim_subreg_shadow.sv \
 	$(DUT_HDL_DIR)/hw/ip/prim/rtl/prim_subreg.sv \
-	$(DUT_HDL_DIR)/hw/ip/prim/rtl/prim_alert_pkg.sv \
 	$(DUT_HDL_DIR)/hw/ip/prim/rtl/prim_cipher_pkg.sv \
 	$(DUT_HDL_DIR)/hw/ip/prim/rtl/prim_pulse_sync.sv \
 	$(DUT_HDL_DIR)/hw/ip/prim/rtl/prim_lfsr.sv \

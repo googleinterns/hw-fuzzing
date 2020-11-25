@@ -19,8 +19,10 @@ This module implements a method to pull all data from a GCS bucket.
 """
 
 import glob
+import multiprocessing
 import os
 import subprocess
+import sys
 
 import hjson
 from hwfutils.run_cmd import run_cmd
@@ -28,6 +30,9 @@ from hwfutils.run_cmd import run_cmd
 
 def pull_data_from_gcs():
   """Pulls down fuzzer data from GCS to local machine."""
+  # Create worker pool
+  pool = multiprocessing.Pool(None)
+
   # Check if local DST path exists first, if not, create it
   parent_dst = os.path.join(os.getenv("HW_FUZZING"), "data")
   if not os.path.exists(parent_dst):
@@ -46,13 +51,51 @@ def pull_data_from_gcs():
     if not line:
       break
     src = line.decode("utf-8").rstrip("/\n")
-    dst = os.path.join(parent_dst, src.split("/")[-1])
+    dst = os.path.join(parent_dst, os.path.basename(src))
     if not _data_exists_locally(dst):
+      print("Pulling down fuzzing data from %s ..." % src)
       # TODO(ttrippel): speed up with -m option (causes issues on MacOS)
       # cp_cmd = ["gsutil", "-m", "cp", "-r", src, parent_dst]
-      cp_cmd = ["gsutil", "cp", "-r", src, parent_dst]
-      print("Pulling down fuzzing data from %s ..." % src)
-      run_cmd(cp_cmd, "ERROR: cannot copy data from GCS.")
+      # cp_cmd = ["gsutil", "cp", "-r", src, parent_dst]
+      # run_cmd(cp_cmd, "ERROR: cannot copy data from GCS.")
+      # Just copy the files we need
+      cp_cmds = []
+      plot_data = "out/%s/plot_data" % _get_afl_plot_file_path(src)
+      exp_log = os.path.join("logs", "exp.log")
+      svas = os.path.join("logs", "svas.csv")
+      bb_complexity = os.path.join("logs", "bb_complexity.csv")
+      kcov_cum = os.path.join("logs", "kcov_cum.csv")
+      llvm_cov_cum = os.path.join("logs", "llvm_cov_cum.csv")
+      vlt_cov_cum = os.path.join("logs", "vlt_cov_cum.csv")
+      data_files = [
+          plot_data, exp_log, svas, bb_complexity, kcov_cum, llvm_cov_cum,
+          vlt_cov_cum
+      ]
+      for df in data_files:
+        cp_cmds.append(
+            ["gsutil", "cp",
+             os.path.join(src, df),
+             os.path.join(dst, df)])
+      results = pool.map_async(_run_gsutil_cmd, cp_cmds)
+      results.wait()
+
+
+def _get_afl_plot_file_path(src):
+  ls_cmd = ["gsutil", "ls", os.path.join(src, "out")]
+  proc = subprocess.Popen(ls_cmd,
+                          stdin=subprocess.PIPE,
+                          stdout=subprocess.PIPE,
+                          stderr=subprocess.STDOUT,
+                          close_fds=True)
+  line = proc.stdout.readline().decode("utf-8").rstrip("\n /")
+  return os.path.basename(line)
+
+
+def _run_gsutil_cmd(gs_util_cmd):
+  run_cmd(gs_util_cmd,
+          "ERROR: cannot copy data from GCS.",
+          silent=True,
+          fail_silent=True)
 
 
 def _get_gcs_bucket_path():

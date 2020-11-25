@@ -21,7 +21,7 @@ from hwfutils.string_color import color_str_yellow as yellow
 
 
 # Run command as subprocess catching non-zero exit codes
-def run_cmd(cmd, error_str, silent=False):
+def run_cmd(cmd, error_str, silent=False, fail_silent=False):
   """Runs the provided command (list of strings) in a separate process."""
   try:
     if not silent:
@@ -31,5 +31,6 @@ def run_cmd(cmd, error_str, silent=False):
     else:
       subprocess.check_call(cmd, stdout=subprocess.DEVNULL)
   except subprocess.CalledProcessError:
-    print(red(error_str), file=sys.stderr)
-    sys.exit(1)
+    if not fail_silent:
+      print(red(error_str), file=sys.stderr)
+      sys.exit(1)
