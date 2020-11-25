@@ -34,8 +34,8 @@ EXPERIMENT_BASE_NAMES = [
     "exp006-cpp-afl-lock-%dstates-%dwidth-duttb-instr-wopt-%d",
     "exp007-cpp-afl-lock-%dstates-%dwidth-dut-instr-wopt-%d",
 ]
-# NUM_STATES = [128]
-NUM_STATES = [16, 32, 64]
+NUM_STATES = [8]
+# NUM_STATES = [16, 32, 64]
 COMP_WIDTHS = [4]
 RUNS = range(0, 50)
 

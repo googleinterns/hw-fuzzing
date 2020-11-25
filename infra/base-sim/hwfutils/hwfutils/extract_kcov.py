@@ -38,7 +38,7 @@ class KCov(Coverage):
       cov_data = json.load(jf)
       for cov_dict in cov_data['files']:
         filename = cov_dict['file']
-        if filename.startswith("/src/hw/%s/model" % self.toplevel):
+        if ("hw/%s/model" % self.toplevel) in filename:
           lines_covered = int(cov_dict['covered_lines'])
           lines_total = int(cov_dict['total_lines'])
           self.coverage_dict[Coverage.LINES_COVERED][-1] += lines_covered
@@ -53,6 +53,7 @@ class KCov(Coverage):
 def main(argv):
   module_description = "HW Fuzzing LLVM Coverage Extraction"
   parser = argparse.ArgumentParser(description=module_description)
+  parser.add_argument("--output-dir", default="logs")
   parser.add_argument("toplevel")
   parser.add_argument("kcov_dir")
   args = parser.parse_args(argv)
@@ -62,8 +63,8 @@ def main(argv):
   cum_cov = KCov(args.toplevel, args.kcov_dir, "kcov_cum*", ".json")
 
   # Export coverage data to a plotting friendly CSV file.
-  cov.dump_to_csv("logs/kcov.csv")
-  cum_cov.dump_to_csv("logs/kcov_cum.csv")
+  cov.dump_to_csv("%s/kcov.csv" % args.output_dir)
+  cum_cov.dump_to_csv("%s/kcov_cum.csv" % args.output_dir)
 
 
 if __name__ == "__main__":

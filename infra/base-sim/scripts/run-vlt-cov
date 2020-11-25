@@ -13,6 +13,10 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+: ${LOGS_PATH:=logs}
+: ${OUT_PATH:=out}
+: ${AGG_OUT_PATH:=logs}
+
 function extract_vlt_coverage() {
   # extact coverage for the current test
   LINES_COVERED=$(echo $TOTAL_COVERAGE | awk '{print $3}' | awk -F/ '{print $1}' | tr -cd '[:alnum:]')
@@ -20,20 +24,21 @@ function extract_vlt_coverage() {
   COV_PERCENT=$(echo $TOTAL_COVERAGE | awk '{print $4}')
 }
 
-: ${LOGS_PATH:=logs}
-: ${OUT_PATH:=out}
-
 echo "Tracing COVERAGE with Verilator ..."
 rm -rf bin build model *.vcd
 
 # Verilate with coverage enabled
-ENABLE_COVERAGE_TRACING=1 DISABLE_VCD_TRACING=1 make -j 2
+source $SCRIPTS/set_hwf_isa.sh
+make -j 2 \
+  TB_CXXFLAGS="$TB_CXXFLAGS" \
+  ENABLE_COVERAGE_TRACING=1 \
+  DISABLE_VCD_TRACING=1
 
 # Create output dirs and coverage CSV file
 VLT_COV_ROOT_DIR=$LOGS_PATH/vlt-cov
 VLT_TMP_ANNOTATE_DIR=$VLT_COV_ROOT_DIR/tmp_annotations
-VLT_LINE_COV_PER_TEST=$LOGS_PATH/vlt_cov.csv
-VLT_LINE_CUM_COV_TEST=$LOGS_PATH/vlt_cov_cum.csv
+VLT_LINE_COV_PER_TEST=$AGG_OUT_PATH/vlt_cov.csv
+VLT_LINE_CUM_COV_TEST=$AGG_OUT_PATH/vlt_cov_cum.csv
 rm -rf $VLT_COV_ROOT_DIR
 mkdir -p $VLT_COV_ROOT_DIR
 chmod 777 $VLT_COV_ROOT_DIR
@@ -59,9 +64,9 @@ for TEST_CASE in $OUT_PATH/*/queue/*; do
 
   # Trace current test case
   # run simulation and move coverage data file
-  echo -n "    Tracing test: $TEST_CASE ... "
+  echo -n "    Tracing test: $(basename "$TEST_CASE") ... "
   bin/$TOPLEVEL <"$TEST_CASE" >/dev/null
-  mv $LOGS_PATH/coverage.dat $TEST_COV_DATA
+  mv logs/coverage.dat $TEST_COV_DATA
   # extract test-specific coverage to CSV file
   TOTAL_COVERAGE=$(verilator_coverage --annotate $VLT_TMP_ANNOTATE_DIR $TEST_COV_DATA)
   extract_vlt_coverage

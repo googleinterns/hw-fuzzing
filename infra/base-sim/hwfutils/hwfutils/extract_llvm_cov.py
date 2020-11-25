@@ -69,7 +69,7 @@ class LLVMCov(Coverage):
 
         # extract stats from each line
         filename = line_list[0]
-        if filename.startswith("hw/%s/model" % self.toplevel):
+        if ("hw/%s/model" % self.toplevel) in filename:
           # parse region coverage
           regions_total = int(line_list[1])
           regions_missed = int(line_list[2])
@@ -87,6 +87,7 @@ class LLVMCov(Coverage):
 def main(argv):
   module_description = "HW Fuzzing LLVM Coverage Extraction"
   parser = argparse.ArgumentParser(description=module_description)
+  parser.add_argument("--output-dir", default="logs")
   parser.add_argument("toplevel")
   parser.add_argument("llvm_cov_dir")
   args = parser.parse_args(argv)
@@ -97,8 +98,8 @@ def main(argv):
                     ".report.txt")
 
   # Export coverage data to a plotting friendly CSV file.
-  cov.dump_to_csv("logs/llvm_cov.csv")
-  cum_cov.dump_to_csv("logs/llvm_cov_cum.csv")
+  cov.dump_to_csv("%s/llvm_cov.csv" % args.output_dir)
+  cum_cov.dump_to_csv("%s/llvm_cov_cum.csv" % args.output_dir)
 
 
 if __name__ == "__main__":

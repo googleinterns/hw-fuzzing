@@ -31,16 +31,20 @@ from ot_config_dict import CONFIG_DICT
 EXPERIMENT_BASE_NAME = "exp011-cpp-afl-%s-%s-%s-%s-%d"
 # DURATION_MINS = 60
 DURATION_MINS = 1440  # 24 hours
-TOPLEVELS = ["aes", "hmac", "kmac", "rv_timer"]
-OPCODE_TYPES = ["constant", "mapped"]
-INSTR_TYPES = ["variable", "fixed"]
+# TOPLEVELS = ["aes", "hmac", "kmac", "rv_timer"]
+TOPLEVELS = ["hmac"]
+# OPCODE_TYPES = ["constant", "mapped"]
+OPCODE_TYPES = ["constant"]
+INSTR_TYPES = ["variable"]
+# INSTR_TYPES = ["variable", "fixed"]
 # TERMINATE_TYPES = ["invalidop", "never"]
 TERMINATE_TYPES = ["never"]
 # RUNS = range(0, 20)
 # RUNS = range(0, 5)
 # RUNS = range(0, 2)
 # RUNS = range(2, 4)
-RUNS = range(4, 5)
+# RUNS = range(4, 5)
+RUNS = range(5, 10)
 # ------------------------------------------------------------------------------
 
 TERMINAL_ROWS, TERMINAL_COLS = os.popen('stty size', 'r').read().split()

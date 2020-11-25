@@ -19,7 +19,11 @@
 
 echo "Tracing LINE COVERAGE with kcov ..."
 rm -rf bin build model *.vcd
-CPPFLAGS="-g" DISABLE_VCD_TRACING=1 make -j 2
+source $SCRIPTS/set_hwf_isa.sh
+CPPFLAGS="-g" \
+  make -j 2 \
+  TB_CXXFLAGS="$TB_CXXFLAGS" \
+  DISABLE_VCD_TRACING=1
 
 # Create output dirs
 KCOV_ROOT=$LOGS_PATH/kcov
@@ -41,7 +45,7 @@ TEST_CASE_NUM=0
 for TEST_CASE in $OUT_PATH/*/queue/*; do
 
   # run kcov
-  echo -n "    Tracing test: $TEST_CASE ... "
+  echo -n "    Tracing test: $(basename "$TEST_CASE") ... "
   $KCOV_PATH/kcov $KCOV_TMP_CURR bin/$TOPLEVEL <"$TEST_CASE" >/dev/null
   echo "Done."
 
@@ -75,6 +79,7 @@ for TEST_CASE in $OUT_PATH/*/queue/*; do
   # increment test number and update previous output dir
   TEST_CASE_NUM=$((TEST_CASE_NUM + 1))
 done
+# TODO(ttrippel): merge last set of traces
 rm -rf $KCOV_TMP_CURR
 rm -rf $KCOV_TMP_MERGE_1
 rm -rf $KCOV_TMP_MERGE_2
