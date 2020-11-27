@@ -98,12 +98,17 @@ class FuzzingData:
 
   def __post_init__(self):
     self.afl_data = self._load_afl_data()
+    self.rt = self._load_run_time()
 
   def _load_csv_data(self, csv_file):
     return pd.read_csv(csv_file,
                        delimiter=',',
                        index_col=None,
                        engine='python')
+
+  def _load_run_time(self):
+    with open(log_file, "r") as lf:
+      line = line.strip()
 
   def _load_afl_data(self):
     afl_glob_path = os.path.join(self.data_path, "out", "afl_*_interactive",
@@ -127,17 +132,12 @@ class FuzzingData:
 
 
 def _drop_outliers_in_range(values, lower_percentile=30, upper_percentile=70):
-  # median = np.median(values)
-  # mean = np.mean(values)
   lower_bound, upper_bound = np.percentile(
       values, [lower_percentile, upper_percentile])
   trimmed_values = []
   for i in range(len(values)):
     if lower_bound <= values[i] < upper_bound:
       trimmed_values.append(values[i])
-  # else:
-  # trimmed_values.append(median)
-  # trimmed_values.append(mean)
   return trimmed_values
 
 
@@ -307,10 +307,7 @@ def compute_instr_type_mann_whitney(instr_rts):
 
 
 def compute_fs_opt_mann_whitney(instr_rts):
-  print(
-      yellow(
-          "Computing Mann-Whitney U-test on instrumentation complexity data ..."
-      ))
+  print(yellow("Computing Mann-Whitney U-test on fork server opt. data ..."))
   for num_states in STATES:
     sub_rt_df = instr_rts[instr_rts[NUM_STATES_LABEL] == num_states]
     no_opt_data = sub_rt_df[sub_rt_df[OPT_TYPE_LABEL] ==
@@ -320,14 +317,14 @@ def compute_fs_opt_mann_whitney(instr_rts):
     mw = stats.mannwhitneyu(no_opt_data, opt_data)
     print("%d States - Mann-Whitney:" % num_states)
     print("\t%s vs. %s:" % (OPT_TYPE_MAPPINGS[False], OPT_TYPE_MAPPINGS[True]),
-          mw)
+          mw.pvalue)
   print(green("Done."))
   print(LINE_SEP)
 
 
 def plot_opt_strategies(instr_rts, fsopt_rts, plot_type="violin"):
   print(yellow("Generating plots ..."))
-  LABEL_FONT_SIZE = 14
+  LABEL_FONT_SIZE = 12
   sns.set()
 
   # HW fuzzing instrumentation levels

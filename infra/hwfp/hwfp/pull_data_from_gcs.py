@@ -62,14 +62,21 @@ def pull_data_from_gcs():
       cp_cmds = []
       plot_data = "out/%s/plot_data" % _get_afl_plot_file_path(src)
       exp_log = os.path.join("logs", "exp.log")
+      fuzz_time_log = os.path.join("logs", "fuzz_time.log")
       svas = os.path.join("logs", "svas.csv")
       bb_complexity = os.path.join("logs", "bb_complexity.csv")
       kcov_cum = os.path.join("logs", "kcov_cum.csv")
       llvm_cov_cum = os.path.join("logs", "llvm_cov_cum.csv")
       vlt_cov_cum = os.path.join("logs", "vlt_cov_cum.csv")
       data_files = [
-          plot_data, exp_log, svas, bb_complexity, kcov_cum, llvm_cov_cum,
-          vlt_cov_cum
+          plot_data,
+          exp_log,
+          fuzz_time_log,
+          svas,
+          bb_complexity,
+          kcov_cum,
+          llvm_cov_cum,
+          vlt_cov_cum,
       ]
       for df in data_files:
         cp_cmds.append(
