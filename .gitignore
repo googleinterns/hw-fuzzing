@@ -55,9 +55,7 @@ hw/rv_timer/seeds
 *.png
 *.svg
 *.jpg
-!docs/figures/fuzzing_hardware_like_software.png
-!docs/figures/hw_fuzzing_pipeline.png
-!docs/figures/lock_state_machine.png
+!docs/figures/hwf_process.png
 
 # Environment
 .envrc
