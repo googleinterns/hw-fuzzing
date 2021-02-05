@@ -79,7 +79,6 @@ for TEST_CASE in $OUT_PATH/*/queue/*; do
   # increment test number and update previous output dir
   TEST_CASE_NUM=$((TEST_CASE_NUM + 1))
 done
-# TODO(ttrippel): merge last set of traces
 rm -rf $KCOV_TMP_CURR
 rm -rf $KCOV_TMP_MERGE_1
 rm -rf $KCOV_TMP_MERGE_2

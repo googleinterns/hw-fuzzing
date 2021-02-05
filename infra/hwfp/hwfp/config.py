@@ -62,7 +62,8 @@ class Config():
     if not self.args.silent:
       print(LINE_SEP)
       print("Loading GCP configurations ...")
-    with open(self.root_path + "/gcp_config.hjson", "r") as hjson_file:
+    gcp_config = os.path.join(self.root_path, args.gcp_config_filename)
+    with open(gcp_config, "r") as hjson_file:
       self.gcp_params = hjson.load(hjson_file)
 
     # Load experiment configurations
