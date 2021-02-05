@@ -23,7 +23,6 @@ from dataclasses import dataclass
 
 import matplotlib as mpl
 import matplotlib.pyplot as plt
-# import numpy as np
 import pandas as pd
 import seaborn as sns
 from hwfutils.string_color import color_str_green as green
@@ -39,8 +38,13 @@ LABEL_FONT_SIZE = 8
 TICK_FONT_SIZE = 8
 LEGEND_FONT_SIZE = 8
 LEGEND_TITLE_FONT_SIZE = 8
-TIME_SCALE = "m"
-SCALED_MAX_PLOT_TIME = 60
+# TIME_SCALE = "m"
+TIME_SCALE = "h"
+# SCALED_MAX_PLOT_TIME = 60
+SCALED_MAX_PLOT_TIME = 24
+# PLOT_FILE_NAME = "hwf_grammar_cov_1hour_10trials_avg.pdf"
+PLOT_FILE_NAME = "hwf_grammar_cov_24hours_10trials_avg_wline.pdf"
+PLOT_FORMAT = "pdf"
 
 # ------------------------------------------------------------------------------
 # Plot labels
@@ -71,7 +75,7 @@ OPCODE_TYPES = ["constant", "mapped"]
 INSTR_TYPES = ["variable", "fixed"]
 # TERMINATE_TYPES = ["invalidop", "never"]
 TERMINATE_TYPES = ["never"]
-TRIALS = range(0, 5)
+TRIALS = range(0, 10)
 
 # ------------------------------------------------------------------------------
 # Other defines
@@ -138,6 +142,7 @@ class FuzzingData:
     cov_data_path = "%s/logs/%s_cum.csv" % (self.cov_data_path, cov_type)
     if not os.path.exists(cov_data_path):
       print(red("ERROR: coverage data (%s) does not exist." % cov_data_path))
+      # return None
       sys.exit(1)
     # Load data into Pandas DataFrame
     cov_df = self._load_csv_data(cov_data_path)
@@ -185,7 +190,10 @@ def get_vlt_cov_at_time(paths_total, vlt_cov_data):
   return vlt_cov
 
 
-def build_avg_coverage_df(exp2data, time_units="m", normalize_to_start=False):
+def build_avg_coverage_df(exp2data,
+                          time_units="m",
+                          normalize_to_start=False,
+                          consolidation="avg"):
   print(yellow("Building average coverage dataframe ..."))
   # Create empty dictionary that will be used to create a Pandas DataFrame that
   # looks like the following:
@@ -219,54 +227,47 @@ def build_avg_coverage_df(exp2data, time_units="m", normalize_to_start=False):
       kcov_avg = 0
       llvm_cov_avg = 0
       vlt_cov_avg = 0
-      i = 0
+      kcov_max = 0
+      llvm_cov_max = 0
+      vlt_cov_max = 0
       for fd in fd_list:
         # get the paths_total at the current time
         paths_total = get_paths_total_at_time(time, fd.afl_data) - 1
         # get coverage data
-        # print(exp_name, i)
-        kcov_avg += get_cov_at_time(paths_total, fd.kcov_data,
-                                    "Line-Coverage-(%)")
-        llvm_cov_avg += get_cov_at_time(paths_total, fd.llvm_cov_data,
-                                        "Region-Coverage-(%)")
-        vlt_cov_avg += get_vlt_cov_at_time(paths_total, fd.vlt_cov_data)
-        i += 1
+        kcov = get_cov_at_time(paths_total, fd.kcov_data, "Line-Coverage-(%)")
+        kcov_avg += kcov
+        kcov_max = max(kcov_max, kcov)
+        llvm_cov = get_cov_at_time(paths_total, fd.llvm_cov_data,
+                                   "Region-Coverage-(%)")
+        llvm_cov_avg += llvm_cov
+        llvm_cov_max = max(llvm_cov_max, llvm_cov)
+        vlt_cov = get_vlt_cov_at_time(paths_total, fd.vlt_cov_data)
+        vlt_cov_avg += vlt_cov
+        vlt_cov_max = max(vlt_cov_max, vlt_cov)
       kcov_avg /= float(len(fd_list))
       llvm_cov_avg /= float(len(fd_list))
       vlt_cov_avg /= float(len(fd_list))
-      # save time 0 coverage to normalize
-      if time == 0:
-        kcov_avg_t0 = kcov_avg
-        llvm_cov_avg_t0 = llvm_cov_avg
-        vlt_cov_avg_t0 = vlt_cov_avg
-      if normalize_to_start:
-        kcov_avg /= kcov_avg_t0
-        llvm_cov_avg /= llvm_cov_avg_t0
-        vlt_cov_avg /= vlt_cov_avg_t0
-      # add kcov data to dataframe row
       coverage_dict[COVERAGE_TYPE_LABEL].append(SW_LINE_COVERAGE_LABEL)
-      coverage_dict[COVERAGE_LABEL].append(kcov_avg)
-      # add llvm-cov data to dataframe row
       coverage_dict[COVERAGE_TYPE_LABEL].append(SW_REGION_COVERAGE_LABEL)
-      coverage_dict[COVERAGE_LABEL].append(llvm_cov_avg)
-      # add vlt-cov data to dataframe row
       coverage_dict[COVERAGE_TYPE_LABEL].append(HW_LINE_COVERAGE_LABEL)
-      coverage_dict[COVERAGE_LABEL].append(vlt_cov_avg)
+      if consolidation == "avg":
+        coverage_dict[COVERAGE_LABEL].append(kcov_avg)
+        coverage_dict[COVERAGE_LABEL].append(llvm_cov_avg)
+        coverage_dict[COVERAGE_LABEL].append(vlt_cov_avg)
+      else:
+        coverage_dict[COVERAGE_LABEL].append(kcov_max)
+        coverage_dict[COVERAGE_LABEL].append(llvm_cov_max)
+        coverage_dict[COVERAGE_LABEL].append(vlt_cov_max)
     # extend lines to max time value
-    if coverage_dict[TIME_LABEL][-1] != 60.0:
+    if coverage_dict[TIME_LABEL][-1] != SCALED_MAX_PLOT_TIME:
       for _ in range(3):
         coverage_dict[TOPLEVEL_LABEL].append(anchor_fd.toplevel)
         coverage_dict[GRAMMAR_LABEL].append(anchor_fd.grammar)
         coverage_dict[TIME_LABEL].append(SCALED_MAX_PLOT_TIME)
-    # add kcov data to dataframe row
     coverage_dict[COVERAGE_TYPE_LABEL].append(SW_LINE_COVERAGE_LABEL)
-    coverage_dict[COVERAGE_LABEL].append(kcov_avg)
-    # add llvm-cov data to dataframe row
     coverage_dict[COVERAGE_TYPE_LABEL].append(SW_REGION_COVERAGE_LABEL)
-    coverage_dict[COVERAGE_LABEL].append(llvm_cov_avg)
-    # add vlt-cov data to dataframe row
     coverage_dict[COVERAGE_TYPE_LABEL].append(HW_LINE_COVERAGE_LABEL)
-    coverage_dict[COVERAGE_LABEL].append(vlt_cov_avg)
+    coverage_dict[COVERAGE_LABEL].extend(coverage_dict[COVERAGE_LABEL][-3:])
   print(green("Done."))
   print(LINE_SEP)
   return pd.DataFrame.from_dict(coverage_dict)
@@ -435,36 +436,77 @@ def _get_axis_limits():
                                              SubplotAxisLimits(),
                                              SubplotAxisLimits())
 
-  MIN_TIME = -5
-  MAX_TIME = 60
+  MIN_TIME = -2
+  MAX_TIME = SCALED_MAX_PLOT_TIME
+
+  # ------------------------------------------------
   # AES axis limits
+  # ------------------------------------------------
+  # axis_limits["aes"].kcov_limits = SubplotAxisLimits(MIN_TIME, MAX_TIME, 89,
+  # 91)
+  # axis_limits["aes"].llvm_cov_limits = SubplotAxisLimits(
+  # MIN_TIME, MAX_TIME, 58, 63)
+  # axis_limits["aes"].vlt_cov_limits = SubplotAxisLimits(
+  # MIN_TIME, MAX_TIME, 80, 90)
+  # ------------------------------------------------
   axis_limits["aes"].kcov_limits = SubplotAxisLimits(MIN_TIME, MAX_TIME, 89,
                                                      91)
   axis_limits["aes"].llvm_cov_limits = SubplotAxisLimits(
       MIN_TIME, MAX_TIME, 58, 63)
   axis_limits["aes"].vlt_cov_limits = SubplotAxisLimits(
-      MIN_TIME, MAX_TIME, 83, 90)
+      MIN_TIME, MAX_TIME, 81, 91)
+  # ------------------------------------------------
 
+  # ------------------------------------------------
   # HMAC axis limits
+  # ------------------------------------------------
+  # axis_limits["hmac"].kcov_limits = SubplotAxisLimits(MIN_TIME, MAX_TIME, 85,
+  # 89)
+  # axis_limits["hmac"].llvm_cov_limits = SubplotAxisLimits(
+  # MIN_TIME, MAX_TIME, 63, 68)
+  # axis_limits["hmac"].vlt_cov_limits = SubplotAxisLimits(
+  # MIN_TIME, MAX_TIME, 61, 95)
+  # ------------------------------------------------
   axis_limits["hmac"].kcov_limits = SubplotAxisLimits(MIN_TIME, MAX_TIME, 85,
                                                       89)
   axis_limits["hmac"].llvm_cov_limits = SubplotAxisLimits(
-      MIN_TIME, MAX_TIME, 65, 68)
+      MIN_TIME, MAX_TIME, 63, 68)
   axis_limits["hmac"].vlt_cov_limits = SubplotAxisLimits(
-      MIN_TIME, MAX_TIME, 70, 95)
+      MIN_TIME, MAX_TIME, 60, 95)
+  # ------------------------------------------------
 
+  # ------------------------------------------------
   # KMAC axis limits
+  # ------------------------------------------------
+  # axis_limits["kmac"].kcov_limits = SubplotAxisLimits(MIN_TIME, MAX_TIME, 94,
+  # 96)
+  # axis_limits["kmac"].llvm_cov_limits = SubplotAxisLimits(
+  # MIN_TIME, MAX_TIME, 67, 70)
+  # axis_limits["kmac"].vlt_cov_limits = SubplotAxisLimits(
+  # MIN_TIME, MAX_TIME, 50, 85)
+  # ------------------------------------------------
   axis_limits["kmac"].kcov_limits = SubplotAxisLimits(MIN_TIME, MAX_TIME, 94,
                                                       96)
-  axis_limits["kmac"].llvm_cov_limits = SubplotAxisLimits(
-      MIN_TIME, MAX_TIME, 68, 71)
-  axis_limits["kmac"].vlt_cov_limits = SubplotAxisLimits(
-      MIN_TIME, MAX_TIME, 60, 85)
+  # ------------------------------------------------
 
+  # ------------------------------------------------
   # RV-Timer axis limits
-  axis_limits["rv_timer"].kcov_limits = SubplotAxisLimits(-0.1, 3, 80, 90)
-  axis_limits["rv_timer"].llvm_cov_limits = SubplotAxisLimits(-0.1, 3, 50, 85)
-  axis_limits["rv_timer"].vlt_cov_limits = SubplotAxisLimits(-0.1, 3, 25, 88)
+  # ------------------------------------------------
+  # RV_TIMER_START_TIME = -0.1
+  # RV_TIMER_END_TIME = 3
+  # axis_limits["rv_timer"].kcov_limits = SubplotAxisLimits(RV_TIMER_START_TIME, RV_TIMER_END_TIME, 80, 90)
+  # axis_limits["rv_timer"].llvm_cov_limits = SubplotAxisLimits(RV_TIMER_START_TIME, RV_TIMER_END_TIME, 63, 73)
+  # axis_limits["rv_timer"].vlt_cov_limits = SubplotAxisLimits(RV_TIMER_START_TIME, RV_TIMER_END_TIME, 10, 88)
+  # ------------------------------------------------
+  RV_TIMER_START_TIME = -0.01
+  RV_TIMER_END_TIME = 0.1
+  axis_limits["rv_timer"].kcov_limits = SubplotAxisLimits(
+      RV_TIMER_START_TIME, RV_TIMER_END_TIME, 81, 90)
+  axis_limits["rv_timer"].llvm_cov_limits = SubplotAxisLimits(
+      RV_TIMER_START_TIME, RV_TIMER_END_TIME, 63, 74)
+  axis_limits["rv_timer"].vlt_cov_limits = SubplotAxisLimits(
+      RV_TIMER_START_TIME, RV_TIMER_END_TIME, 10, 95)
+  # ------------------------------------------------
   return axis_limits
 
 
@@ -501,6 +543,7 @@ def plot_avg_coverage_vs_time(cov_df, time_units="m"):
                         hue=GRAMMAR_LABEL,
                         ax=axes[row][col],
                         legend=plot_legend)
+      ax.axhline(y=1.0, color='r', linestyle='-')
       # get legend info if we are plotting the first plot
       if plot_legend:
         lines = ax.get_lines()
@@ -547,7 +590,7 @@ def plot_avg_coverage_vs_time(cov_df, time_units="m"):
   plt.subplots_adjust(bottom=0.23, wspace=0.25, hspace=0.25)
 
   # adjust figure layout and save to file
-  plt.savefig("hwf_grammar_cov.pdf", format="PDF")
+  plt.savefig(PLOT_FILE_NAME, format=PLOT_FORMAT)
   print(green("Done."))
   print(LINE_SEP)
 
@@ -564,8 +607,13 @@ def main(argv):
                                      time_units=TIME_SCALE,
                                      normalize_to_start=False)
   # coverage_dfs = build_coverage_dfs(exp2data)
-
-  # Compute stats
+  # print("Dumping to CSV ...")
+  # avg_cov_df.to_csv("temp.csv", index=False)
+  # print("Reading from CSV ...")
+  # avg_cov_df = pd.read_csv("temp.csv",
+  # delimiter=',',
+  # index_col=None,
+  # engine='python')
 
   # Plot data
   plot_avg_coverage_vs_time(avg_cov_df, time_units=TIME_SCALE)

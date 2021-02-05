@@ -98,7 +98,7 @@ class FuzzingData:
 
   def __post_init__(self):
     self.afl_data = self._load_afl_data()
-    self.rt = self._load_run_time()
+    self.runtime = self._load_run_time()
 
   def _load_csv_data(self, csv_file):
     return pd.read_csv(csv_file,
@@ -107,8 +107,18 @@ class FuzzingData:
                        engine='python')
 
   def _load_run_time(self):
-    with open(log_file, "r") as lf:
-      line = line.strip()
+    run_time_path = "%s/logs/fuzz_time.log" % self.data_path
+    if not os.path.exists(run_time_path):
+      print(red("ERROR: run time data (%s) does not exist." % run_time_path))
+      sys.exit(1)
+    with open(run_time_path, "r") as lf:
+      for line in lf:
+        line = line.strip()
+        if line.startswith("real"):
+          line_list = line.split()
+          rt_min = float(line_list[1].split("m")[0])
+          rt_sec = float(line_list[1].split("m")[1].rstrip("s"))
+    return ((rt_min * 60) + rt_sec)
 
   def _load_afl_data(self):
     afl_glob_path = os.path.join(self.data_path, "out", "afl_*_interactive",
@@ -125,11 +135,6 @@ class FuzzingData:
     afl_df.loc[:, "# unix_time"] -= afl_df.loc[0, "# unix_time"]
     return afl_df
 
-  @property
-  def runtime(self):
-    return float(self.afl_data["# unix_time"].max() -
-                 self.afl_data["# unix_time"].min())
-
 
 def _drop_outliers_in_range(values, lower_percentile=30, upper_percentile=70):
   lower_bound, upper_bound = np.percentile(
@@ -139,14 +144,6 @@ def _drop_outliers_in_range(values, lower_percentile=30, upper_percentile=70):
     if lower_bound <= values[i] < upper_bound:
       trimmed_values.append(values[i])
   return trimmed_values
-
-
-# CURRENTLY UNUSED
-def _winsorize_outliers_in_range(values,
-                                 lower_percentile=0.33,
-                                 upper_percentile=0.33):
-  marray = winsorize(values, limits=(lower_percentile, upper_percentile))
-  return list(marray)
 
 
 def _aggregrate_instr_complex_rts(exp2data):
@@ -324,7 +321,7 @@ def compute_fs_opt_mann_whitney(instr_rts):
 
 def plot_opt_strategies(instr_rts, fsopt_rts, plot_type="violin"):
   print(yellow("Generating plots ..."))
-  LABEL_FONT_SIZE = 12
+  LABEL_FONT_SIZE = 14
   sns.set()
 
   # HW fuzzing instrumentation levels
@@ -342,6 +339,7 @@ def plot_opt_strategies(instr_rts, fsopt_rts, plot_type="violin"):
                         jitter=0.3,
                         size=MARKER_SIZE)
   ax1.axhline(y=1.0, color='r', linestyle='-')
+  ax1.set_ylim(0.5, 3)
   ax1.set_xlabel(NUM_STATES_LABEL, fontsize=LABEL_FONT_SIZE)
   ax1.set_ylabel(RUN_TIME_LABEL, fontsize=LABEL_FONT_SIZE)
   ax1.tick_params("x", labelsize=LABEL_FONT_SIZE)
@@ -350,7 +348,8 @@ def plot_opt_strategies(instr_rts, fsopt_rts, plot_type="violin"):
              fontsize=LABEL_FONT_SIZE,
              title_fontsize=LABEL_FONT_SIZE)
   plt.tight_layout()
-  plt.savefig("hwf_instrumentation_levels.png", format="PNG")
+  # plt.savefig("hwf_instrumentation_levels.png", format="png")
+  plt.savefig("hwf_instrumentation_levels.pdf", format="pdf")
   plt.close()
 
   # HW fork server optimization
@@ -368,6 +367,7 @@ def plot_opt_strategies(instr_rts, fsopt_rts, plot_type="violin"):
                         jitter=0.3,
                         size=MARKER_SIZE)
   ax2.axhline(y=1.0, color='r', linestyle='-')
+  ax1.set_ylim(0.5, 3)
   ax2.set_xlabel(NUM_STATES_LABEL, fontsize=LABEL_FONT_SIZE)
   ax2.set_ylabel(RUN_TIME_LABEL, fontsize=LABEL_FONT_SIZE)
   ax2.tick_params("x", labelsize=LABEL_FONT_SIZE)
@@ -376,7 +376,8 @@ def plot_opt_strategies(instr_rts, fsopt_rts, plot_type="violin"):
              fontsize=LABEL_FONT_SIZE,
              title_fontsize=LABEL_FONT_SIZE)
   plt.tight_layout()
-  plt.savefig("hwf_fs_opt.png", format="PNG")
+  # plt.savefig("hwf_fs_opt.png", format="png")
+  plt.savefig("hwf_fs_opt.pdf", format="pdf")
 
   print(green("Done."))
   print(LINE_SEP)
