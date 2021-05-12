@@ -31,6 +31,7 @@ autoconf
 export VERILATOR_ROOT=$(pwd)
 ./configure
 make -j 4
+make install
 
 # Remove installation dependencies to shrink image size
 apt-get remove --purge -y $VLT_INSTALL_PACKAGES
