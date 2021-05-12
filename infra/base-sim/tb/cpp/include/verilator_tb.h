@@ -32,7 +32,8 @@ class VerilatorTb {
   vluint64_t get_main_time();
 
  protected:
-  Vtop dut_;  // Verilator model of DUT
+  Vtop dut_;              // Verilator model of DUT
+  vluint64_t main_time_;  // Verilator simulation time
 #if VM_TRACE
   void DumpTrace();
 #endif
@@ -40,7 +41,6 @@ class VerilatorTb {
   void set_main_time(vluint64_t main_time);
 
  private:
-  vluint64_t main_time_;  // Verilator simulation time
 #if VM_TRACE
   VerilatedVcdC* tracing_file_pointer_;  // VCD file pointer
   std::string vcd_file_name_;            // VCD file name
