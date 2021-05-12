@@ -14,7 +14,7 @@
 
 # Base image for all other images.
 
-FROM ubuntu:20.04
+FROM ubuntu:18.04
 MAINTAINER trippel@umich.edu
 ENV DEBIAN_FRONTEND noninteractive
 RUN apt-get update && apt-get upgrade -y && apt-get autoremove -y
