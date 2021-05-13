@@ -45,11 +45,12 @@ MODEL_SRC := $(MODEL_DIR)/Vtop.cpp
 ################################################################################
 # Verilator flags
 ################################################################################
+VLT_TOPMODULE ?= $(TOPLEVEL)_tb
 VFLAGS += \
 	-Wno-fatal \
 	--prefix Vtop \
 	--Mdir $(MODEL_DIR) \
-	--top-module $(TOPLEVEL)_tb \
+	--top-module $(VLT_TOPMODULE)
 	--cc \
 	--compiler clang
 
@@ -63,12 +64,6 @@ CPPFLAGS += "-DVL_TIME_PRECISION_STR=1ps"
 export COCOTB_REDUCED_LOG_FMT := 1
 export COCOTB_LOG_LEVEL       := DEBUG
 export LD_LIBRARY_PATH        := $(shell cocotb-config --prefix)/cocotb/libs
-endif
-
-ifeq ($(TOPLEVEL), Sodor3Stage)
-VFLAGS += --top-module VerilatorHarness 
-else
-VFLAGS += --top-module $(TOPLEVEL)_tb
 endif
 
 ifdef HDL_INC_DIRS
@@ -96,11 +91,6 @@ $(BIN_DIR)/$(TOPLEVEL): $(MODEL_SRC) $(TB_SRCS) $(SHARED_TB_SRCS)
 
 $(MODEL_SRC): $(HDL)
 	$(VERILATOR_ROOT)/bin/verilator $(VFLAGS) $^
-
-# TODO(ttrippel): this is a hack to compile RFUZZ FIRRTL HW to Verilog (and
-# generate the dut.hpp file needed for the RFUZZ Verilator harness).
-%.v:
-	$(MAKE) -C $(DUT_HDL_DIR) bin
 
 %.sv:
 	$(shell fusesoc --cores-root=$(DUT_HDL_DIR) run --tool=verilator \

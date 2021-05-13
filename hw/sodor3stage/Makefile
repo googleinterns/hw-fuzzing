@@ -38,8 +38,8 @@ export SEED          ?=
 ################################################################################
 export HDL_INC_DIRS := ../tb/hdl
 export HDL := \
-	$(DUT_HDL_DIR)/build/$(TOPLEVEL).v \
-	$(DUT_HDL_DIR)/build/$(TOPLEVEL)_VHarness.v
+	$(TOPLEVEL).v \
+	$(TOPLEVEL)_VHarness.v
 export SHARED_TB_SRCS := \
 	verilator_tb.cpp \
 	stdin_fuzz_tb.cpp \
@@ -48,10 +48,10 @@ export SHARED_TB_SRCS := \
 ################################################################################
 # Verilator Flags (optional)
 ################################################################################
+export VLT_TOPMODULE := VerilatorHarness
 export VFLAGS := --assert
 
 ################################################################################
 # Include common build targets
 ################################################################################
 include ../common.mk
-
