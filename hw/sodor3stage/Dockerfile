@@ -18,7 +18,8 @@ MAINTAINER trippel@umich.edu
 
 # create DUT directory
 ENV DUT=$HW/sodor3stage
-RUN mkdir $DUT
+RUN mkdir $DUT 
+RUN mkdir $DUT/hdl
 
 # Copy in HDL and testbench
 RUN apt-get install -y git sed
@@ -30,10 +31,9 @@ RUN cd $DUT_HDL_DIR && git checkout ${VERSION}
 RUN cd $DUT_HDL_DIR && \
       sed -i 's/git@github.com:/https:\/\/github.com\//' .gitmodules && \
       git submodule update --init
-#COPY hdl $DUT/hdl
+COPY hdl_generator/generate-hdl $SCRIPTS/
 COPY tb $DUT/tb
 COPY seeds $DUT/seeds
-#COPY seed_descriptions $DUT/seed_descriptions
 
 # Install RFUZZ circuit building dependencies
 RUN apt-get install -y \
@@ -49,12 +49,8 @@ RUN apt-key adv --keyserver hkp://keyserver.ubuntu.com:80 \
       --recv 2EE0EA64E40A89B84B2DF73499E82A75642AC823
 RUN apt-get update && apt-get install -y sbt
 
-# Tell Meson build system where to find Verilator headers
-#ENV PKG_CONFIG_PATH=$VERILATOR_ROOT
-
 # Copy in build scripts
 COPY Makefile $DUT/
 
 WORKDIR $DUT
 CMD ["run"]
-
