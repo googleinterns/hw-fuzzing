@@ -13,7 +13,14 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+# Generate HDL from FIRRTL
 make -C $DUT_HDL_DIR FIR=${TOPLEVEL}.fir DUT=$TOPLEVEL bin
+mkdir -p $DUT/hdl
 cp $DUT_HDL_DIR/build/$TOPLEVEL.v hdl/$TOPLEVEL.v
 cp $DUT_HDL_DIR/build/${TOPLEVEL}_VHarness.v hdl/${TOPLEVEL}_VHarness.v
+
+# Generate Verilator TB interface
+rfuzz_interface_gen.py \
+  -o $HW/tb/cpp/include/rfuzz_tb_interface.h \
+  -i $DUT_HDL_DIR/build/$TOPLEVEL.toml
 exit 0
