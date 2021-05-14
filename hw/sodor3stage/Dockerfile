@@ -16,10 +16,13 @@ ARG FUZZER=sim
 FROM hw-fuzzing/base-${FUZZER}
 MAINTAINER trippel@umich.edu
 
-# create DUT directory
-ENV DUT=$HW/sodor3stage
+# Test that TOPLEVEL argument was passed
+ARG TOPLEVEL
+RUN test -n "$TOPLEVEL"
+
+# Create DUT directory
+ENV DUT=$HW/$TOPLEVEL
 RUN mkdir $DUT 
-RUN mkdir $DUT/hdl
 
 # Copy in HDL and testbench
 RUN apt-get install -y git sed
@@ -31,7 +34,7 @@ RUN cd $DUT_HDL_DIR && git checkout ${VERSION}
 RUN cd $DUT_HDL_DIR && \
       sed -i 's/git@github.com:/https:\/\/github.com\//' .gitmodules && \
       git submodule update --init
-COPY hdl_generator/generate-hdl $SCRIPTS/
+ENV PATH="${PATH}:${DUT}/hdl_generator"
 COPY tb $DUT/tb
 COPY seeds $DUT/seeds
 
