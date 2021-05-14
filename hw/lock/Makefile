@@ -15,7 +15,7 @@
 ################################################################################
 # Design Specific Configs
 ################################################################################
-export TOPLEVEL      := lock
+export TOPLEVEL      ?= lock
 export TOPLEVEL_LANG := verilog
 export TB_TYPE       ?= cpp
 export TB            ?= afl

@@ -19,7 +19,7 @@ endif
 ################################################################################
 # Circuit specific configs
 ################################################################################
-export TOPLEVEL      := aes
+export TOPLEVEL      ?= aes
 export TOPLEVEL_LANG := verilog
 export TB_TYPE       ?= cpp
 export TB            ?= afl

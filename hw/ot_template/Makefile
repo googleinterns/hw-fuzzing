@@ -19,7 +19,7 @@ endif
 ################################################################################
 # Circuit specific configs
 ################################################################################
-export TOPLEVEL      := # OpenTitan IP Toplevel
+export TOPLEVEL      ?= # OpenTitan IP Toplevel
 export TOPLEVEL_LANG := verilog
 export TB_TYPE       ?= cpp
 export TB            ?= afl
