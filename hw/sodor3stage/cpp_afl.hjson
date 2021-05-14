@@ -1,7 +1,7 @@
 {
   // Experiment Parameters
   experiment_name: rfuzz-sodor3stage-test
-  toplevel: sodor3stage
+  toplevel: Sodor3Stage
   // VCS commit hash of version of DUT
   version: HEAD
   // Options: [cpp, cocotb]
