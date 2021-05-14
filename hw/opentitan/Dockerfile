@@ -25,19 +25,24 @@ RUN test -n "$TOPLEVEL"
 ENV DUT=$HW/$TOPLEVEL
 RUN mkdir $DUT
 
-# Copy in HDL and testbench
+# Pull down OpenTitan codebase from GitHub
 RUN apt-get install -y git
 ENV DUT_HDL_DIR=$HW/opentitan
 RUN git clone --branch hwfuzz-checkpoint \
       https://github.com/timothytrippel/opentitan.git $DUT_HDL_DIR
+
+# Checkout specific version of OpenTitan codebase
 ARG VERSION=HEAD
 RUN cd $DUT_HDL_DIR && git checkout ${VERSION}
-COPY hdl $DUT/hdl
-COPY tb $DUT/tb
-COPY seed_descriptions $DUT/seed_descriptions
+
+# Copy in local files to the image
+RUN test -n "$TOPLEVEL"
+COPY $TOPLEVEL/hdl $DUT/hdl
+COPY $TOPLEVEL/tb $DUT/tb
+COPY $TOPLEVEL/seed_descriptions $DUT/seed_descriptions
 
 # Copy in build scripts
-COPY Makefile $DUT/
+COPY $TOPLEVEL/Makefile $DUT/
 
 WORKDIR $DUT
 CMD ["run"]

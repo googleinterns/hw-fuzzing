@@ -1,6 +1,7 @@
 {
   // Experiment Parameters
   experiment_name: aes-test
+  soc: opentitan
   toplevel: aes
   // VCS commit hash of version of DUT
   version: HEAD

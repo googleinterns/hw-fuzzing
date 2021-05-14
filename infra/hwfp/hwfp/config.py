@@ -73,6 +73,7 @@ class Config():
     with open(self.config_filename, "r") as hjson_file:
       cdict = hjson.load(hjson_file)
       self.experiment_name = cdict["experiment_name"]
+      self.soc = cdict["soc"]
       self.toplevel = cdict["toplevel"]
       self.version = cdict["version"]
       self.tb_type = cdict["tb_type"]
@@ -115,6 +116,7 @@ class Config():
 
     # Add main experiment parameters
     exp_config_table.add_row(["Experiment Name", self.experiment_name])
+    exp_config_table.add_row(["SoC", self.soc])
     exp_config_table.add_row(["Toplevel", self.toplevel])
     exp_config_table.add_row(["Version", self.version])
     exp_config_table.add_row(["Testbench Type", self.tb_type])

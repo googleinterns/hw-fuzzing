@@ -1,4 +1,4 @@
-// Copyright 2020 Timothy Trippel
+// Copyright 2021 Timothy Trippel
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -12,30 +12,23 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-module lock_tb(
-  input wire reset_n,
-  input wire clk,
-  input wire [7:0] code,
-  output reg [1:0] state,
-  output wire unlocked
-);
+#include "hw/tb/cpp/include/rfuzz_tb.h"
 
-  ////////////////
-  //    DUT     //
-  ////////////////
-  lock dut (
-    .reset_n,
-    .clk,
-    .code,
-    .state,
-    .unlocked
-  );
+// Testbench needs to be global for sc_time_stamp()
+RFUZZTb* tb = NULL;
 
-  ////////////////
-  // Assertions //
-  ////////////////
-  assert property (@(posedge clk) disable iff (reset_n === '0) !unlocked) else
-  begin
-      $error("SUCCESS: unlocked state has been reached.");
-  end
-endmodule
+// needs to be defined so Verilog can call $time
+double sc_time_stamp() { return tb->get_main_time(); }
+
+int main(int argc, char** argv, char** env) {
+  // Instantiate testbench
+  tb = new RFUZZTb(argc, argv);
+
+  // Simulate the DUT
+  tb->SimulateDUT();
+
+  // Teardown
+  delete (tb);
+  tb = NULL;
+  exit(0);
+}
