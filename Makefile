@@ -28,7 +28,13 @@ rebuild-infra:
 	infra/cleanup_infra.sh; infra/build_infra.sh
 
 # Fuzzing locally
-fuzz-%: hw/%/cpp_afl.hjson
+fuzz-ot-%: hw/opentitan/%/cpp_afl.hjson
+	python3 infra/hwfp/hwfp/fuzz.py $<
+
+fuzz-other-%: hw/other/%/cpp_afl.hjson
+	python3 infra/hwfp/hwfp/fuzz.py $<
+
+fuzz-rfuzz-%: hw/rfuzz/%/cpp_afl.hjson
 	python3 infra/hwfp/hwfp/fuzz.py $<
 
 # Synchronize GCS experiment data locally

@@ -161,12 +161,17 @@ def build_docker_image(config):
     print(LINE_SEP)
     print("Building Docker image to fuzz %s ..." % config.toplevel)
     print(LINE_SEP)
+  # Set Dockerfile path
+  if config.soc == "other":
+    dockerfile_path = "%s/hw/other/%s" % (config.root_path, config.toplevel)
+  else:
+    dockerfile_path = "%s/hw/%s" % (config.root_path, config.soc)
+  # Build command
   cmd = [
       "docker", "build", "--build-arg",
       "TOPLEVEL=%s" % config.toplevel, "--build-arg",
       "FUZZER=%s" % config.fuzzer, "--build-arg",
-      "VERSION=%s" % config.version, "-t", config.docker_image,
-      "%s/hw/%s" % (config.root_path, config.toplevel)
+      "VERSION=%s" % config.version, "-t", config.docker_image, dockerfile_path
   ]
   error_str = "ERROR: image build FAILED. Terminating experiment!"
   run_cmd(cmd, error_str, silent=config.args.silent)
@@ -195,9 +200,10 @@ def create_local_experiment_data_dir(config):
            stat.S_IRWXU | stat.S_IRGRP | stat.S_IROTH)
 
   # Copy over seeds that were used in this experiment
-  seeds_dir = "%s/hw/%s/seeds" % (config.root_path, config.toplevel)
-  seed_descripts_dir = "%s/hw/%s/seed_descriptions" % (config.root_path,
-                                                       config.toplevel)
+  seeds_dir = "%s/hw/%s/%s/seeds" % (config.root_path, config.soc,
+                                     config.toplevel)
+  seed_descripts_dir = "%s/hw/%s/%s/seed_descriptions" % (
+      config.root_path, config.soc, config.toplevel)
   if os.path.isdir(seeds_dir):
     shutil.copytree(seeds_dir, os.path.join(exp_data_path, "seeds"))
     os.chmod(os.path.join(exp_data_path, "seeds"),
@@ -264,8 +270,8 @@ def run_docker_container_locally(config, exp_data_path):
     cmd.extend(["-v", "%s/%s:/src/hw/tb" % (config.root_path, SHARED_TB_PATH)])
     cmd.extend([
         "-v",
-        "%s/hw/%s:/src/hw/%s" %
-        (config.root_path, config.toplevel, config.toplevel)
+        "%s/hw/%s/%s:/src/hw/%s" %
+        (config.root_path, config.soc, config.toplevel, config.toplevel)
     ])
     cmd.extend([
         "-v",

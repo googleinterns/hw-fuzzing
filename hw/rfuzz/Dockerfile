@@ -35,8 +35,8 @@ RUN cd $DUT_HDL_DIR && \
       sed -i 's/git@github.com:/https:\/\/github.com\//' .gitmodules && \
       git submodule update --init
 ENV PATH="${PATH}:${DUT}/hdl_generator"
-COPY tb $DUT/tb
-COPY seeds $DUT/seeds
+COPY $TOPLEVEL/tb $DUT/tb
+COPY $TOPLEVEL/seeds $DUT/seeds
 
 # Install RFUZZ circuit building dependencies
 RUN apt-get install -y \
@@ -53,7 +53,7 @@ RUN apt-key adv --keyserver hkp://keyserver.ubuntu.com:80 \
 RUN apt-get update && apt-get install -y sbt
 
 # Copy in build scripts
-COPY Makefile $DUT/
+COPY $TOPLEVEL/Makefile $DUT/
 
 WORKDIR $DUT
 CMD ["run"]
