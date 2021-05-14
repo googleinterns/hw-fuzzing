@@ -10,6 +10,9 @@ debug/
 target/
 Cargo.*
 !Cargo.toml
+# RFUZZ Cores
+infra/base-sim/tb/cpp/include/rfuzz_tb_interface.h
+hw/Sodor3Stage/hdl/
 
 # C Compiler Ouputs
 *.a
