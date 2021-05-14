@@ -50,7 +50,7 @@ VFLAGS += \
 	-Wno-fatal \
 	--prefix Vtop \
 	--Mdir $(MODEL_DIR) \
-	--top-module $(VLT_TOPMODULE)
+	--top-module $(VLT_TOPMODULE) \
 	--cc \
 	--compiler clang
 
