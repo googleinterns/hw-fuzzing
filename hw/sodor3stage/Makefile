@@ -38,8 +38,8 @@ export SEED          ?=
 ################################################################################
 export HDL_INC_DIRS := ../tb/hdl
 export HDL := \
-	$(TOPLEVEL).v \
-	$(TOPLEVEL)_VHarness.v
+	hdl/$(TOPLEVEL).v \
+	hdl/$(TOPLEVEL)_VHarness.v
 export SHARED_TB_SRCS := \
 	verilator_tb.cpp \
 	stdin_fuzz_tb.cpp \

@@ -17,19 +17,7 @@
 #include <bitset>
 #include <iostream>
 
-// TODO(ttrippel): these are specific to the Sodor3Stage design. Need to port
-// the dut_gen.py script from the RFUZZ project to autogenerate this.
-static constexpr size_t InputSize = 8;
-static inline void apply_input(Vtop* top, const uint8_t* input) {
-  top->io_input_bytes_0 = input[0];
-  top->io_input_bytes_1 = input[1];
-  top->io_input_bytes_2 = input[2];
-  top->io_input_bytes_3 = input[3];
-  top->io_input_bytes_4 = input[4];
-  top->io_input_bytes_5 = input[5];
-  top->io_input_bytes_6 = input[6];
-  top->io_input_bytes_7 = input[7];
-}
+#include "hw/tb/cpp/include/rfuzz_tb_interface.h"
 
 const uint8_t ResetInput[InputSize] = {0};
 
@@ -100,29 +88,8 @@ void RFUZZTb::SimulateDUT() {
     // Load test into DUT
     apply_input(&dut_, test_input);
 
-    //// Print test read from file/STDIN
-    // std::cout << "Loading inputs for test " << get_test_num();
-    // std::cout << " (time = " << std::dec << unsigned(get_main_time())
-    //<< ") ...";
-    // std::cout << std::endl;
-    // std::cout << "  in = " << std::bitset<8>(test_input[0]);
-    // std::cout << " (0x" << std::hex << unsigned(test_input[0]) << ")";
-    // std::cout << std::endl;
-    // std::cout << "  dut.code = " << std::bitset<8>(dut_.code);
-    // std::cout << " (0x" << std::hex << unsigned(dut_.code) << ")";
-    // std::cout << std::endl;
-
     // Toggle clock period
     ToggleClock(&dut_.clock, 2);
-
-    // Print vital DUT state
-    // std::cout << "Checking if unlocked (time = ";
-    // std::cout << std::dec << unsigned(get_main_time()) << ") ..." <<
-    // std::endl; std::cout << "  state = 0x" << std::hex <<
-    // unsigned(dut_.state)
-    //<< std::endl;
-    // std::cout << "  unlocked = 0x" << std::hex << unsigned(dut_.unlocked)
-    //<< std::endl;
   }
 
 #if VM_TRACE
