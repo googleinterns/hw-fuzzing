@@ -17,8 +17,12 @@ ARG FUZZER=sim
 FROM hw-fuzzing/base-${FUZZER}
 MAINTAINER trippel@umich.edu
 
-# create DUT directory
-ENV DUT=$HW/hmac
+# Test that TOPLEVEL argument was passed
+ARG TOPLEVEL
+RUN test -n "$TOPLEVEL"
+
+# Create DUT directory
+ENV DUT=$HW/$TOPLEVEL
 RUN mkdir $DUT
 
 # Copy in HDL and testbench

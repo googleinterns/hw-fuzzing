@@ -21,13 +21,17 @@ MAINTAINER trippel@umich.edu
 RUN curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y
 ENV PATH="$PATH:/root/.cargo/bin"
 
-# create DUT directory
-ENV DUT=$HW/lock
+# Test that TOPLEVEL argument was passed
+ARG TOPLEVEL
+RUN test -n "$TOPLEVEL"
+
+# Create DUT directory
+ENV DUT=$HW/$TOPLEVEL
 RUN mkdir $DUT
 
 # Copy in HDL and testbench
 COPY hdl_generator $DUT/hdl_generator
-RUN mv $DUT/hdl_generator/generate-hdl $SCRIPTS/
+ENV PATH="${PATH}:${DUT}/hdl_generator"
 COPY hdl $DUT/hdl
 COPY tb $DUT/tb
 COPY seeds $DUT/seeds

@@ -163,6 +163,7 @@ def build_docker_image(config):
     print(LINE_SEP)
   cmd = [
       "docker", "build", "--build-arg",
+      "TOPLEVEL=%s" % config.toplevel, "--build-arg",
       "FUZZER=%s" % config.fuzzer, "--build-arg",
       "VERSION=%s" % config.version, "-t", config.docker_image,
       "%s/hw/%s" % (config.root_path, config.toplevel)
@@ -273,19 +274,8 @@ def run_docker_container_locally(config, exp_data_path):
     cmd.extend(
         ["-v",
          "%s/infra/base-sim/exe.mk:/src/hw/exe.mk" % config.root_path])
-    for script in [
-        "run",
-        "run-kcov",
-        "run-llvm-cov",
-        "run-vlt-cov",
-        "set_hwf_isa.sh",
-        "cpp-verilator-sim",
-    ]:
-      cmd.extend([
-          "-v",
-          "%s/infra/base-sim/scripts/%s:/scripts/%s" %
-          (config.root_path, script, script)
-      ])
+    for script in glob.glob("%s/infra/base-sim/scripts/*" % config.root_path):
+      cmd.extend(["-v", "%s:/scripts/%s" % (script, os.path.basename(script))])
     if config.fuzzer == "afl" or config.fuzzer == "afl-term-on-crash":
       for script in ["compile", "fuzz"]:
         cmd.extend([
