@@ -20,9 +20,13 @@ MAINTAINER trippel@umich.edu
 ARG TOPLEVEL
 RUN test -n "$TOPLEVEL"
 
-# Create DUT directory
+# Create DUT directories
 ENV DUT=$HW/$TOPLEVEL
-RUN mkdir $DUT 
+RUN mkdir $DUT
+RUN mkdir -p $DUT/hdl_generator
+ARG FUZZER=sim TB_TYPE
+RUN test -n "$TB_TYPE"
+RUN mkdir -p $DUT/tb/$TB_TYPE/$FUZZER
 
 # Copy in HDL and testbench
 RUN apt-get install -y git sed
@@ -35,7 +39,8 @@ RUN cd $DUT_HDL_DIR && \
       sed -i 's/git@github.com:/https:\/\/github.com\//' .gitmodules && \
       git submodule update --init
 ENV PATH="${PATH}:${DUT}/hdl_generator"
-COPY $TOPLEVEL/tb $DUT/tb
+COPY generate-hdl $DUT/hdl_generator/generate-hdl
+COPY main.cpp $DUT/tb/cpp/afl/main.cpp
 COPY $TOPLEVEL/seeds $DUT/seeds
 
 # Install RFUZZ circuit building dependencies
@@ -53,7 +58,7 @@ RUN apt-key adv --keyserver hkp://keyserver.ubuntu.com:80 \
 RUN apt-get update && apt-get install -y sbt
 
 # Copy in build scripts
-COPY $TOPLEVEL/Makefile $DUT/
+COPY Makefile $DUT/
 
 WORKDIR $DUT
 CMD ["run"]

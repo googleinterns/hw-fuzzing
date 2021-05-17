@@ -19,7 +19,6 @@ endif
 ################################################################################
 # Circuit specific configs
 ################################################################################
-export TOPLEVEL      ?= Sodor3Stage
 export TOPLEVEL_LANG := verilog
 export TB_TYPE       ?= cpp
 export TB            ?= afl
