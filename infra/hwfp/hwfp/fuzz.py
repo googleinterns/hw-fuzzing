@@ -170,6 +170,7 @@ def build_docker_image(config):
   cmd = [
       "docker", "build", "--build-arg",
       "TOPLEVEL=%s" % config.toplevel, "--build-arg",
+      "TB_TYPE=%s" % config.tb_type, "--build-arg",
       "FUZZER=%s" % config.fuzzer, "--build-arg",
       "VERSION=%s" % config.version, "-t", config.docker_image, dockerfile_path
   ]
@@ -268,6 +269,29 @@ def run_docker_container_locally(config, exp_data_path):
         ["-v",
          "%s/%s:/src/hw/hwfutils" % (config.root_path, HWFUTILS_PATH)])
     cmd.extend(["-v", "%s/%s:/src/hw/tb" % (config.root_path, SHARED_TB_PATH)])
+    if config.soc == "rfuzz":
+      cmd.extend([
+          "-v",
+          "%s/hw/%s/Makefile:/src/hw/%s/Makefile" %
+          (config.root_path, config.soc, config.toplevel)
+      ])
+      cmd.extend([
+          "-v",
+          "%s/hw/%s/generate-hdl:/src/hw/%s/hdl_generator/generate-hdl" %
+          (config.root_path, config.soc, config.toplevel)
+      ])
+      cmd.extend([
+          "-v",
+          "%s/hw/%s/main.cpp:/src/hw/%s/tb/%s/%s/main.cpp" %
+          (config.root_path, config.soc, config.toplevel, config.tb_type,
+           config.fuzzer)
+      ])
+    else:
+      cmd.extend([
+          "-v",
+          "%s/hw/%s/%s:/src/hw/%s" %
+          (config.root_path, config.soc, config.toplevel, config.toplevel)
+      ])
     cmd.extend([
         "-v",
         "%s/hw/%s/%s:/src/hw/%s" %
