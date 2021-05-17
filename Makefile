@@ -43,33 +43,7 @@ sync-data:
 
 # Cleanup local fuzzing build/results
 clean:
-	@for CORE in $(wildcard hw/*); do \
-		if [[ $$CORE != "hw/ot_template" ]]; then \
-			echo "Cleaning up fuzzing files in: $$CORE ..."; \
-			pushd $$CORE >/dev/null; \
-			rm -rf bin; \
-			rm -rf build; \
-			rm -rf model; \
-			rm -rf logs; \
-			rm -rf out; \
-			rm -f *.vcd; \
-			rm -f *.xml; \
-			rm -f *.dat; \
-			rm -rf tb/cocotb/*/__pycache__; \
-			if [ -d seed_descriptions ]; then rm -rf seeds; fi; \
-			popd >/dev/null; \
-		fi; \
-		if [[ $$CORE == "hw/lock" ]]; then \
-			pushd $$CORE >/dev/null; \
-			rm -rf hdl_generator/locksmith/target; \
-			rm -f hdl_generator/locksmith/Cargo.lock; \
-			popd >/dev/null; \
-		fi; \
-	done; \
-  docker ps -a -q | xargs -I {} docker rm {}; \
-  docker images -q -f dangling=true | xargs -I {} docker rmi -f {}; \
-  docker volume ls -qf dangling=true | xargs -I {} docker volume rm {}; \
-	echo "Done."
+	infra/clean_local_results.sh
 
 .PHONY: \
 	build_infra \
