@@ -1,5 +1,5 @@
 #!/bin/bash -eu
-# Copyright 2020 Timothy Trippel
+# Copyright 2021 Timothy Trippel
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -13,20 +13,30 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-# Remove all DUT Docker images
-GCP_PROJECT_ID=$(gcloud config get-value project)
-FUZZERS="afl-term-on-crash afl sim"
+# Cleanup local build/fuzzing results
 for SOC in $(ls hw/); do
   for DUT in $(ls hw/$SOC/); do
     if [ -d hw/$SOC/$DUT ]; then
       if [[ $DUT != "ot_template" ]]; then
-        echo "Cleaning up Docker images for fuzzing: $DUT ..."
-        for FUZZER in $FUZZERS; do
-          LOWER_CASE_DUT=$(echo $DUT | awk '{print tolower($0)}')
-          FUZZER_REGEX="gcr.io/$GCP_PROJECT_ID/$FUZZER-$LOWER_CASE_DUT"
-          docker images | grep $FUZZER_REGEX | awk '{print $3}' |
-            xargs docker rmi -f || true | >/dev/null
-        done
+        echo "Cleaning up build/fuzzing files in: $DUT ..."
+        pushd hw/$SOC/$DUT >/dev/null
+        rm -rf bin
+        rm -rf build
+        rm -rf model
+        rm -rf logs
+        rm -rf out
+        rm -f *.vcd
+        rm -f *.xml
+        rm -f *.dat
+        rm -rf tb/cocotb/*/__pycache__
+        if [ -d seed_descriptions ]; then rm -rf seeds; fi
+        popd >/dev/null
+      fi
+      if [[ $SOC == "other" && $DUT == "lock" ]]; then
+        pushd hw/$SOC/$DUT >/dev/null
+        rm -rf hdl_generator/locksmith/target
+        rm -f hdl_generator/locksmith/Cargo.lock
+        popd >/dev/null
       fi
     fi
   done
@@ -36,3 +46,4 @@ done
 docker ps -a -q | xargs -I {} docker rm {}
 docker images -q -f dangling=true | xargs -I {} docker rmi -f {}
 docker volume ls -qf dangling=true | xargs -I {} docker volume rm {}
+echo "Done."
