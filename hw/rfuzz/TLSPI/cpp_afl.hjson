@@ -21,11 +21,7 @@
   run_on_gcp: 0
 
   // Parameters to pass model
-  model_params: {
-    opcode_type: constant
-    instr_type: variable
-    terminate_on_invalid_opcode: 0
-  }
+  model_params: {}
 
   // HDL Generation Parameters (if any)
   hdl_gen_params: {}
