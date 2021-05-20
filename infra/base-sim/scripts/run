@@ -74,7 +74,7 @@ elif [[ $FUZZER == "afl" || $FUZZER == "afl-term-on-crash" ]]; then
 
   # Fuzz the DUT
   #time BIN_DIR=bin fuzz 2> | tee -a logs/exp.log
-  ( time BIN_DIR=bin fuzz ) 2> logs/fuzz_time.log
+  (time BIN_DIR=bin fuzz) 2>logs/fuzz_time.log
 
   # Save fuzzing results to GCS
   if [[ $RUN_ON_GCP == "1" ]]; then

@@ -536,7 +536,7 @@ def fuzz(argv):
                       help="Max number of VM instances allowed on GCP zone.")
   parser.add_argument("--gcp-config-filename",
                       default="gcp_config.hjson",
-                      help="GCP vonfiguration file in the HJSON format.")
+                      help="GCP configuration file in the HJSON format.")
   parser.add_argument("config_filename",
                       metavar="config.hjson",
                       help="Configuration file in the HJSON format.")
