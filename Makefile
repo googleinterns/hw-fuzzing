@@ -13,6 +13,7 @@
 # limitations under the License.
 
 SHELL := /bin/bash
+SEARCH_PREFIX ?= ""
 
 # Infrastructure
 build-infra:
@@ -39,7 +40,7 @@ fuzz-rfuzz-%: hw/rfuzz/%/cpp_afl.hjson
 
 # Synchronize GCS experiment data locally
 sync-data:
-	python3 infra/hwfp/hwfp/pull_data_from_gcs.py
+	python3 infra/hwfp/hwfp/pull_data_from_gcs.py $(SEARCH_PREFIX)
 
 # Cleanup local fuzzing build/results
 clean:

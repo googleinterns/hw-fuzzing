@@ -28,7 +28,7 @@ import hjson
 from hwfutils.run_cmd import run_cmd
 
 
-def pull_data_from_gcs():
+def pull_data_from_gcs(search_prefix=None):
   """Pulls down fuzzer data from GCS to local machine."""
   # Create worker pool
   pool = multiprocessing.Pool(None)
@@ -52,39 +52,30 @@ def pull_data_from_gcs():
       break
     src = line.decode("utf-8").rstrip("/\n")
     dst = os.path.join(parent_dst, os.path.basename(src))
-    if not _data_exists_locally(dst):
+    if (search_prefix is None or
+        search_prefix in src) and not _data_exists_locally(dst):
       print("Pulling down fuzzing data from %s ..." % src)
-      # TODO(ttrippel): speed up with -m option (causes issues on MacOS)
-      # cp_cmd = ["gsutil", "-m", "cp", "-r", src, parent_dst]
-      # cp_cmd = ["gsutil", "cp", "-r", src, parent_dst]
-      # run_cmd(cp_cmd, "ERROR: cannot copy data from GCS.")
-      # Just copy the files we need
+      # Just copy the files we need (coverage/stats files)
       cp_cmds = []
-      plot_data = "out/%s/plot_data" % _get_afl_plot_file_path(src)
-      exp_log = os.path.join("logs", "exp.log")
-      fuzz_time_log = os.path.join("logs", "fuzz_time.log")
-      svas = os.path.join("logs", "svas.csv")
-      bb_complexity = os.path.join("logs", "bb_complexity.csv")
-      kcov_cum = os.path.join("logs", "kcov_cum.csv")
-      llvm_cov_cum = os.path.join("logs", "llvm_cov_cum.csv")
-      vlt_cov_cum = os.path.join("logs", "vlt_cov_cum.csv")
-      data_files = [
-          plot_data,
-          exp_log,
-          fuzz_time_log,
-          svas,
-          bb_complexity,
-          kcov_cum,
-          llvm_cov_cum,
-          vlt_cov_cum,
-      ]
+      data_files = _get_data_file_paths(src)
       for df in data_files:
         cp_cmds.append(
             ["gsutil", "cp",
              os.path.join(src, df),
              os.path.join(dst, df)])
-      results = pool.map_async(_run_gsutil_cmd, cp_cmds)
-      results.wait()
+        results = pool.map_async(_run_gsutil_cmd, cp_cmds)
+        results.wait()
+
+
+def _get_data_file_paths(src):
+  data_files = ["out/%s/plot_data" % _get_afl_plot_file_path(src)]
+  log_files = [
+      "exp.log", "fuzz_time.log", "svas.csv", "bb_complexity.csv",
+      "kcov_cum.csv", "llvm_cov_cum.csv", "vlt_cov_cum.csv"
+  ]
+  for lf in log_files:
+    data_files.append(os.path.join("logs", lf))
+  return data_files
 
 
 def _get_afl_plot_file_path(src):
@@ -120,4 +111,7 @@ def _data_exists_locally(exp_data_path):
 
 
 if __name__ == "__main__":
-  pull_data_from_gcs()
+  if len(sys.argv) < 2 or sys.argv[1] == "":
+    pull_data_from_gcs()
+  else:
+    pull_data_from_gcs(search_prefix=sys.argv[1])

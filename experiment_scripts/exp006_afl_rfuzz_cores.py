@@ -14,22 +14,18 @@
 # limitations under the License.
 
 import copy
-import glob
-import itertools
 import os
-import shutil
 import tempfile
 
 import hjson
 from hwfp.fuzz import fuzz
 from hwfutils.string_color import color_str_green as green
-
 from rfuzz_config_dict import CONFIG_DICT
 
 # ------------------------------------------------------------------------------
 # Experiment Parameters
 # ------------------------------------------------------------------------------
-EXPERIMENT_BASE_NAME = "exp015-rfuzz-afl-%s-%d"
+EXPERIMENT_BASE_NAME = "exp015-rfuzz-afl-%s-%sm-%d"
 DURATION_MINS = 60
 TOPLEVELS = ["Sodor3Stage", "FFTSmall", "TLI2C", "TLPWM", "TLSPI", "TLUART"]
 RUNS = range(0, 2)
@@ -53,10 +49,8 @@ def _main():
         cdict = copy.deepcopy(CONFIG_DICT)
 
         # Set experiment name
-        experiment_name = EXPERIMENT_BASE_NAME % (toplevel, run)
+        experiment_name = EXPERIMENT_BASE_NAME % (toplevel, DURATION_MINS, run)
         experiment_name = experiment_name.replace("_", "-").lower()
-        # print(experiment_name)
-        # continue
         cdict["experiment_name"] = experiment_name
         cdict["toplevel"] = toplevel
 
@@ -72,8 +66,8 @@ def _main():
         # launch fuzz the DUT
         fuzz(["--fail-silently", hjson_file_path])
         # fuzz([
-            # "-y", "--gcp-config-filename", "gcp_config.east1b.hjson",
-            # hjson_file_path
+        # "-y", "--gcp-config-filename", "gcp_config.east1b.hjson",
+        # hjson_file_path
         # ])
 
         # cleanup config file
