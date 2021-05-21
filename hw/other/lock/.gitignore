@@ -1,0 +1,5 @@
+# HDL Generation Outputs
+debug/
+target/
+Cargo.*
+!Cargo.toml
