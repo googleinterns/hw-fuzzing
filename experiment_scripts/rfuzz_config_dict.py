@@ -1,4 +1,4 @@
-# Copyright 2020 Timothy Trippel
+# Copyright 2021 Timothy Trippel
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -15,7 +15,7 @@
 CONFIG_DICT = {
     "experiment_name": "not-set",
     "toplevel": "not-set",
-    "soc": "opentitan",
+    "soc": "rfuzz",
     "version": "HEAD",
     "tb_type": "cpp",
     "tb": "afl",
@@ -26,11 +26,7 @@ CONFIG_DICT = {
     "manual": 0,
     "run_on_gcp": 1,
     "hdl_gen_params": {},
-    "model_params": {
-        "opcode_type": "constant",
-        "instr_type": "variable",
-        "terminate_on_invalid_opcode": 0,
-    },
+    "model_params": {},
     "fuzzer_params": {
         "interactive_mode": 1,
         "timeout_ms": None,

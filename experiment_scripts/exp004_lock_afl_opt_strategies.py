@@ -34,10 +34,11 @@ EXPERIMENT_BASE_NAMES = [
     "exp006-cpp-afl-lock-%dstates-%dwidth-duttb-instr-wopt-%d",
     "exp007-cpp-afl-lock-%dstates-%dwidth-dut-instr-wopt-%d",
 ]
-NUM_STATES = [8]
-# NUM_STATES = [16, 32, 64]
+NUM_STATES = [32, 64]
+# NUM_STATES = [8, 16, 32, 64]
 COMP_WIDTHS = [4]
 RUNS = range(0, 50)
+# RUNS = range(42, 50)
 
 LINE_SEP = "*******************************************************************"
 
@@ -108,15 +109,15 @@ def _main():
               hjson.dump(cdict, fp)
 
             # launch fuzz the DUT
-            fuzz(["--fail-silently", hjson_file_path])
+            # fuzz(["--fail-silently", hjson_file_path])
+            fuzz(["-y", hjson_file_path])
 
             # cleanup config file
             os.remove(hjson_file_path)
 
   finally:
     # remove temp dir
-    for tmp_dir in glob.glob("tmp*"):
-      shutil.rmtree(tmp_dir, ignore_errors=True)
+    shutil.rmtree(tmp_dir, ignore_errors=True)
 
   print(LINE_SEP)
   print(LINE_SEP)
