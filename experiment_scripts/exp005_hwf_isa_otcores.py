@@ -14,7 +14,6 @@
 # limitations under the License.
 
 import copy
-import glob
 import itertools
 import os
 import shutil
@@ -22,7 +21,6 @@ import shutil
 import hjson
 from hwfp.fuzz import fuzz
 from hwfutils.string_color import color_str_green as green
-
 from ot_config_dict import CONFIG_DICT
 
 # ------------------------------------------------------------------------------
