@@ -15,6 +15,7 @@
 CONFIG_DICT = {
     "experiment_name": "not-set",
     "toplevel": "lock",
+    "soc": "other",
     "version": "HEAD",
     "tb_type": "cpp",
     "tb": "not-set",
