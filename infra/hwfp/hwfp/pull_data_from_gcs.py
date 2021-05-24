@@ -63,8 +63,8 @@ def pull_data_from_gcs(search_prefix=None):
             ["gsutil", "cp",
              os.path.join(src, df),
              os.path.join(dst, df)])
-        results = pool.map_async(_run_gsutil_cmd, cp_cmds)
-        results.wait()
+      results = pool.map_async(_run_gsutil_cmd, cp_cmds)
+      results.wait()
 
 
 def _get_data_file_paths(src):

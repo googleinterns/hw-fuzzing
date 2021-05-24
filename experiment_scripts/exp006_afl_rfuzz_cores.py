@@ -25,8 +25,8 @@ from rfuzz_config_dict import CONFIG_DICT
 # ------------------------------------------------------------------------------
 # Experiment Parameters
 # ------------------------------------------------------------------------------
-EXPERIMENT_BASE_NAME = "exp015-rfuzz-afl-%s-%sm-%d"
-DURATION_MINS = 60
+EXPERIMENT_BASE_NAME = "exp016-rfuzz-afl-%s-%sm-%d"
+DURATION_MINS = 1440
 TOPLEVELS = ["Sodor3Stage", "FFTSmall", "TLI2C", "TLPWM", "TLSPI", "TLUART"]
 RUNS = range(0, 2)
 # ------------------------------------------------------------------------------
