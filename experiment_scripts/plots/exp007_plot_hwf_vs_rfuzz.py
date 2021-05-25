@@ -23,7 +23,6 @@ from dataclasses import dataclass
 
 import matplotlib as mpl
 import matplotlib.pyplot as plt
-
 import pandas as pd
 import seaborn as sns
 from hwfutils.string_color import color_str_green as green
@@ -49,7 +48,7 @@ LEGEND_FONT_SIZE = 8
 LEGEND_TITLE_FONT_SIZE = 8
 TIME_SCALE = "m"
 SCALED_MAX_PLOT_TIME = DURATION_MINS
-PLOT_FORMAT = "PNG"
+PLOT_FORMAT = "PDF"
 PLOT_FILE_NAME = "hwf_vs_rfuzz_woseeds_%dmin.%s" % (DURATION_MINS,
                                                     PLOT_FORMAT.lower())
 
@@ -263,15 +262,13 @@ def build_rfuzz_coverage_df(exp2data,
         coverage_dict[COVERAGE_LABEL].append(rfuzz_vlt_cov_avg)
       else:
         coverage_dict[COVERAGE_LABEL].append(rfuzz_vlt_cov_max)
-  # extend lines to max time value
-  # if coverage_dict[TIME_LABEL][-1] != SCALED_MAX_PLOT_TIME:
-  # for _ in range(2):
-  # coverage_dict[TOPLEVEL_LABEL].append(anchor_fd.toplevel)
-  # coverage_dict[TIME_LABEL].append(SCALED_MAX_PLOT_TIME)
-  # coverage_dict[FUZZER_LABEL].append("HWFP")
-  # coverage_dict[FUZZER_LABEL].append("RFUZZ")
-  # coverage_dict[COVERAGE_TYPE_LABEL].append(HW_LINE_COVERAGE_LABEL)
-  # coverage_dict[COVERAGE_LABEL].extend(coverage_dict[COVERAGE_LABEL][-1:])
+    # extend lines to max time value
+    if coverage_dict[TIME_LABEL][-1] != SCALED_MAX_PLOT_TIME:
+      coverage_dict[TOPLEVEL_LABEL].append(anchor_fd.toplevel)
+      coverage_dict[TIME_LABEL].append(SCALED_MAX_PLOT_TIME)
+      coverage_dict[FUZZER_LABEL].append("RFUZZ")
+      coverage_dict[COVERAGE_TYPE_LABEL].append(HW_LINE_COVERAGE_LABEL)
+      coverage_dict[COVERAGE_LABEL].append(coverage_dict[COVERAGE_LABEL][-1])
     print("Max HW Line coverage (%15s): %.3f%%" %
           (anchor_fd.toplevel, coverage_dict[COVERAGE_LABEL][-1]))
   print(green("Done."))
@@ -329,14 +326,12 @@ def build_hwf_coverage_df(exp2data,
       else:
         coverage_dict[COVERAGE_LABEL].append(hwf_vlt_cov_max)
     # extend lines to max time value
-    # if coverage_dict[TIME_LABEL][-1] != SCALED_MAX_PLOT_TIME:
-    # for _ in range(2):
-    # coverage_dict[TOPLEVEL_LABEL].append(anchor_fd.toplevel)
-    # coverage_dict[TIME_LABEL].append(SCALED_MAX_PLOT_TIME)
-    # coverage_dict[FUZZER_LABEL].append("HWFP")
-    # coverage_dict[FUZZER_LABEL].append("RFUZZ")
-    # coverage_dict[COVERAGE_TYPE_LABEL].append(HW_LINE_COVERAGE_LABEL)
-    # coverage_dict[COVERAGE_LABEL].extend(coverage_dict[COVERAGE_LABEL][-1:])
+    if coverage_dict[TIME_LABEL][-1] != SCALED_MAX_PLOT_TIME:
+      coverage_dict[TOPLEVEL_LABEL].append(anchor_fd.toplevel)
+      coverage_dict[TIME_LABEL].append(SCALED_MAX_PLOT_TIME)
+      coverage_dict[FUZZER_LABEL].append("HWFP")
+      coverage_dict[COVERAGE_TYPE_LABEL].append(HW_LINE_COVERAGE_LABEL)
+      coverage_dict[COVERAGE_LABEL].append(coverage_dict[COVERAGE_LABEL][-1])
     print("Max HW Line coverage (%15s): %.3f%%" %
           (anchor_fd.toplevel, coverage_dict[COVERAGE_LABEL][-1]))
   print(green("Done."))
@@ -366,16 +361,19 @@ def plot_avg_coverage_vs_time(hwf_cov_df, rfuzz_cov_df, time_units="m"):
 
   # Set plot style and extract only HDL line coverage
   sns.set_theme(context="notebook", style="darkgrid")
-  # hdl_cov_df = hwf_cov_df[cov_df[COVERAGE_TYPE_LABEL] == HW_LINE_COVERAGE_LABEL]
+  # print(hwf_cov_df.head(10))
+  # print(rfuzz_cov_df.head(10))
+  hdl_cov_df = pd.concat([hwf_cov_df, rfuzz_cov_df])
+  # print(hdl_cov_df)
 
   # create figure and plot the data
-  fig, ax = plt.subplots(1, 1, figsize=(4, 2))
-  sns.lineplot(data=hwf_cov_df,
+  fig, ax = plt.subplots(1, 1, figsize=(6, 4))
+  sns.lineplot(data=hdl_cov_df,
                x=TIME_LABEL,
                y=COVERAGE_LABEL,
                hue=TOPLEVEL_LABEL,
-               ax=ax,
-               markers="x")
+               style=FUZZER_LABEL,
+               ax=ax)
 
   # format the plot
   if time_units == "m":
@@ -389,10 +387,10 @@ def plot_avg_coverage_vs_time(hwf_cov_df, rfuzz_cov_df, time_units="m"):
   ax.set_ylabel("HDL Line " + COVERAGE_LABEL, fontsize=LABEL_FONT_SIZE)
   ax.tick_params("x", labelsize=TICK_FONT_SIZE)
   ax.tick_params("y", labelsize=TICK_FONT_SIZE)
-  plt.legend(title="Core",
-             fontsize=LEGEND_FONT_SIZE,
-             title_fontsize=LEGEND_TITLE_FONT_SIZE,
-             ncol=2)
+  # plt.legend(title="Core",
+  # fontsize=LEGEND_FONT_SIZE,
+  # title_fontsize=LEGEND_TITLE_FONT_SIZE,
+  # ncol=2)
   plt.tight_layout()
 
   # save the plot
