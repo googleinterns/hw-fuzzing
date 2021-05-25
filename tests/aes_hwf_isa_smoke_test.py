@@ -303,8 +303,8 @@ def _main(argv):
   print(green("Running %d test suites ..." % num_tests))
 
   # Get list of encryption/decryption test pairs
-  yaml_descripts_dir = os.path.join(os.getenv("HW_FUZZING"), "hw", "aes",
-                                    "seed_descriptions")
+  yaml_descripts_dir = os.path.join(os.getenv("HW_FUZZING"), "hw", "opentitan",
+                                    "aes", "seed_descriptions")
   test_pairs = _extract_test_pairs(yaml_descripts_dir, args.testcase)
 
   test_suite_num = 1
