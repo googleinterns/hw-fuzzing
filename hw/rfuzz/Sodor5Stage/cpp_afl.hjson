@@ -1,8 +1,8 @@
 {
   // Experiment Parameters
-  experiment_name: rfuzz-fftsmall-test
+  experiment_name: rfuzz-sodor5stage-test
   soc: rfuzz
-  toplevel: FFTSmall
+  toplevel: Sodor5Stage
   // VCS commit hash of version of DUT
   version: HEAD
   // Options: [cpp, cocotb]

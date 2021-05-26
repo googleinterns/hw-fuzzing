@@ -29,7 +29,7 @@ RUN test -n "$TB_TYPE"
 RUN mkdir -p $DUT/tb/$TB_TYPE/$FUZZER
 
 # Copy in HDL and testbench
-RUN apt-get install -y git sed
+RUN apt-get update && apt-get install -y git sed
 ENV DUT_HDL_DIR=$HW/rfuzz
 RUN git clone --branch hwfuzz-usenix21 \
       https://github.com/timothytrippel/rfuzz.git $DUT_HDL_DIR

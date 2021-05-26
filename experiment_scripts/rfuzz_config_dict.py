@@ -20,6 +20,7 @@ CONFIG_DICT = {
     "tb_type": "cpp",
     "tb": "afl",
     "fuzzer": "afl",
+    "default_input": "test.hwf",
     "instrument_dut": 1,
     "instrument_tb": 0,
     "instrument_vltrt": 0,
