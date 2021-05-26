@@ -13,7 +13,7 @@
 // limitations under the License.
 
 
-`include "prim_assert.sv"
+`include "hwf_assert.sv"
 
 module rv_timer_tb (
   input clk_i,
@@ -56,7 +56,7 @@ module rv_timer_tb (
   wire [63:0] compare_value;
   assign timer_value = {dut.u_reg.reg2hw.timer_v_upper0, dut.u_reg.reg2hw.timer_v_lower0};
   assign compare_value = {dut.u_reg.reg2hw.compare_upper0_0.q, dut.u_reg.reg2hw.compare_lower0_0.q};
-  `ASSERT(IntrMissed, (dut.intr_timer_en && (timer_value >= compare_value))
+  `HWF_ASSERT(IntrMissed, (dut.intr_timer_en && (timer_value >= compare_value))
     |-> dut.intr_timer_set);
 `endif
 

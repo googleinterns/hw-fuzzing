@@ -42,7 +42,7 @@ COPY $TOPLEVEL/tb $DUT/tb
 COPY $TOPLEVEL/seed_descriptions $DUT/seed_descriptions
 
 # Copy in build scripts
-COPY $TOPLEVEL/Makefile $DUT/
+COPY Makefile $DUT/
 
 WORKDIR $DUT
 CMD ["run"]

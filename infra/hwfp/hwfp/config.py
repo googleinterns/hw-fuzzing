@@ -79,6 +79,7 @@ class Config():
       self.tb_type = cdict["tb_type"]
       self.tb = cdict["tb"]
       self.fuzzer = cdict["fuzzer"]
+      self.seed = cdict["seed"]
       self.instrument_dut = cdict["instrument_dut"]
       self.instrument_tb = cdict["instrument_tb"]
       self.instrument_vltrt = cdict["instrument_vltrt"]
@@ -122,6 +123,7 @@ class Config():
     exp_config_table.add_row(["Testbench Type", self.tb_type])
     exp_config_table.add_row(["Testbench", self.tb])
     exp_config_table.add_row(["Fuzzer", self.fuzzer])
+    exp_config_table.add_row(["Seed", self.seed])
     exp_config_table.add_row(["Instrument DUT", self.instrument_dut])
     exp_config_table.add_row(["Instrument TB", self.instrument_tb])
     exp_config_table.add_row(["Instrument VLT-RT", self.instrument_vltrt])

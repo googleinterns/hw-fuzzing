@@ -38,6 +38,11 @@ for SOC in $(ls hw/); do
         rm -f hdl_generator/locksmith/Cargo.lock
         popd >/dev/null
       fi
+      if [[ $SOC == "opentitan" ]]; then
+        pushd hw/$SOC/$DUT >/dev/null
+        rm -f Makefile
+        popd >/dev/null
+      fi
       if [[ $SOC == "rfuzz" ]]; then
         pushd hw/$SOC/$DUT >/dev/null
         rm -rf hdl
@@ -46,6 +51,7 @@ for SOC in $(ls hw/); do
         rm -f Makefile
         popd >/dev/null
       fi
+
     fi
   done
 done

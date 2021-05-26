@@ -11,6 +11,8 @@
   tb: afl
   // Options: [afl, afl-term-on-crash, sim]
   fuzzer: afl
+  // Default simulation input
+  seed: sha_full.hwf
   // Parts of the design that should be instrumented for fuzzing
   instrument_dut: 1
   instrument_tb: 0
@@ -28,7 +30,9 @@
   }
 
   // HDL Generation Parameters (if any)
-  hdl_gen_params: {}
+  hdl_gen_params: {
+    fusesoc_version: 0.1
+  }
 
   // AFL - Fuzzer Parameters
   fuzzer_params: {

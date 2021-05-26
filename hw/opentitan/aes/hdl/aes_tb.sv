@@ -13,7 +13,7 @@
 // limitations under the License.
 
 
-`include "prim_assert.sv"
+`include "hwf_assert.sv"
 
 module aes_tb
   import aes_reg_pkg::*;

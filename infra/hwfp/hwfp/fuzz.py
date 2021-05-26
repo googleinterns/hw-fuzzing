@@ -39,14 +39,13 @@ import subprocess
 import sys
 import time
 
+# sys.path.insert(0, os.path.join(os.getenv("HW_FUZZING"), "infra/hwfp"))
+from hwfp.config import HWFUTILS_PATH, LINE_SEP, SHARED_TB_PATH, Config
 # sys.path.insert(0, os.path.join(os.getenv("HW_FUZZING"), HWFUTILS_PATH))
 from hwfutils.run_cmd import run_cmd
 from hwfutils.string_color import color_str_green as green
 from hwfutils.string_color import color_str_red as red
 from hwfutils.string_color import color_str_yellow as yellow
-
-# sys.path.insert(0, os.path.join(os.getenv("HW_FUZZING"), "infra/hwfp"))
-from hwfp.config import HWFUTILS_PATH, LINE_SEP, SHARED_TB_PATH, Config
 
 
 # Abort this fuzzing session
@@ -248,6 +247,7 @@ def run_docker_container_locally(config, exp_data_path):
   cmd.extend(["-e", "%s=%s" % ("TB_TYPE", config.tb_type)])
   cmd.extend(["-e", "%s=%s" % ("TB", config.tb)])
   cmd.extend(["-e", "%s=%s" % ("FUZZER", config.fuzzer)])
+  cmd.extend(["-e", "%s=%s" % ("SEED", config.seed)])
   cmd.extend(["-e", "%s=%s" % ("INSTRUMENT_DUT", config.instrument_dut)])
   cmd.extend(["-e", "%s=%s" % ("INSTRUMENT_TB", config.instrument_tb)])
   cmd.extend(["-e", "%s=%s" % ("INSTRUMENT_VLTRT", config.instrument_vltrt)])
@@ -286,11 +286,11 @@ def run_docker_container_locally(config, exp_data_path):
           (config.root_path, config.soc, config.toplevel, config.tb_type,
            config.fuzzer)
       ])
-    else:
+    elif config.soc == "opentitan":
       cmd.extend([
           "-v",
-          "%s/hw/%s/%s:/src/hw/%s" %
-          (config.root_path, config.soc, config.toplevel, config.toplevel)
+          "%s/hw/%s/Makefile:/src/hw/%s/Makefile" %
+          (config.root_path, config.soc, config.toplevel)
       ])
     cmd.extend([
         "-v",

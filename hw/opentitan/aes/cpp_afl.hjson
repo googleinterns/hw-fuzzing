@@ -15,6 +15,8 @@
   instrument_dut: 1
   instrument_tb: 0
   instrument_vltrt: 0
+  // Default simulation input
+  seed: auto_ctr_128bit_encrypt_1block.hwf
   // Open shell in container on launch for debugging (0)
   manual: 1
   // Launch container on GCP (1) or locally (0)
@@ -28,7 +30,9 @@
   }
 
   // HDL Generation Parameters (if any)
-  hdl_gen_params: {}
+  hdl_gen_params: {
+    fusesoc_version: 0.6
+  }
 
   // AFL - Fuzzer Parameters
   fuzzer_params: {

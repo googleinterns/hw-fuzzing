@@ -13,7 +13,7 @@
 // limitations under the License.
 
 
-`include "prim_assert.sv"
+//`include "hwf_assert.sv"
 
 module kmac_tb (
   input clk_i,
