@@ -11,6 +11,8 @@
   tb: afl
   // Options: [afl, afl-term-on-crash, sim]
   fuzzer: sim
+  // Default simulation input
+  default_input: auto_ctr_128bit_encrypt_1block.hwf
   // Parts of the design that should be instrumented for fuzzing
   instrument_dut: 0
   instrument_tb: 0
@@ -28,7 +30,9 @@
   }
 
   // HDL Generation Parameters (if any)
-  hdl_gen_params: {}
+  hdl_gen_params: {
+    fusesoc_version: 0.6
+  }
 
   // Fuzzer Parameters
   fuzzer_params: {}

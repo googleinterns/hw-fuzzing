@@ -11,12 +11,12 @@
   tb: afl
   // Options: [afl, afl-term-on-crash, sim]
   fuzzer: afl
+  // Default simulation input
+  default_input: auto_ctr_128bit_encrypt_1block.hwf
   // Parts of the design that should be instrumented for fuzzing
   instrument_dut: 1
   instrument_tb: 0
   instrument_vltrt: 0
-  // Default simulation input
-  seed: auto_ctr_128bit_encrypt_1block.hwf
   // Open shell in container on launch for debugging (0)
   manual: 1
   // Launch container on GCP (1) or locally (0)

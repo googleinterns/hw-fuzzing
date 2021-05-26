@@ -247,7 +247,7 @@ def run_docker_container_locally(config, exp_data_path):
   cmd.extend(["-e", "%s=%s" % ("TB_TYPE", config.tb_type)])
   cmd.extend(["-e", "%s=%s" % ("TB", config.tb)])
   cmd.extend(["-e", "%s=%s" % ("FUZZER", config.fuzzer)])
-  cmd.extend(["-e", "%s=%s" % ("SEED", config.seed)])
+  cmd.extend(["-e", "%s=%s" % ("DEFAULT_INPUT", config.default_input)])
   cmd.extend(["-e", "%s=%s" % ("INSTRUMENT_DUT", config.instrument_dut)])
   cmd.extend(["-e", "%s=%s" % ("INSTRUMENT_TB", config.instrument_tb)])
   cmd.extend(["-e", "%s=%s" % ("INSTRUMENT_VLTRT", config.instrument_vltrt)])
@@ -467,6 +467,9 @@ def run_docker_container_on_gce(config):
   cmd.extend(["--container-env", "%s=%s" % ("TB_TYPE", config.tb_type)])
   cmd.extend(["--container-env", "%s=%s" % ("TB", config.tb)])
   cmd.extend(["--container-env", "%s=%s" % ("FUZZER", config.fuzzer)])
+  cmd.extend(
+      ["--container-env",
+       "%s=%s" % ("DEFAULT_INPUT", config.default_input)])
   cmd.extend(
       ["--container-env",
        "%s=%s" % ("INSTRUMENT_DUT", config.instrument_dut)])

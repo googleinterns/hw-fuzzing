@@ -67,8 +67,6 @@ make \
   VLTRT_CXX=$VLTRT_CXX \
   VLTRT_CXXFLAGS="$VLTRT_CXXFLAGS" \
   LINK=$LINK \
-  TB_TYPE=$TB_TYPE \
-  TB=$TB \
   DISABLE_VCD_TRACING=1 \
   debug-make
 
@@ -89,8 +87,6 @@ make \
   VLTRT_CXX=$VLTRT_CXX \
   VLTRT_CXXFLAGS="$VLTRT_CXXFLAGS" \
   LINK=$LINK \
-  TB_TYPE=$TB_TYPE \
-  TB=$TB \
   DISABLE_VCD_TRACING=1 \
   report-svas
 
@@ -103,8 +99,6 @@ make \
   VLTRT_CXX=$VLTRT_CXX \
   VLTRT_CXXFLAGS="$VLTRT_CXXFLAGS" \
   LINK=$LINK \
-  TB_TYPE=$TB_TYPE \
-  TB=$TB \
   DISABLE_VCD_TRACING=1 \
   report-bbs
 
@@ -136,8 +130,6 @@ make \
   VLTRT_CXX=$VLTRT_CXX \
   VLTRT_CXXFLAGS="$VLTRT_CXXFLAGS" \
   LINK=$LINK \
-  TB_TYPE=$TB_TYPE \
-  TB=$TB \
   DISABLE_VCD_TRACING=1
 echo "Done!"
 

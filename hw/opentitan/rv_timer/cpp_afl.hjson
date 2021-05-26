@@ -12,7 +12,7 @@
   // Options: [afl, afl-term-on-crash, sim]
   fuzzer: afl-term-on-crash
   // Default simulation input
-  seed: arm_timer_and_interrupt.hwf
+  default_input: arm_timer_and_interrupt.hwf
   // Parts of the design that should be instrumented for fuzzing
   instrument_dut: 1
   instrument_tb: 0

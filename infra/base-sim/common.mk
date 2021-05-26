@@ -124,10 +124,10 @@ report-bbs: $(MODEL_SRC) $(TB_SRCS) $(SHARED_TB_SRCS)
 
 ifeq ($(TB_TYPE), cocotb)
 sim: $(BIN_DIR)/$(TOPLEVEL)
-	MODULE=$(TB_MODULE) $< < seeds/$(SEED)
+	MODULE=$(TB_MODULE) $< < seeds/$(DEFAULT_INPUT)
 else
 sim: $(BIN_DIR)/$(TOPLEVEL)
-	$< < seeds/$(SEED)
+	$< < seeds/$(DEFAULT_INPUT)
 endif
 
 clean:

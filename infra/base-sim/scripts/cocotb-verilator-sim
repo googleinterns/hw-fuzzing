@@ -40,8 +40,6 @@ echo $LINE_SEP
 echo "Verilating/Compiling/Instrumenting/Simulating the DUT ..."
 make clean
 make \
-  TB_TYPE=$TB_TYPE \
-  TB=$TB \
   DISABLE_VCD_TRACING=1 \
   sim
 check-exit-code
