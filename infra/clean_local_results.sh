@@ -17,21 +17,19 @@
 for SOC in $(ls hw/); do
   for DUT in $(ls hw/$SOC/); do
     if [ -d hw/$SOC/$DUT ]; then
-      if [[ $DUT != "ot_template" ]]; then
-        echo "Cleaning up build/fuzzing files in: $DUT ..."
-        pushd hw/$SOC/$DUT >/dev/null
-        rm -rf bin
-        rm -rf build
-        rm -rf model
-        rm -rf logs
-        rm -rf out
-        rm -f *.vcd
-        rm -f *.xml
-        rm -f *.dat
-        rm -rf tb/cocotb/*/__pycache__
-        if [ -d seed_descriptions ]; then rm -rf seeds; fi
-        popd >/dev/null
-      fi
+      echo "Cleaning up build/fuzzing files in: $DUT ..."
+      pushd hw/$SOC/$DUT >/dev/null
+      rm -rf bin
+      rm -rf build
+      rm -rf model
+      rm -rf logs
+      rm -rf out
+      rm -f *.vcd
+      rm -f *.xml
+      rm -f *.dat
+      rm -rf tb/cocotb/*/__pycache__
+      if [ -d seed_descriptions ]; then rm -rf seeds; fi
+      popd >/dev/null
       if [[ $SOC == "other" && $DUT == "lock" ]]; then
         pushd hw/$SOC/$DUT >/dev/null
         rm -rf hdl_generator/locksmith/target
@@ -42,6 +40,11 @@ for SOC in $(ls hw/); do
         pushd hw/$SOC/$DUT >/dev/null
         rm -f Makefile
         popd >/dev/null
+        if [[ $DUT != "kmac" ]]; then
+          pushd hw/$SOC/$DUT >/dev/null
+          rm -f fusesoc_verilator.vc
+          popd >/dev/null
+        fi
       fi
       if [[ $SOC == "rfuzz" ]]; then
         pushd hw/$SOC/$DUT >/dev/null
@@ -51,7 +54,6 @@ for SOC in $(ls hw/); do
         rm -f Makefile
         popd >/dev/null
       fi
-
     fi
   done
 done
