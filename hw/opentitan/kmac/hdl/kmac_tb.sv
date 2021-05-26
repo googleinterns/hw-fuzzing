@@ -13,22 +13,38 @@
 // limitations under the License.
 
 
-//`include "hwf_assert.sv"
+`include "hwf_assert.sv"
 
-module kmac_tb (
+module kmac_tb
+  import kmac_pkg::*;
+(
   input clk_i,
   input rst_ni,
+
+  input clk_edn_i,
+  input rst_edn_ni,
 
   input  tlul_pkg::tl_h2d_t tl_i,
   output tlul_pkg::tl_d2h_t tl_o,
 
+  // KeyMgr sideload (secret key) interface
   input keymgr_pkg::hw_key_req_t keymgr_key_i,
-  input  keymgr_pkg::kmac_data_req_t keymgr_kdf_i,
-  output keymgr_pkg::kmac_data_rsp_t keymgr_kdf_o,
 
+  // KeyMgr KDF data path
+  input  app_req_t [NumAppIntf-1:0] app_i,
+  output app_rsp_t [NumAppIntf-1:0] app_o,
+
+  // EDN interface
+  output edn_pkg::edn_req_t entropy_o,
+  input  edn_pkg::edn_rsp_t entropy_i,
+
+  // interrupts
   output logic intr_kmac_done_o,
   output logic intr_fifo_empty_o,
-  output logic intr_kmac_err_o
+  output logic intr_kmac_err_o,
+
+  // Idle signal
+  output logic idle_o
 );
 
   //////////////////
@@ -38,16 +54,21 @@ module kmac_tb (
     .clk_i,
     .rst_ni,
 
+    .clk_edn_i,
+    .rst_edn_ni,
+
     .tl_i,
     .tl_o,
 
     .keymgr_key_i,
-    .keymgr_kdf_i,
-    .keymgr_kdf_o,
+    .app_i,
+    .app_o,
 
     .intr_kmac_done_o,
     .intr_fifo_empty_o,
-    .intr_kmac_err_o
+    .intr_kmac_err_o,
+    
+    .idle_o
   );
 
 `ifdef UNPACK_TLUL
