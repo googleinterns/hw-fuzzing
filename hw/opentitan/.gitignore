@@ -3,3 +3,9 @@ aes/seeds
 hmac/seeds
 kmac/seeds
 rv_timer/seeds
+
+# Shared Makefile
+aes/Makefile
+hmac/Makefile
+kmac/Makefile
+rv_timer/Makefile

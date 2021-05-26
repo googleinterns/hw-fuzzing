@@ -26,7 +26,7 @@ ENV DUT=$HW/$TOPLEVEL
 RUN mkdir $DUT
 
 # Pull down OpenTitan codebase from GitHub
-RUN apt-get install -y git
+RUN apt-get update && apt-get install -y git
 ENV DUT_HDL_DIR=$HW/opentitan
 RUN git clone --branch hwfuzz-checkpoint \
       https://github.com/timothytrippel/opentitan.git $DUT_HDL_DIR
