@@ -59,9 +59,6 @@ if [[ $FUZZER == "sim" ]]; then
     echo "ERROR: unsupported testbench type. Aborting!" | tee -a logs/exp.log
   fi
 
-  # Save simulation results to GCS
-  save-fuzzing-data
-
 elif [[ $FUZZER == "afl" || $FUZZER == "afl-term-on-crash" ]]; then
   if [[ $TB_TYPE == "cocotb" ]]; then
     # cocotb Required Environment Vars.
