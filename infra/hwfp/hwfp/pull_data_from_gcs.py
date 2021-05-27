@@ -46,10 +46,7 @@ def pull_data_from_gcs(search_prefix=None):
                           stdout=subprocess.PIPE,
                           stderr=subprocess.STDOUT,
                           close_fds=True)
-  while True:
-    line = proc.stdout.readline()
-    if not line:
-      break
+  for line in proc.stdout:
     src = line.decode("utf-8").rstrip("/\n")
     dst = os.path.join(parent_dst, os.path.basename(src))
     if (search_prefix is None or
