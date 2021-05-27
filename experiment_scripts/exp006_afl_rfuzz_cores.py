@@ -25,17 +25,17 @@ from rfuzz_config_dict import CONFIG_DICT
 # ------------------------------------------------------------------------------
 # Experiment Parameters
 # ------------------------------------------------------------------------------
-EXPERIMENT_BASE_NAME = "exp015-rfuzz-afl-%s-%sm-%d"
-# EXPERIMENT_BASE_NAME = "exp016-rfuzz-afl-%s-%sm-%d"
-# DURATION_MINS = 1440
-DURATION_MINS = 60
-# TOPLEVELS = ["Sodor3Stage", "FFTSmall", "TLI2C", "TLPWM", "TLSPI", "TLUART"]
-TOPLEVELS = ["Sodor1Stage", "Sodor2Stage", "Sodor5Stage"]
-# TOPLEVELS = [
-# "Sodor1Stage", "Sodor2Stage", "Sodor3Stage", "Sodor5Stage", "FFTSmall",
-# "TLI2C", "TLPWM", "TLSPI", "TLUART"
-# ]
-RUNS = range(0, 2)
+# EXPERIMENT_BASE_NAME = "exp015-rfuzz-afl-%s-%sm-%d"
+EXPERIMENT_BASE_NAME = "exp016-rfuzz-afl-%s-%sm-%d"
+DURATION_MINS = 1440
+# DURATION_MINS = 60
+# TOPLEVELS = ["Sodor1Stage", "Sodor5Stage"]
+TOPLEVELS = [
+    "Sodor1Stage", "Sodor3Stage", "Sodor5Stage", "FFTSmall", "TLI2C", "TLPWM",
+    "TLSPI", "TLUART"
+]
+# RUNS = range(0, 2)
+RUNS = range(2, 6)
 # ------------------------------------------------------------------------------
 
 TERMINAL_ROWS, TERMINAL_COLS = os.popen('stty size', 'r').read().split()
@@ -71,11 +71,11 @@ def _main():
           hjson.dump(cdict, fp)
 
         # launch fuzz the DUT
-        fuzz(["--fail-silently", hjson_file_path])
-        # fuzz([
-        # "-y", "--gcp-config-filename", "gcp_config.east1b.hjson",
-        # hjson_file_path
-        # ])
+        # fuzz(["--fail-silently", hjson_file_path])
+        fuzz([
+            "-y", "--gcp-config-filename", "gcp_config.east1b.hjson",
+            hjson_file_path
+        ])
 
         # cleanup config file
         os.remove(hjson_file_path)
