@@ -84,5 +84,7 @@ module kmac_tb
   //////////////////
   //  Assertions  //
   //////////////////
+  //HWF_ASSERT(Issue6408, (dut.sha3_absorbed && dut.sha3_done) |-> 
+    //(dut.kmac_st_d == 0));
 
 endmodule

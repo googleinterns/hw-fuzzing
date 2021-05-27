@@ -10,9 +10,9 @@
   // Options: [default]
   tb: afl
   // Options: [afl, afl-term-on-crash, sim]
-  fuzzer: afl
+  fuzzer: sim
   // Default simulation input
-  default_input: hash_128kstrength_sha3_noendswp_10words.hwf
+  default_input: issue6408.hwf
   // Parts of the design that should be instrumented for fuzzing
   instrument_dut: 1
   instrument_tb: 0
