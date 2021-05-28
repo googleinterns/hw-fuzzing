@@ -84,7 +84,7 @@ module kmac_tb
   //////////////////
   //  Assertions  //
   //////////////////
-  //HWF_ASSERT(Issue6408, (dut.sha3_absorbed && dut.sha3_done) |-> 
-    //(dut.kmac_st_d == 0));
+  `HWF_ASSERT(GitHubIssue6408, ((dut.kmac_st == 3) && dut.sha3_absorbed 
+    && dut.sha3_done) |-> (dut.kmac_st_d == 0))
 
 endmodule
