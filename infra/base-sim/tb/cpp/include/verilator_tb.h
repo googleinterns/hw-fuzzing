@@ -27,8 +27,6 @@ class VerilatorTb {
  public:
   VerilatorTb(int argc, char** argv);
   ~VerilatorTb();
-  virtual bool ResetDUT(vluint8_t* clk, vluint8_t* rst_n,
-                        uint32_t num_clk_periods);
   vluint64_t get_main_time();
 
  protected:

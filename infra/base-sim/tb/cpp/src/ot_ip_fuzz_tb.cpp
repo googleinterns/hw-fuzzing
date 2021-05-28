@@ -30,6 +30,8 @@ void OTIPFuzzTb::InitializeDUT() {
   // Set some sensible values for DUT inputs
   dut_.clk_i = 0;
   dut_.rst_ni = 0;
+  // dut_.clk_edn_i = 0;
+  // dut_.rst_edn_ni = 0;
 
   // Evaluate the Model
   dut_.eval();
@@ -40,6 +42,34 @@ void OTIPFuzzTb::InitializeDUT() {
 
   // Start time at 1 to align rising clock edges with even time values
   set_main_time(1);
+}
+
+// Reset DUT
+bool OTIPFuzzTb::ResetDUT(uint32_t num_clk_periods) {
+  // Print reset status
+  std::cout << "Resetting the DUT (time: " << std::dec << unsigned(main_time_);
+  std::cout << ") ..." << std::endl;
+
+  // Place DUT in reset
+  dut_.rst_ni = 0;
+  // dut_.rst_edn_ni = 0;
+
+  // Toggle clock for NUM_RESET_PERIODS
+  // Check if reached end of simulation
+  if (ToggleClock(&dut_.clk_i, (num_clk_periods * 2) + 1)) {
+    return true;
+  }
+
+  // Pull DUT out of reset
+  dut_.rst_ni = 1;
+  // dut_.rst_edn_ni = 1;
+
+  // Print reset status
+  std::cout << "Reset complete! (time = " << std::dec << unsigned(main_time_);
+  std::cout << ")" << std::endl;
+
+  // Indicate we have NOT reached a Verilog $finish statement
+  return false;
 }
 
 #ifdef OPCODE_TYPE_MAPPED
@@ -171,8 +201,7 @@ void OTIPFuzzTb::SimulateDUT() {
   std::cout << "---------------------------------" << std::endl;
 
   // Reset the DUT (check if reset completes before reaching a $finish)
-  bool reset_caused_finished =
-      ResetDUT(&dut_.clk_i, &dut_.rst_ni, NUM_RESET_CLK_PERIODS);
+  bool reset_caused_finished = ResetDUT(NUM_RESET_CLK_PERIODS);
   std::cout << "---------------------------------" << std::endl;
 
   // Initialize AFL fork server

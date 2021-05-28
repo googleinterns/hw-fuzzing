@@ -46,6 +46,7 @@ class OTIPFuzzTb : public TLULHostTb {
 
  private:
   void InitializeDUT();
+  bool ResetDUT(uint32_t num_clk_periods);
   bool GetFuzzOpcode(HWFuzzOpcode* opcode);
   bool GetFuzzInstruction(HWFuzzInstruction* instr);
 };

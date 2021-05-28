@@ -51,33 +51,6 @@ VerilatorTb::~VerilatorTb() {
 #endif
 }
 
-// Reset the DUT
-bool VerilatorTb::ResetDUT(vluint8_t* clk, vluint8_t* rst_n,
-                           uint32_t num_clk_periods) {
-  // Print reset status
-  std::cout << "Resetting the DUT (time: " << std::dec << unsigned(main_time_);
-  std::cout << ") ..." << std::endl;
-
-  // Place DUT in reset
-  *rst_n = 0;
-
-  // Toggle clock for NUM_RESET_PERIODS
-  // Check if reached end of simulation
-  if (ToggleClock(clk, (num_clk_periods * 2) + 1)) {
-    return true;
-  }
-
-  // Pull DUT out of reset
-  *rst_n = 1;
-
-  // Print reset status
-  std::cout << "Reset complete! (time = " << std::dec << unsigned(main_time_);
-  std::cout << ")" << std::endl;
-
-  // Indicate we have NOT reached a Verilog $finish statement
-  return false;
-}
-
 #if VM_TRACE
 // Dump VCD trace to VCD file
 void VerilatorTb::DumpTrace() {
@@ -98,8 +71,10 @@ bool VerilatorTb::ToggleClock(vluint8_t* clk, uint32_t num_toggles) {
     // Toggle main clock
     if (*clk) {
       *clk = 0;
+      // dut_.clk_edn_i = 0;
     } else {
       *clk = 1;
+      // dut_.clk_edn_i = 1;
     }
 
     // Evaluate model
