@@ -14,8 +14,10 @@
 
 #include "hw/tb/cpp/include/tlul_host_tb.h"
 
+#include <bitset>
 #include <iomanip>
 #include <iostream>
+#include <vector>
 
 TLULHostTb::TLULHostTb(int argc, char** argv) : STDINFuzzTb(argc, argv) {
   // Initialize all bus signals to 0, except set host to ready to receive data
@@ -58,6 +60,74 @@ void TLULHostTb::ClearRequest() {
   std::cout << "Clearing TL-UL request ..." << std::endl;
   PrintH2DSignals();
 #endif
+}
+
+uint8_t TLULHostTb::ComputeCMDIntegrity(uint32_t tl_type, uint32_t address,
+                                        uint32_t opcode, uint32_t mask) {
+  // create 64-bit input block
+  uint64_t in = 0;
+  in |= (tl_type & 0x3);
+  in <<= 32;
+  in |= (address & 0xFFFFFFFF);
+  in <<= 3;
+  in |= (opcode & 0x7);
+  in <<= 4;
+  in |= (mask & 0xF);
+#ifdef DEBUG
+  std::cout << "Computing Command Integrity Code ..." << std::endl;
+  std::cout << "in = ";
+  std::cout << " 0x" << std::right << std::setfill('0') << std::setw(16)
+            << std::hex << in << std ::endl;
+  std::cout << "tl_type = ";
+  std::cout << " 0x" << std::right << std::setfill('0') << std::setw(1)
+            << std::hex << tl_type << std ::endl;
+  std::cout << "address = ";
+  std::cout << " 0x" << std::right << std::setfill('0') << std::setw(8)
+            << std::hex << address << std ::endl;
+  std::cout << "opcode = ";
+  std::cout << " 0x" << std::right << std::setfill('0') << std::setw(1)
+            << std::hex << opcode << std ::endl;
+  std::cout << "mask = ";
+  std::cout << " 0x" << std::right << std::setfill('0') << std::setw(1)
+            << std::hex << mask << std::endl;
+#endif
+
+  // compute command integrity code
+  uint8_t cmd_intg = 0;
+  std::vector<std::bitset<64>> cmd_intgs;
+  cmd_intgs.emplace_back(in & 0x0103FFF800007FFF);
+  cmd_intgs.emplace_back(in & 0x017C1FF801FF801F);
+  cmd_intgs.emplace_back(in & 0x01BDE1F87E0781E1);
+  cmd_intgs.emplace_back(in & 0x01DEEE3B8E388E22);
+  cmd_intgs.emplace_back(in & 0x01EF76CDB2C93244);
+  cmd_intgs.emplace_back(in & 0x01F7BB56D5525488);
+  cmd_intgs.emplace_back(in & 0x01FBDDA769A46910);
+  for (int i = 6; i >= 0; i--) {
+    cmd_intg <<= 1;
+    cmd_intg |= (cmd_intgs[i].count() % 2 ? 0x1 : 0x0);
+  }
+#ifdef DEBUG
+  std::cout << "cmd_intg = ";
+  std::cout << " 0x" << std::right << std::setfill('0') << std::setw(2)
+            << std::hex << cmd_intg << std::endl;
+#endif
+
+  return cmd_intg;
+}
+
+uint32_t TLULHostTb::CreateAUSER(uint32_t address, OpcodeA opcode,
+                                 uint32_t mask) {
+  // TODO(ttrippel): make tl_type based off of the opcode? for now it seems OT
+  // defines this as always 0x2? Check TLUL HDL in OT project.
+  uint8_t tl_type = 0x2;
+  uint8_t cmd_intg =
+      ComputeCMDIntegrity(tl_type, address, (uint32_t)opcode, mask);
+  uint32_t a_user = 0;
+  a_user |= (tl_type & 0x3);
+  a_user <<= 7;
+  a_user |= (cmd_intg & 0x7F);
+  a_user <<= 7;
+  return a_user;
 }
 
 // Prints a row in the H2D or D2H tables
@@ -198,6 +268,9 @@ bool TLULHostTb::SendTLULRequest(OpcodeA opcode, uint32_t address,
     ToggleClock(&dut_.clk_i, 1);
   }
 
+  // Compute command integrity code and A_USER bits
+  uint32_t a_user = CreateAUSER(address, opcode, mask);
+
   // Put request on the bus
   SetH2DSignal("A_VALID", 1);
   SetH2DSignal("A_OPCODE", (uint32_t)opcode);
@@ -205,6 +278,7 @@ bool TLULHostTb::SendTLULRequest(OpcodeA opcode, uint32_t address,
   SetH2DSignal("A_ADDRESS", address);
   SetH2DSignal("A_DATA", data);
   SetH2DSignal("A_MASK", mask);
+  SetH2DSignal("A_USER", a_user);
   SetH2DSignal("D_READY", 1);
 #ifdef DEBUG
   std::cout << "Putting TL-UL transaction on bus ..." << std::endl;

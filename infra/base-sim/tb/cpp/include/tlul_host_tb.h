@@ -118,7 +118,7 @@
 // -----------------------------------------------------------------------------
 // Debug macros
 // -----------------------------------------------------------------------------
-#define DEBUG
+//#define DEBUG
 #define DEBUG_MSG(msg) std::cout << (msg) << std::endl;
 #define DEBUG_VAL(name, x) std::cout << (name) << ": " << (x) << std::endl;
 
@@ -204,6 +204,9 @@ class TLULHostTb : public STDINFuzzTb {
   // TL-UL transaction helper methods
   bool WaitForDeviceReady();
   void ClearRequest();
+  uint8_t ComputeCMDIntegrity(uint32_t tl_type, uint32_t address,
+                              uint32_t opcode, uint32_t mask);
+  uint32_t CreateAUSER(uint32_t address, OpcodeA opcode, uint32_t mask);
   bool WaitForDeviceResponse();
   bool SendTLULRequest(OpcodeA opcode, uint32_t address, uint32_t data,
                        uint32_t size, uint32_t mask);
