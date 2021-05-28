@@ -12,9 +12,6 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-
-`include "prim_assert.sv"
-
 module tlul_inspect (
   input tlul_pkg::tl_h2d_t tl_i,
   input tlul_pkg::tl_d2h_t tl_o
@@ -23,58 +20,58 @@ module tlul_inspect (
 // Host-to-Device Signals
 // A - Channel
 logic                         a_valid;
-logic                  [2:0]  a_opcode;
+tlul_pkg::tl_a_op_e           a_opcode;
 logic                  [2:0]  a_param;
 logic  [top_pkg::TL_SZW-1:0]  a_size;
 logic  [top_pkg::TL_AIW-1:0]  a_source;
 logic   [top_pkg::TL_AW-1:0]  a_address;
 logic  [top_pkg::TL_DBW-1:0]  a_mask;
 logic   [top_pkg::TL_DW-1:0]  a_data;
-logic                 [16:0]  a_user;
+tlul_pkg::tl_a_user_t         a_user;
 // D - Channel
 logic                         d_ready;
 
 // Device-to-Host Signals
 // D - Channel
 logic                         d_valid;
-logic                  [2:0]  d_opcode;
+tlul_pkg::tl_d_op_e           d_opcode;
 logic                  [2:0]  d_param;
 logic  [top_pkg::TL_SZW-1:0]  d_size;
 logic  [top_pkg::TL_AIW-1:0]  d_source;
 logic  [top_pkg::TL_DIW-1:0]  d_sink;
 logic   [top_pkg::TL_DW-1:0]  d_data;
-logic  [top_pkg::TL_DUW-1:0]  d_user;
+tlul_pkg::tl_d_user_t         d_user;
 logic                         d_error;
 // A - Channel
 logic                         a_ready;
 
 // Host-to-Device Signals
 // A - Channel
-assign a_valid   = tl_i[101];
-assign a_opcode  = tl_i[100:98];
-assign a_param   = tl_i[97:95];
-assign a_size    = tl_i[94:93];
-assign a_source  = tl_i[92:85];
-assign a_address = tl_i[84:53];
-assign a_mask    = tl_i[52:49];
-assign a_data    = tl_i[48:17];
-assign a_user    = tl_i[16:1];
-// D - Channel
-assign d_ready = tl_i[0];
+assign 
+{a_valid   ,
+ a_opcode  ,
+ a_param   ,
+ a_size    ,
+ a_source  ,
+ a_address ,
+ a_mask    ,
+ a_data    ,
+ a_user    ,
+ d_ready} = tl_i;
 
 // Device-to-Host Signals
 // D - Channel
-assign d_valid   = tl_o[67];
-assign d_opcode  = tl_o[66:64];
-assign d_param   = tl_o[63:61];
-assign d_size    = tl_o[60:59];
-assign d_source  = tl_o[58:51];
-assign d_sink  = tl_o[50];
-assign d_data  = tl_o[49:18];
-assign d_user  = tl_o[17:2];
-assign d_error  = tl_o[1];
-// A - Channel
-assign a_ready  = tl_o[0];
+assign 
+{d_valid  ,
+ d_opcode ,
+ d_param  ,
+ d_size   ,
+ d_source ,
+ d_sink   ,
+ d_data   ,
+ d_user   ,
+ d_error  ,
+ a_ready} = tl_o;
 
 endmodule
 
