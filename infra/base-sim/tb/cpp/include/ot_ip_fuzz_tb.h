@@ -19,6 +19,7 @@
 #include "hw/tb/cpp/include/verilator_tb.h"
 
 #define OPCODE_SIZE_BYTES 1   // number of opcode bytes to read from STDIN
+#define REPEAT_SIZE_BYTES 3   // size of num_repeats value
 #define ADDRESS_SIZE_BYTES 4  // size of TL-UL address bus
 #define DATA_SIZE_BYTES 4     // size of TL-UL data bus
 #define WAIT_OPCODE_THRESHOLD 85
@@ -34,6 +35,7 @@ enum class HWFuzzOpcode {
 
 struct HWFuzzInstruction {
   HWFuzzOpcode opcode;
+  uint32_t num_repeats;
   uint32_t address;
   uint32_t data;
 };

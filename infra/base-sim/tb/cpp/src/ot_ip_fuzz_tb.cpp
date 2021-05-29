@@ -128,15 +128,21 @@ bool OTIPFuzzTb::GetFuzzInstruction(HWFuzzInstruction* instr) {
   // Get opcode
   read_valid = GetFuzzOpcode(&(instr->opcode));
 
-  // Get address
+  // Get repeat
   if (read_valid) {
-    read_valid &= ReadBytes(reinterpret_cast<uint8_t*>(&(instr->address)),
-                            ADDRESS_SIZE_BYTES);
+    read_valid &= ReadBytes(reinterpret_cast<uint8_t*>(&(instr->num_repeats)),
+                            REPEAT_SIZE_BYTES);
 
-    // Get data
+    // Get address
     if (read_valid) {
-      read_valid &= ReadBytes(reinterpret_cast<uint8_t*>(&(instr->data)),
-                              DATA_SIZE_BYTES);
+      read_valid &= ReadBytes(reinterpret_cast<uint8_t*>(&(instr->address)),
+                              ADDRESS_SIZE_BYTES);
+
+      // Get data
+      if (read_valid) {
+        read_valid &= ReadBytes(reinterpret_cast<uint8_t*>(&(instr->data)),
+                                DATA_SIZE_BYTES);
+      }
     }
   }
   return read_valid;
@@ -150,6 +156,12 @@ bool OTIPFuzzTb::GetFuzzInstruction(HWFuzzInstruction* instr) {
 
   // Get opcode
   read_valid = GetFuzzOpcode(&(instr->opcode));
+
+  // Get repeat
+  if (read_valid) {
+    read_valid &= ReadBytes(reinterpret_cast<uint8_t*>(&(instr->num_repeats)),
+                            REPEAT_SIZE_BYTES);
+  }
 
   // Get address and data (if required)
   if (read_valid) {
@@ -223,35 +235,37 @@ void OTIPFuzzTb::SimulateDUT() {
 #else
     while (instr_valid && !Verilated::gotFinish()) {
 #endif
-      switch (instr.opcode) {
-        case HWFuzzOpcode::kWait: {
-          std::cout << "(wait)" << std::endl;
-          ToggleClock(&dut_.clk_i, 2);
-          break;
-        }
+      for (int i = 0; i < instr.num_repeats; i++) {
+        switch (instr.opcode) {
+          case HWFuzzOpcode::kWait: {
+            std::cout << "(wait)" << std::endl;
+            ToggleClock(&dut_.clk_i, 2);
+            break;
+          }
 
-        case HWFuzzOpcode::kRead: {
-          // TODO(ttrippel): deal with error/finish (data == 0xFFFFFFFF)
-          std::cout << "(read) -- addr: 0x" << std::setw(OT_TL_DW >> 2)
-                    << std::setfill('0') << std::hex << instr.address;
-          read_data = Get(instr.address);
-          std::cout << " --> data: 0x" << std::setw(OT_TL_DW >> 2) << std::hex
-                    << read_data << std::endl;
-          break;
-        }
+          case HWFuzzOpcode::kRead: {
+            // TODO(ttrippel): deal with error/finish (data == 0xFFFFFFFF)
+            std::cout << "(read) -- addr: 0x" << std::setw(OT_TL_DW >> 2)
+                      << std::setfill('0') << std::hex << instr.address;
+            read_data = Get(instr.address);
+            std::cout << " --> data: 0x" << std::setw(OT_TL_DW >> 2) << std::hex
+                      << read_data << std::endl;
+            break;
+          }
 
-        case HWFuzzOpcode::kWrite: {
-          std::cout << "(write) -- addr: 0x" << std::setw(OT_TL_DW >> 2)
-                    << std::setfill('0') << std::hex << instr.address
-                    << "; data: 0x" << std::setw(OT_TL_DW >> 2) << std::hex
-                    << instr.data << std::endl;
-          PutFull(instr.address, instr.data);
-          break;
-        }
+          case HWFuzzOpcode::kWrite: {
+            std::cout << "(write) -- addr: 0x" << std::setw(OT_TL_DW >> 2)
+                      << std::setfill('0') << std::hex << instr.address
+                      << "; data: 0x" << std::setw(OT_TL_DW >> 2) << std::hex
+                      << instr.data << std::endl;
+            PutFull(instr.address, instr.data);
+            break;
+          }
 
-        default: {
-          // Handles a kInvalid fuzz opcode
-          break;
+          default: {
+            // Handles a kInvalid fuzz opcode
+            break;
+          }
         }
       }
 

@@ -40,6 +40,7 @@ class TLULFuzzInstr:
   opcode_type = "constant"
   instr_type = "variable"
   opcode_size = 1
+  repeat_size = 3
   address_size = 4
   data_size = 4
   direct_in_size = 0
@@ -76,7 +77,7 @@ class TLULFuzzInstr:
       self.address = int(instr[_YAMLTags.address])
       self.data = int(instr[_YAMLTags.data])
 
-    # Validata address and data fields
+    # Validate address and data fields
     self._validate_instr_field_size(_YAMLTags.address, self.address,
                                     TLULFuzzInstr.address_size)
     self._validate_instr_field_size(_YAMLTags.data, self.data,
@@ -143,6 +144,10 @@ class TLULFuzzInstr:
     opcode_bytes = opcode_int.to_bytes(TLULFuzzInstr.opcode_size,
                                        byteorder=TLULFuzzInstr.endianness,
                                        signed=False)
+    # create REPEAT bytes from integer value
+    repeat_bytes = self.repeat.to_bytes(TLULFuzzInstr.repeat_size,
+                                        byteorder=TLULFuzzInstr.endianness,
+                                        signed=False)
     # create DATA bytes from integer value
     address_bytes = self.address.to_bytes(TLULFuzzInstr.address_size,
                                           byteorder=TLULFuzzInstr.endianness,
@@ -161,23 +166,26 @@ class TLULFuzzInstr:
     # Build the instruction frame
     if TLULFuzzInstr.instr_type == "fixed":
       if self.direct_in is not None:
-        return opcode_bytes + address_bytes + data_bytes + direct_in_bytes
+        return (opcode_bytes + repeat_bytes + address_bytes + data_bytes +
+                direct_in_bytes)
       else:
-        return opcode_bytes + address_bytes + data_bytes
+        return (opcode_bytes + repeat_bytes + address_bytes + data_bytes)
     else:
       if self.direct_in is not None:
         # Include DIRECT_IN bits in instruction
         if self.opcode == TLULOpcode.wait:
-          return opcode_bytes + direct_in_bytes
+          return opcode_bytes + repeat_bytes + direct_in_bytes
         elif self.opcode == TLULOpcode.read:
-          return opcode_bytes + address_bytes + direct_in_bytes
+          return (opcode_bytes + repeat_bytes + address_bytes +
+                  direct_in_bytes)
         else:
-          return opcode_bytes + address_bytes + data_bytes + direct_in_bytes
+          return (opcode_bytes + repeat_bytes + address_bytes + data_bytes +
+                  direct_in_bytes)
       else:
         # DO NOT include DIRECT_IN bits in instruction
         if self.opcode == TLULOpcode.wait:
-          return opcode_bytes
+          return opcode_bytes + repeat_bytes
         elif self.opcode == TLULOpcode.read:
-          return opcode_bytes + address_bytes
+          return opcode_bytes + repeat_bytes + address_bytes
         else:
-          return opcode_bytes + address_bytes + data_bytes
+          return opcode_bytes + repeat_bytes + address_bytes + data_bytes
