@@ -4,15 +4,16 @@
   soc: opentitan
   toplevel: aes
   // VCS commit hash of version of DUT
-  version: HEAD
+  version: aes-fsm-bug
   // Options: [cpp, cocotb]
   tb_type: cpp
   // Options: [default]
   tb: afl
   // Options: [afl, afl-term-on-crash, sim]
-  fuzzer: afl
+  fuzzer: sim
+  /*fuzzer: afl-term-on-crash*/
   // Default simulation input
-  default_input: auto_ctr_128bit_encrypt_1block.hwf
+  default_input: fsm_bug.hwf
   // Parts of the design that should be instrumented for fuzzing
   instrument_dut: 1
   instrument_tb: 0
@@ -40,7 +41,7 @@
     timeout_ms: null
     memory_limit_mb: null
     num_instances: 1
-    mode: m
+    mode: s
     duration_mins: 1440
   }
 }
