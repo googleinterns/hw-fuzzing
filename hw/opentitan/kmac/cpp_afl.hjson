@@ -10,7 +10,6 @@
   // Options: [default]
   tb: afl
   // Options: [afl, afl-term-on-crash, sim]
-  /*fuzzer: sim*/
   fuzzer: afl-term-on-crash
   // Default simulation input
   default_input: issue6408.hwf
@@ -19,7 +18,7 @@
   instrument_tb: 0
   instrument_vltrt: 0
   // Open shell in container on launch for debugging
-  manual: 1
+  manual: 0
   // Launch container on GCP (1) or locally (0)
   run_on_gcp: 0
 

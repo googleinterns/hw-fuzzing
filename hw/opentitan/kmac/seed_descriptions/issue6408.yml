@@ -27,14 +27,11 @@
 - {opcode: write, addr: 0x00000820, data: 0xDEADBEEF}
 - {opcode: write, addr: 0x00000824, data: 0x01010101}
 
-# Write the desired output length the FIFO (right-encoded)
-- {opcode: write, addr: 0x00000800, data: 0x00020100}
-
 # Issue PROCESS command
 - {opcode: write, addr: 0x00000014, data: 0x00000002}
 
 # Wait for the hash to complete
-- {opcode: wait, addr: 0, data: 0, repeat: 90}
+- {opcode: wait, addr: 0, data: 0, repeat: 88}
 
 # Issue DONE command
 - {opcode: write, addr: 0x00000014, data: 0x00000008}
