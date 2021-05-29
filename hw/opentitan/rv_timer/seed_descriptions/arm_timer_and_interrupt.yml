@@ -2,26 +2,22 @@
 - {opcode: wait, addr: 0x00000000, data: 0x00000000}
 
 # Set the TIMER_COMPARE upper and lower registers to a combined value of 256
-#- {opcode: write, addr: 0x0000010C, data: 0x00000100}
-#- {opcode: write, addr: 0x00000110, data: 0x00000000}
+- {opcode: write, addr: 0x0000010C, data: 0x00000100}
+- {opcode: write, addr: 0x00000110, data: 0x00000000}
 
 # Enable interrupts
-#- {opcode: write, addr: 0x00000114, data: 0x00000001}
+- {opcode: write, addr: 0x00000114, data: 0x00000001}
 
 # Arm the timer
-#- {opcode: write, addr: 0x00000000, data: 0x00000001}
+- {opcode: write, addr: 0x00000000, data: 0x00000001}
 # Disarm the timer
-- {opcode: write, addr: 0x00000000, data: 0x00000000}
+#- {opcode: write, addr: 0x00000000, data: 0x00000000}
 
 # Let the timer increment by waiting
-- {opcode: wait, addr: 0x00000000, data: 0x00000000}
-- {opcode: wait, addr: 0x00000000, data: 0x00000000}
-- {opcode: wait, addr: 0x00000000, data: 0x00000000}
-- {opcode: wait, addr: 0x00000000, data: 0x00000000}
-- {opcode: wait, addr: 0x00000000, data: 0x00000000}
+- {opcode: wait, addr: 0, data: 0, repeat: 1}
 
 # Read timer upper and lower 32-bit values
-- {opcode: read, addr: 0x00000104, data: 0x00000000}
-- {opcode: read, addr: 0x00000108, data: 0x00000000}
+#- {opcode: read, addr: 0x00000104, data: 0x00000000}
+#- {opcode: read, addr: 0x00000108, data: 0x00000000}
 ...
 

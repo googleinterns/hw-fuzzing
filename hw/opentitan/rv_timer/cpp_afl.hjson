@@ -10,6 +10,7 @@
   // Options: [default]
   tb: afl
   // Options: [afl, afl-term-on-crash, sim]
+  /*fuzzer: sim*/
   fuzzer: afl-term-on-crash
   // Default simulation input
   default_input: arm_timer_and_interrupt.hwf

@@ -46,22 +46,11 @@ ifndef DISABLE_VCD_TRACING
 HDL += ../tb/hdl/tlul_inspect.sv
 endif
 
-#TODO(ttrippel): fix this to work with FuseSoC generated HDL file list for RV_Timer
-#ifdef DEMO
-#HDL += hdl/timer_core_wbug.sv
-#else
-#HDL += $(DUT_HDL_DIR)/hw/ip/$(TOPLEVEL)/rtl/timer_core.sv
-
-#endif
 ################################################################################
 # Verilator Flags (optional)
 ################################################################################
 export VFLAGS := --assert
-
-#TODO(ttrippel): fix DEMO flag for RV_Timer 
-#ifdef DEMO
-#VFLAGS += -DDEMO
-#endif
+#export VFLAGS += -DINJECTED_BUG_CHECK
 
 ################################################################################
 # Include common build targets
