@@ -1,6 +1,6 @@
 {
   // Experiment Parameters
-  experiment_name: rv_timer-bug-demo
+  experiment_name: rv-timer-bug-demo
   soc: opentitan
   toplevel: rv_timer
   // VCS commit hash of version of DUT
@@ -18,7 +18,7 @@
   instrument_tb: 0
   instrument_vltrt: 0
   // Open shell in container on launch for debugging
-  manual: 1
+  manual: 0
   // Launch container on GCP (1) or locally (0)
   run_on_gcp: 0
 
@@ -41,6 +41,6 @@
     memory_limit_mb: null
     num_instances: 1
     mode: s
-    duration_mins: 1440
+    duration_mins: null
   }
 }
