@@ -29,7 +29,6 @@ RUN mkdir $DUT
 RUN apt-get update && apt-get install -y git
 ENV DUT_HDL_DIR=$HW/opentitan
 RUN git clone --branch hwfuzz-checkpoint \
-#RUN git clone --branch rv-timer-compare-bug \
       https://github.com/timothytrippel/opentitan.git $DUT_HDL_DIR
 
 # Checkout specific version of OpenTitan codebase
