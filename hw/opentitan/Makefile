@@ -50,7 +50,7 @@ endif
 # Verilator Flags (optional)
 ################################################################################
 export VFLAGS := --assert
-#export VFLAGS += -DINJECTED_BUG_CHECK
+export VFLAGS += -DINJECTED_BUG_CHECK
 
 ################################################################################
 # Include common build targets

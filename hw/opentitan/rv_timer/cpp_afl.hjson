@@ -1,16 +1,15 @@
 {
   // Experiment Parameters
-  experiment_name: rv_timer-test
+  experiment_name: rv_timer-bug-demo
   soc: opentitan
   toplevel: rv_timer
   // VCS commit hash of version of DUT
-  version: HEAD
+  version: rv-timer-compare-bug
   // Options: [cpp, cocotb]
   tb_type: cpp
   // Options: [default]
   tb: afl
   // Options: [afl, afl-term-on-crash, sim]
-  /*fuzzer: sim*/
   fuzzer: afl-term-on-crash
   // Default simulation input
   default_input: arm_timer_and_interrupt.hwf
