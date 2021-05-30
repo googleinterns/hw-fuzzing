@@ -10,7 +10,8 @@
   // Options: [default]
   tb: afl
   // Options: [afl, afl-term-on-crash, sim]
-  fuzzer: sim
+  /*fuzzer: sim*/
+  fuzzer: afl-term-on-crash
   // Default simulation input
   default_input: padding_bug.hwf
   // Parts of the design that should be instrumented for fuzzing
