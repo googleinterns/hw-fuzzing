@@ -59,5 +59,15 @@ module hmac_tb (
   ////////////////
   // Assertions //
   ////////////////
+`ifdef INJECTED_BUG_CHECK
+  wire [63:0] message_length;
+  wire [31:0] shaf_rdata;
+  wire [2:0] sel_data;
+  assign message_length = dut.u_sha2.u_pad.message_length;
+  assign shaf_rdata = dut.u_sha2.u_pad.shaf_rdata;
+  assign sel_data = dut.u_sha2.u_pad.sel_data;
+  `HWF_ASSERT(PaddingError, ((sel_data == 1) && (message_length[4:3] == 00)) |-> 
+    (shaf_rdata == 32'h8000_0000))
+`endif
 
 endmodule

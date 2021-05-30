@@ -1,18 +1,18 @@
 {
   // Experiment Parameters
-  experiment_name: hmac-test
+  experiment_name: hmac-bug-demo
   soc: opentitan
   toplevel: hmac
   // VCS commit hash of version of DUT
-  version: HEAD
+  version: hmac-padding-bug
   // Options: [cpp, cocotb]
   tb_type: cpp
   // Options: [default]
   tb: afl
   // Options: [afl, afl-term-on-crash, sim]
-  fuzzer: afl
+  fuzzer: sim
   // Default simulation input
-  default_input: sha_full.hwf
+  default_input: padding_bug.hwf
   // Parts of the design that should be instrumented for fuzzing
   instrument_dut: 1
   instrument_tb: 0
@@ -40,7 +40,7 @@
     timeout_ms: null
     memory_limit_mb: null
     num_instances: 1
-    mode: m
+    mode: s
     duration_mins: 1440
   }
 }
