@@ -1,16 +1,16 @@
 {
   // Experiment Parameters
-  experiment_name: kmac-test
+  experiment_name: kmac-issue6408-bug
   soc: opentitan
   toplevel: kmac
   // VCS commit hash of version of DUT
-  version: HEAD
+  version: hwf-issue-6408-kmac
   // Options: [cpp, cocotb]
   tb_type: cpp
   // Options: [default]
   tb: afl
   // Options: [afl, afl-term-on-crash, sim]
-  // fuzzer: sim
+  /*fuzzer: sim*/
   fuzzer: afl-term-on-crash
   // Default simulation input
   default_input: issue6408.hwf
@@ -41,7 +41,7 @@
     timeout_ms: null
     memory_limit_mb: null
     num_instances: 1
-    mode: m
-    duration_mins: 1440
+    mode: s
+    duration_mins: null
   }
 }
