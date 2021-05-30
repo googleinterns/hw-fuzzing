@@ -1,6 +1,6 @@
 {
   // Experiment Parameters
-  experiment_name: aes-test
+  experiment_name: aes-bug-demo
   soc: opentitan
   toplevel: aes
   // VCS commit hash of version of DUT
@@ -10,8 +10,7 @@
   // Options: [default]
   tb: afl
   // Options: [afl, afl-term-on-crash, sim]
-  fuzzer: sim
-  /*fuzzer: afl-term-on-crash*/
+  fuzzer: afl-term-on-crash
   // Default simulation input
   default_input: fsm_bug.hwf
   // Parts of the design that should be instrumented for fuzzing

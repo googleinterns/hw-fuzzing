@@ -62,7 +62,7 @@ module aes_tb
 `ifdef INJECTED_BUG_CHECK
   logic [2:0] ctrl_cs;
   assign ctrl_cs = dut.u_aes_core.u_aes_cipher_core.u_aes_cipher_control.aes_cipher_ctrl_cs;
-  `HWF_ASSERT(FSMBug, (ctrl_cs == 4) |=> (ctrl_cs == 5))
+  `HWF_ASSERT(FSMBug, (ctrl_cs == 3) |=> (ctrl_cs == 0))
 `endif
 
 endmodule
