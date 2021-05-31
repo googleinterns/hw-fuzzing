@@ -1,8 +1,8 @@
 ---
 - {opcode: wait, addr: 0x00000000, data: 0x00000000}
 
-# Set the TIMER_COMPARE upper and lower registers to a combined value of 256
-- {opcode: write, addr: 0x0000010C, data: 0x00000100}
+# Set the TIMER_COMPARE upper and lower registers to a combined value of 65536
+- {opcode: write, addr: 0x0000010C, data: 0x00010000}
 - {opcode: write, addr: 0x00000110, data: 0x00000000}
 
 # Enable interrupts
