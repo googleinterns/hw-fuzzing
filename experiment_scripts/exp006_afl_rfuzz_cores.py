@@ -35,7 +35,8 @@ TOPLEVELS = [
     "TLSPI", "TLUART"
 ]
 # RUNS = range(0, 2)
-RUNS = range(2, 6)
+# RUNS = range(2, 6)
+RUNS = range(6, 10)
 # ------------------------------------------------------------------------------
 
 TERMINAL_ROWS, TERMINAL_COLS = os.popen('stty size', 'r').read().split()
