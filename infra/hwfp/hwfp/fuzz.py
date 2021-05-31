@@ -147,8 +147,8 @@ def check_if_gce_vm_up(config):
     line = proc.stdout.readline()
     if not line:
       break
-    line = line.decode("utf-8").rstrip("/\n")
-    if config.experiment_name in line:
+    vm_name = line.decode("utf-8").rstrip("/\n").split()[0]
+    if config.experiment_name == vm_name:
       action_msg = "WARNING: experiment already running on GCE. Overwrite? [Yn]"
       abort_msg = "ABORT: re-run with different experiment name."
       return _verify_action(config, delete_gce_vm, action_msg, abort_msg)
