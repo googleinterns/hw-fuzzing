@@ -31,7 +31,7 @@
 - {opcode: write, addr: 0x00000014, data: 0x00000002}
 
 # Wait for the hash to complete
-- {opcode: wait, addr: 0, data: 0, repeat: 88}
+- {opcode: wait, addr: 0, data: 0, repeat: 100}
 
 # Issue DONE command
 - {opcode: write, addr: 0x00000014, data: 0x00000008}
