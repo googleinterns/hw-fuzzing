@@ -29,7 +29,7 @@ COPY scripts/ $SCRIPTS/
 COPY opentitan-requirements.txt sim-requirements.txt $SRC/
 
 # Install python dependencies
-RUN apt-get install -y git xxd
+RUN apt-get update && apt-get install -y git xxd
 
 # Install OpenTitan and Python Dependencies
 RUN python3 -m pip install -r $SRC/opentitan-requirements.txt
@@ -40,7 +40,7 @@ RUN python3 -m pip install -r $HW/hwfutils/requirements.txt
 ENV PYTHONPATH="$PYTHONPATH:$HW/hwfutils"
 
 # Install kcov for post-fuzzing coverage tracing
-RUN apt-get install -y \
+RUN apt-get update && apt-get install -y \
       binutils-dev \
       cmake \
       libcurl4-openssl-dev \
