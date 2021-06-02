@@ -21,15 +21,13 @@ import os
 import sys
 from dataclasses import dataclass
 
-import matplotlib as mpl
 import matplotlib.pyplot as plt
 import pandas as pd
 import seaborn as sns
 from hwfutils.string_color import color_str_green as green
 from hwfutils.string_color import color_str_red as red
 from hwfutils.string_color import color_str_yellow as yellow
-
-# from scipy import stats
+from scipy import stats
 
 # ------------------------------------------------------------------------------
 # Experiment Parameters
@@ -53,8 +51,8 @@ LEGEND_TITLE_FONT_SIZE = 8
 TIME_SCALE = "h"
 SCALED_MAX_PLOT_TIME = 24
 PLOT_FORMAT = "PDF"
-PLOT_FILE_NAME = "hwf_vs_rfuzz_woseeds_%dmin.%s" % (DURATION_MINS,
-                                                    PLOT_FORMAT.lower())
+PLOT_FILE_NAME = "hwf_vs_rfuzz_woseeds_%dmin_broken.%s" % (DURATION_MINS,
+                                                           PLOT_FORMAT.lower())
 
 # ------------------------------------------------------------------------------
 # Plot labels
@@ -213,6 +211,13 @@ def get_vlt_cov_at_time(test_id, vlt_cov_data):
   return vlt_cov
 
 
+def get_max_vlt_cov(vlt_cov_data):
+  last_test_id = vlt_cov_data.shape[0] - 1
+  vlt_cov = (float(vlt_cov_data.loc[last_test_id, "Lines-Covered"]) /
+             float(vlt_cov_data.loc[last_test_id, "Total-Lines"])) * 100.0
+  return vlt_cov
+
+
 def scale_time(time_seconds, time_units):
   if time_units == "h":
     return float(time_seconds) / float(3600)
@@ -220,6 +225,23 @@ def scale_time(time_seconds, time_units):
     return float(time_seconds) / float(60)
   else:
     return time_seconds
+
+
+def load_fuzzing_data(hwf_exp_prefix, rfuzz_exp_prefix):
+  print(yellow("Loading data ..."))
+  exp2data = collections.defaultdict(list)
+  for toplevel in TOPLEVELS:
+    for trial in TRIALS:
+      # Build complete path to data files
+      exp_suffix = EXPERIMENT_SUFFIX % (toplevel.lower(), DURATION_MINS)
+      hwf_data_path = "{}-{}-{}".format(hwf_exp_prefix, exp_suffix, trial)
+      rfuzz_data_path = "{}/rfuzz-{}-{}".format(rfuzz_exp_prefix, exp_suffix,
+                                                trial)
+      # Load fuzzing data into an object
+      exp2data[exp_suffix].append(
+          FuzzingData(toplevel, DURATION_MINS, trial, hwf_data_path,
+                      rfuzz_data_path))
+  return exp2data
 
 
 def build_max_rfuzz_coverage_df(exp2data,
@@ -240,16 +262,17 @@ def build_max_rfuzz_coverage_df(exp2data,
       TIME_LABEL: [],
       COVERAGE_LABEL: [],
   }
+  cov_dict = collections.defaultdict(list)  # maps toplevel --> [coverage list]
   for exp_name, fd_list in exp2data.items():
+    # get max coverage experiment
+    max_cov = get_max_vlt_cov(fd_list[0].rfuzz_cov_data)
     max_cov_fd = fd_list[0]
     for fd in fd_list:
-      max
-    # get min coverage experiment
-    max_cov = fd_list[0].rfuzz_cov_data["Line-Coverage-(%)"].iloc[-1]
-    max_cov_fd = fd_list[0]
-    for fd in fd_list:
-      max_cov = max(max_cov, fd.rfuzz_cov_data["Line-Coverage-(%)"].iloc[-1])
-      max_cov_fd = fd
+      cov = get_max_vlt_cov(fd.rfuzz_cov_data)
+      cov_dict[fd.toplevel].append(cov)
+      if cov > max_cov:
+        max_cov = cov
+        max_cov_fd = fd
     for test_id, row in max_cov_fd.rfuzz_data.iterrows():
       # scale time
       scaled_time = scale_time(row["Time (s)"], time_units)
@@ -278,87 +301,7 @@ def build_max_rfuzz_coverage_df(exp2data,
           (max_cov_fd.toplevel, coverage_dict[COVERAGE_LABEL][-1]))
   print(green("Done."))
   print(LINE_SEP)
-  return pd.DataFrame.from_dict(coverage_dict)
-
-
-def build_hwf_coverage_df(exp2data,
-                          time_units="m",
-                          normalize_to_start=False,
-                          consolidation="max"):
-  print(yellow("Building HWF coverage dataframe ..."))
-  # Create empty dictionary that will be used to create a Pandas DataFrame that
-  # looks like the following:
-  # +--------------------------------------------------------------------+
-  # | toplevel | fuzzer | coverage type |      time     |  coverage (%)  |
-  # +--------------------------------------------------------------------+
-  # |   ...    |  ...   |     ...       |      ...      |       ...      |
-  coverage_dict = {
-      TOPLEVEL_LABEL: [],
-      FUZZER_LABEL: [],
-      COVERAGE_TYPE_LABEL: [],
-      TIME_LABEL: [],
-      COVERAGE_LABEL: [],
-  }
-  for exp_name, fd_list in exp2data.items():
-    anchor_fd = fd_list[0]
-    for time, row in anchor_fd.hwf_afl_data.iterrows():
-      # scale time
-      scaled_time = scale_time(time, time_units)
-      # add circuit, fuzzer, and time values to dataframe row
-      coverage_dict[TOPLEVEL_LABEL].append(anchor_fd.toplevel)
-      coverage_dict[TIME_LABEL].append(scaled_time)
-      # compute average coverage at all points in time
-      hwf_vlt_cov_avg = 0
-      hwf_vlt_cov_max = 0
-      for fd in fd_list:
-        # get the AFL paths_total at the current time
-        paths_total = get_paths_total_at_time(time, fd.hwf_afl_data) - 1
-        # get HWF coverage data
-        hwf_vlt_cov = get_vlt_cov_at_time(paths_total, fd.hwf_cov_data)
-        hwf_vlt_cov_avg += hwf_vlt_cov
-        hwf_vlt_cov_max = max(hwf_vlt_cov_max, hwf_vlt_cov)
-      hwf_vlt_cov_avg /= float(len(fd_list))
-      # save time 0 coverage to normalize
-      if time == 0:
-        hwf_vlt_cov_avg_t0 = hwf_vlt_cov_avg
-      if normalize_to_start:
-        hwf_vlt_cov_avg /= hwf_vlt_cov_avg_t0
-      # add coverage to dataframe row
-      coverage_dict[FUZZER_LABEL].append("HWFP")
-      coverage_dict[COVERAGE_TYPE_LABEL].append(HW_LINE_COVERAGE_LABEL)
-      if consolidation == "avg":
-        coverage_dict[COVERAGE_LABEL].append(hwf_vlt_cov_avg)
-      else:
-        coverage_dict[COVERAGE_LABEL].append(hwf_vlt_cov_max)
-    # extend lines to max time value
-    if coverage_dict[TIME_LABEL][-1] != SCALED_MAX_PLOT_TIME:
-      coverage_dict[TOPLEVEL_LABEL].append(anchor_fd.toplevel)
-      coverage_dict[TIME_LABEL].append(SCALED_MAX_PLOT_TIME)
-      coverage_dict[FUZZER_LABEL].append("HWFP")
-      coverage_dict[COVERAGE_TYPE_LABEL].append(HW_LINE_COVERAGE_LABEL)
-      coverage_dict[COVERAGE_LABEL].append(coverage_dict[COVERAGE_LABEL][-1])
-    print("Max HW Line coverage (%15s): %.3f%%" %
-          (anchor_fd.toplevel, coverage_dict[COVERAGE_LABEL][-1]))
-  print(green("Done."))
-  print(LINE_SEP)
-  return pd.DataFrame.from_dict(coverage_dict)
-
-
-def load_fuzzing_data(hwf_exp_prefix, rfuzz_exp_prefix):
-  print(yellow("Loading data ..."))
-  exp2data = collections.defaultdict(list)
-  for toplevel in TOPLEVELS:
-    for trial in TRIALS:
-      # Build complete path to data files
-      exp_suffix = EXPERIMENT_SUFFIX % (toplevel.lower(), DURATION_MINS)
-      hwf_data_path = "{}-{}-{}".format(hwf_exp_prefix, exp_suffix, trial)
-      rfuzz_data_path = "{}/rfuzz-{}-{}".format(rfuzz_exp_prefix, exp_suffix,
-                                                trial)
-      # Load fuzzing data into an object
-      exp2data[exp_suffix].append(
-          FuzzingData(toplevel, DURATION_MINS, trial, hwf_data_path,
-                      rfuzz_data_path))
-  return exp2data
+  return pd.DataFrame.from_dict(coverage_dict), cov_dict
 
 
 def build_min_hwf_coverage_df(exp2data,
@@ -379,13 +322,17 @@ def build_min_hwf_coverage_df(exp2data,
       TIME_LABEL: [],
       COVERAGE_LABEL: [],
   }
+  cov_dict = collections.defaultdict(list)  # maps toplevel --> [coverage list]
   for exp_name, fd_list in exp2data.items():
     # get min coverage experiment
-    min_cov = fd_list[0].hwf_cov_data["Line-Coverage-(%)"].iloc[-1]
+    min_cov = get_max_vlt_cov(fd_list[0].hwf_cov_data)
     min_cov_fd = fd_list[0]
     for fd in fd_list:
-      min_cov = min(min_cov, fd.hwf_cov_data["Line-Coverage-(%)"].iloc[-1])
-      min_cov_fd = fd
+      cov = get_max_vlt_cov(fd.hwf_cov_data)
+      cov_dict[fd.toplevel].append(cov)
+      if cov < min_cov:
+        min_cov = cov
+        min_cov_fd = fd
     # build data frame for plotting
     for time, row in min_cov_fd.hwf_afl_data.iterrows():
       # scale time
@@ -417,7 +364,7 @@ def build_min_hwf_coverage_df(exp2data,
           (min_cov_fd.toplevel, coverage_dict[COVERAGE_LABEL][-1]))
   print(green("Done."))
   print(LINE_SEP)
-  return pd.DataFrame.from_dict(coverage_dict)
+  return pd.DataFrame.from_dict(coverage_dict), cov_dict
 
 
 def plot_avg_coverage_vs_time(hwf_cov_df, rfuzz_cov_df, time_units="m"):
@@ -448,14 +395,95 @@ def plot_avg_coverage_vs_time(hwf_cov_df, rfuzz_cov_df, time_units="m"):
   ax.set_ylabel("HDL Line " + COVERAGE_LABEL, fontsize=LABEL_FONT_SIZE)
   ax.tick_params("x", labelsize=TICK_FONT_SIZE)
   ax.tick_params("y", labelsize=TICK_FONT_SIZE)
-  # plt.legend(title="Core",
-  # fontsize=LEGEND_FONT_SIZE,
-  # title_fontsize=LEGEND_TITLE_FONT_SIZE,
-  # ncol=2)
+  plt.legend(fontsize=LEGEND_FONT_SIZE,
+             title_fontsize=LEGEND_TITLE_FONT_SIZE,
+             bbox_to_anchor=(1.01, 0.75),
+             loc='upper left')
   plt.tight_layout()
 
   # save the plot
   plt.savefig(PLOT_FILE_NAME, format=PLOT_FORMAT)
+  print(green("Done."))
+  print(LINE_SEP)
+
+
+def plot_avg_coverage_vs_time_broken(hwf_cov_df, rfuzz_cov_df, time_units="m"):
+  print(yellow("Generating plot ..."))
+
+  # Set plot style and extract only HDL line coverage
+  # sns.set_theme(context="notebook", style="darkgrid")
+  hdl_cov_df = pd.concat([hwf_cov_df, rfuzz_cov_df])
+
+  # create subplots
+  fig, (ax1, ax2) = plt.subplots(2, 1, sharex=True, figsize=(6, 4))
+
+  # create figure and plot the data
+  # fig, ax = plt.subplots(1, 1, figsize=(6, 4))
+  sns.lineplot(data=hdl_cov_df,
+               x=TIME_LABEL,
+               y=COVERAGE_LABEL,
+               hue=TOPLEVEL_LABEL,
+               style=FUZZER_LABEL,
+               ax=ax1)
+  sns.lineplot(data=hdl_cov_df,
+               x=TIME_LABEL,
+               y=COVERAGE_LABEL,
+               hue=TOPLEVEL_LABEL,
+               style=FUZZER_LABEL,
+               ax=ax2)
+
+  # set axis ranges
+  ax1.set_ylim(0.3, 1.0)
+  ax2.set_ylim(0, 0.05)
+
+  # hide the spines between the two axes
+  ax1.spines['bottom'].set_visible(False)
+  ax2.spines['top'].set_visible(False)
+  ax1.xaxis.tick_top()
+  ax1.tick_params(labeltop=False)
+  ax2.xaxis.tick_bottom()
+
+  # format the plot
+  if time_units == "m":
+    time_units_label = "min."
+  elif time_units == "h":
+    time_units_label = "hours"
+  else:
+    time_units_label = "s"
+  # ax1.set_xlabel(TIME_LABEL + " (%s)" % time_units_label,
+  # fontsize=LABEL_FONT_SIZE)
+  # ax1.set_ylabel("HDL Line " + COVERAGE_LABEL, fontsize=LABEL_FONT_SIZE)
+  # ax1.tick_params("x", labelsize=TICK_FONT_SIZE)
+  # ax1.tick_params("y", labelsize=TICK_FONT_SIZE)
+  # plt.legend(fontsize=LEGEND_FONT_SIZE,
+  # title_fontsize=LEGEND_TITLE_FONT_SIZE,
+  # bbox_to_anchor=(1.01, 0.75),
+  # loc='upper left')
+  plt.tight_layout()
+
+  # save the plot
+  plt.savefig(PLOT_FILE_NAME, format=PLOT_FORMAT)
+  print(green("Done."))
+  print(LINE_SEP)
+
+
+def compute_stats(hwf_cov_dict, rfuzz_cov_dict):
+  print(yellow("Computing stats ..."))
+  # Compute HDL coverage % differences
+  cov_diffs_sum = 0
+  for toplevel, hwf_cov in hwf_cov_dict.items():
+    min_hwf_cov = min(hwf_cov)
+    max_rfuzz_cov = max(rfuzz_cov_dict[toplevel])
+    cov_diff = min_hwf_cov - max_rfuzz_cov
+    cov_diffs_sum += cov_diff
+    print("HWF vs. RFUZZ coverage (%15s): %.3f%%" % (toplevel, cov_diff))
+  cov_diffs_avg = float(cov_diffs_sum) / float(len(hwf_cov_dict.keys()))
+  print("Avg. coverage difference: %.3f%%" % (cov_diffs_avg))
+  print('-' * len(LINE_SEP))
+  for toplevel, hwf_cov in hwf_cov_dict.items():
+    rfuzz_cov = rfuzz_cov_dict[toplevel]
+    myu = stats.mannwhitneyu(hwf_cov, rfuzz_cov)
+    print("HWF vs. RFUZZ Mann-Whitney (%15s): %s" % (toplevel, myu))
   print(green("Done."))
   print(LINE_SEP)
 
@@ -469,18 +497,19 @@ def main(argv):
 
   # Load runtime data
   exp2data = load_fuzzing_data(args.hwf_exp_prefix, args.rfuzz_exp_prefix)
-  # hwf_cov_df = build_hwf_coverage_df(exp2data,
-  # time_units=TIME_SCALE,
-  # normalize_to_start=False)
-  hwf_cov_df = build_min_hwf_coverage_df(exp2data,
-                                         time_units=TIME_SCALE,
-                                         normalize_to_start=False)
-  rfuzz_cov_df = build_max_rfuzz_coverage_df(exp2data,
-                                             time_units=TIME_SCALE,
-                                             normalize_to_start=False)
+  hwf_cov_df, hwf_cov_dict = build_min_hwf_coverage_df(
+      exp2data, time_units=TIME_SCALE, normalize_to_start=False)
+  rfuzz_cov_df, rfuzz_cov_dict = build_max_rfuzz_coverage_df(
+      exp2data, time_units=TIME_SCALE, normalize_to_start=False)
+
+  # Compute Stats
+  compute_stats(hwf_cov_dict, rfuzz_cov_dict)
 
   # Plot data
   plot_avg_coverage_vs_time(hwf_cov_df, rfuzz_cov_df, time_units=TIME_SCALE)
+  # plot_avg_coverage_vs_time_broken(hwf_cov_df,
+  # rfuzz_cov_df,
+  # time_units=TIME_SCALE)
 
 
 if __name__ == "__main__":
