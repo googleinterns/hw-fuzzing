@@ -18,6 +18,7 @@ import os
 import tempfile
 
 import hjson
+
 from hwfp.fuzz import fuzz
 from hwfutils.string_color import color_str_green as green
 from rfuzz_config_dict import CONFIG_DICT
@@ -26,17 +27,19 @@ from rfuzz_config_dict import CONFIG_DICT
 # Experiment Parameters
 # ------------------------------------------------------------------------------
 # EXPERIMENT_BASE_NAME = "exp015-rfuzz-afl-%s-%sm-%d"
-EXPERIMENT_BASE_NAME = "exp016-rfuzz-afl-%s-%sm-%d"
-DURATION_MINS = 1440
-# DURATION_MINS = 60
-# TOPLEVELS = ["Sodor1Stage", "Sodor5Stage"]
-TOPLEVELS = [
-    "Sodor1Stage", "Sodor3Stage", "Sodor5Stage", "FFTSmall", "TLI2C", "TLPWM",
-    "TLSPI", "TLUART"
-]
-# RUNS = range(0, 2)
+# EXPERIMENT_BASE_NAME = "exp016-rfuzz-afl-%s-%sm-%d"
+EXPERIMENT_BASE_NAME = "exp017-rfuzz-afl-%s-%sm-%dseedcycles-%d"
+# DURATION_MINS = 1440
+DURATION_MINS = 60
+TOPLEVELS = ["Sodor1Stage", "Sodor5Stage"]
+# TOPLEVELS = [
+# "Sodor1Stage", "Sodor3Stage", "Sodor5Stage", "FFTSmall", "TLI2C", "TLPWM",
+# "TLSPI", "TLUART"
+# ]
+NUM_SEED_CYCLES = range(1, 6)
+# RUNS = range(0, 1)
 # RUNS = range(2, 6)
-RUNS = range(6, 10)
+# RUNS = range(6, 10)
 # ------------------------------------------------------------------------------
 
 TERMINAL_ROWS, TERMINAL_COLS = os.popen('stty size', 'r').read().split()
@@ -52,34 +55,37 @@ def _main():
   with tempfile.TemporaryDirectory() as tmp_dir:
     # create config files on the fly and launch experiments
     for toplevel in TOPLEVELS:
-      for run in RUNS:
-        # craft config dictionary
-        cdict = copy.deepcopy(CONFIG_DICT)
+      for seed_cycles in NUM_SEED_CYCLES:
+        for run in RUNS:
+          # craft config dictionary
+          cdict = copy.deepcopy(CONFIG_DICT)
 
-        # Set experiment name
-        experiment_name = EXPERIMENT_BASE_NAME % (toplevel, DURATION_MINS, run)
-        experiment_name = experiment_name.replace("_", "-").lower()
-        cdict["experiment_name"] = experiment_name
-        cdict["toplevel"] = toplevel
+          # Set experiment name
+          experiment_name = EXPERIMENT_BASE_NAME % (toplevel, DURATION_MINS,
+                                                    seed_cycles, run)
+          experiment_name = experiment_name.replace("_", "-").lower()
+          cdict["experiment_name"] = experiment_name
+          cdict["toplevel"] = toplevel
 
-        # Set configurations
-        cdict["fuzzer_params"]["duration_mins"] = DURATION_MINS
+          # Set configurations
+          cdict["hdl_gen_params"]["seed_cycles"] = seed_cycles
+          cdict["fuzzer_params"]["duration_mins"] = DURATION_MINS
 
-        # write to HJSON file
-        hjson_filename = experiment_name + ".hjson"
-        hjson_file_path = os.path.join(tmp_dir, hjson_filename)
-        with open(hjson_file_path, "w") as fp:
-          hjson.dump(cdict, fp)
+          # write to HJSON file
+          hjson_filename = experiment_name + ".hjson"
+          hjson_file_path = os.path.join(tmp_dir, hjson_filename)
+          with open(hjson_file_path, "w") as fp:
+            hjson.dump(cdict, fp)
 
-        # launch fuzz the DUT
-        # fuzz(["--fail-silently", hjson_file_path])
-        fuzz([
-            "-y", "--gcp-config-filename", "gcp_config.east1b.hjson",
-            hjson_file_path
-        ])
+          # launch fuzz the DUT
+          # fuzz(["--fail-silently", hjson_file_path])
+          fuzz([
+              "-y", "--gcp-config-filename", "gcp_config.east1b.hjson",
+              hjson_file_path
+          ])
 
-        # cleanup config file
-        os.remove(hjson_file_path)
+          # cleanup config file
+          os.remove(hjson_file_path)
 
   print(LINE_SEP)
   print(green("DONE!"))

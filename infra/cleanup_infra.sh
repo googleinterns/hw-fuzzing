@@ -33,7 +33,7 @@ else
     docker rmi -f $DOCKER_REPO/base-verilator:latest
     docker rmi -f $DOCKER_REPO/base-clang-11.0.0:latest
     docker rmi -f $DOCKER_REPO/base-image:latest
-    docker rmi -f ubuntu:20.04
+    docker rmi -f ubuntu:18.04
   fi
 
   # Cleanup Docker containers/image layers

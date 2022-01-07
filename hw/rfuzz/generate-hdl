@@ -23,4 +23,10 @@ cp $DUT_HDL_DIR/build/${TOPLEVEL}_VHarness.v hdl/${TOPLEVEL}_VHarness.v
 rfuzz_interface_gen.py \
   -o $HW/tb/cpp/include/rfuzz_tb_interface.h \
   -i $DUT_HDL_DIR/build/$TOPLEVEL.toml
+
+# Create seed file with appropriate about of zero bytes (RFUZZ seeds 0)
+NUM_ZERO_BYTES=$(grep "InputSize" $HW/tb/cpp/include/rfuzz_tb_interface.h |
+  awk '{print $6}' | sed 's/;//')
+dd if=/dev/zero of=$DUT/seeds/test.hwf count=1 bs=$((NUM_ZERO_BYTES * SEED_CYCLES))
+xxd $DUT/seeds/test.hwf
 exit 0

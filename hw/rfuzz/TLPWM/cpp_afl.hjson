@@ -30,7 +30,9 @@
   }
 
   // HDL Generation Parameters (if any)
-  hdl_gen_params: {}
+  hdl_gen_params: {
+    seed_cycles: 5
+  }
 
   // AFL - Fuzzer Parameters
   fuzzer_params: {
