@@ -29,17 +29,17 @@ from rfuzz_config_dict import CONFIG_DICT
 # EXPERIMENT_BASE_NAME = "exp015-rfuzz-afl-%s-%sm-%d"
 # EXPERIMENT_BASE_NAME = "exp016-rfuzz-afl-%s-%sm-%d"
 EXPERIMENT_BASE_NAME = "exp017-rfuzz-afl-%s-%sm-%dseedcycles-%d"
-# DURATION_MINS = 1440
-DURATION_MINS = 60
-TOPLEVELS = ["Sodor1Stage", "Sodor5Stage"]
-# TOPLEVELS = [
-# "Sodor1Stage", "Sodor3Stage", "Sodor5Stage", "FFTSmall", "TLI2C", "TLPWM",
-# "TLSPI", "TLUART"
-# ]
-NUM_SEED_CYCLES = range(1, 6)
-# RUNS = range(0, 1)
-# RUNS = range(2, 6)
-# RUNS = range(6, 10)
+DURATION_MINS = 1440
+# DURATION_MINS = 60
+# TOPLEVELS = ["Sodor1Stage", "Sodor5Stage"]
+# TOPLEVELS = ["TLSPI", "TLUART"]
+TOPLEVELS = [
+    "Sodor1Stage", "Sodor3Stage", "Sodor5Stage", "FFTSmall", "TLI2C", "TLPWM",
+    "TLSPI", "TLUART"
+]
+# NUM_SEED_CYCLES = range(1, 6, 2)
+NUM_SEED_CYCLES = [5]
+RUNS = range(3, 4)
 # ------------------------------------------------------------------------------
 
 TERMINAL_ROWS, TERMINAL_COLS = os.popen('stty size', 'r').read().split()
@@ -48,7 +48,9 @@ LINE_SEP = "=" * int(TERMINAL_COLS)
 
 def _main():
   print(LINE_SEP)
-  print(green("Launching %d experiments ..." % (len(TOPLEVELS) * len(RUNS))))
+  print(
+      green("Launching %d experiments ..." %
+            (len(TOPLEVELS) * len(NUM_SEED_CYCLES) * len(RUNS))))
   print(LINE_SEP)
 
   # create a temp dir to store config files
