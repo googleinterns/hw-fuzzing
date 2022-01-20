@@ -52,16 +52,16 @@
 #define TL_D_READY_WIDTH 1
 
 // Indices
-#define TL_A_VALID_INDEX 101
-#define TL_A_OPCODE_INDEX 98
-#define TL_A_PARAM_INDEX 95
-#define TL_A_SIZE_INDEX 93
-#define TL_A_SOURCE_INDEX 85
-#define TL_A_ADDRESS_INDEX 53
-#define TL_A_MASK_INDEX 49
-#define TL_A_DATA_INDEX 17
-#define TL_A_USER_INDEX 1
 #define TL_D_READY_INDEX 0
+#define TL_A_USER_INDEX (TL_D_READY_INDEX + TL_D_READY_WIDTH)
+#define TL_A_DATA_INDEX (TL_A_USER_INDEX + TL_A_USER_WIDTH)
+#define TL_A_MASK_INDEX (TL_A_DATA_INDEX + TL_A_DATA_WIDTH)
+#define TL_A_ADDRESS_INDEX (TL_A_MASK_INDEX + TL_A_MASK_WIDTH)
+#define TL_A_SOURCE_INDEX (TL_A_ADDRESS_INDEX + TL_A_ADDRESS_WIDTH)
+#define TL_A_SIZE_INDEX (TL_A_SOURCE_INDEX + TL_A_SOURCE_WIDTH)
+#define TL_A_PARAM_INDEX (TL_A_SIZE_INDEX + TL_A_SIZE_WIDTH)
+#define TL_A_OPCODE_INDEX (TL_A_PARAM_INDEX + TL_A_PARAM_WIDTH)
+#define TL_A_VALID_INDEX (TL_A_OPCODE_INDEX + TL_A_OPCODE_WIDTH)
 
 // -----------------------------------------------------------------------------
 // TL Device-to-Host signal widths & indices into struct packed signal: tl_o
@@ -79,16 +79,16 @@
 #define TL_A_READY_WIDTH 1
 
 // Indices
-#define TL_D_VALID_INDEX 67
-#define TL_D_OPCODE_INDEX 64
-#define TL_D_PARAM_INDEX 61
-#define TL_D_SIZE_INDEX 59
-#define TL_D_SOURCE_INDEX 51
-#define TL_D_SINK_INDEX 50
-#define TL_D_DATA_INDEX 18
-#define TL_D_USER_INDEX 2
-#define TL_D_ERROR_INDEX 1
 #define TL_A_READY_INDEX 0
+#define TL_D_ERROR_INDEX (TL_A_READY_INDEX + TL_A_READY_WIDTH)
+#define TL_D_USER_INDEX (TL_D_ERROR_INDEX + TL_D_ERROR_WIDTH)
+#define TL_D_DATA_INDEX (TL_D_USER_INDEX + TL_D_USER_WIDTH)
+#define TL_D_SINK_INDEX (TL_D_DATA_INDEX + TL_D_DATA_WIDTH)
+#define TL_D_SOURCE_INDEX (TL_D_SINK_INDEX + TL_D_SINK_WIDTH)
+#define TL_D_SIZE_INDEX (TL_D_SOURCE_INDEX + TL_D_SOURCE_WIDTH)
+#define TL_D_PARAM_INDEX (TL_D_SIZE_INDEX + TL_D_SIZE_WIDTH)
+#define TL_D_OPCODE_INDEX (TL_D_PARAM_INDEX + TL_D_PARAM_WIDTH)
+#define TL_D_VALID_INDEX (TL_D_OPCODE_INDEX + TL_D_OPCODE_WIDTH)
 
 // -----------------------------------------------------------------------------
 // Other defines
