@@ -117,7 +117,7 @@ fusesoc:
 		--setup $(FUSESOC_LIBRARY):$(TOPLEVEL)
 else
 fusesoc:
-	fusesoc --cores-root=$(DUT_HDL_DIR) run --tool=verilator \
+	fusesoc --cores-root=$(DUT_HDL_DIR) run --flag=fileset_ip --tool=verilator \
 		--setup $(FUSESOC_LIBRARY):$(TOPLEVEL); \
 	tail -n +3 $(FUSESOC_VC) | head -n -3 > $(FUSESOC_TARGET); \
 	sed -i 's/..\/src/$(BUILD_DIR)\/$(FUSESOC_CORE)\/src/' $(FUSESOC_TARGET)

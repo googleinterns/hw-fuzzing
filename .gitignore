@@ -22,6 +22,9 @@ tags
 !cpp-packages.txt
 !*requirements.txt
 
+# FuseSoC Outputs
+fusesoc_verilator.vc
+
 # Verilator Ouputs
 *model/
 *build/
