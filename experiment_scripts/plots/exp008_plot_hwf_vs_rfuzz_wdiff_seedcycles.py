@@ -383,7 +383,7 @@ def build_min_hwf_coverage_df(exp2data,
       if normalize_to_start:
         hwf_vlt_cov /= hwf_vlt_cov_t0
       # add to data frame
-      coverage_dict[FUZZER_LABEL].append("HWFP")
+      coverage_dict[FUZZER_LABEL].append("HWF")
       coverage_dict[COVERAGE_TYPE_LABEL].append(HW_LINE_COVERAGE_LABEL)
       coverage_dict[COVERAGE_LABEL].append(hwf_vlt_cov)
     # extend lines to max time value
@@ -391,7 +391,7 @@ def build_min_hwf_coverage_df(exp2data,
       coverage_dict[TOPLEVEL_LABEL].append(min_cov_fd.toplevel)
       coverage_dict[SEED_CYCLES_LABEL].append(min_cov_fd.seed_cycles)
       coverage_dict[TIME_LABEL].append(SCALED_MAX_PLOT_TIME)
-      coverage_dict[FUZZER_LABEL].append("HWFP")
+      coverage_dict[FUZZER_LABEL].append("HWF")
       coverage_dict[COVERAGE_TYPE_LABEL].append(HW_LINE_COVERAGE_LABEL)
       coverage_dict[COVERAGE_LABEL].append(coverage_dict[COVERAGE_LABEL][-1])
     print("Min. HW Line coverage (%15s): %.3f%%" %

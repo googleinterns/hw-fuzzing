@@ -23,6 +23,7 @@ from dataclasses import dataclass
 
 import matplotlib as mpl
 import matplotlib.pyplot as plt
+
 import pandas as pd
 import seaborn as sns
 from hwfutils.string_color import color_str_green as green
@@ -40,7 +41,7 @@ LEGEND_FONT_SIZE = 8
 LEGEND_TITLE_FONT_SIZE = 8
 TIME_SCALE = "m"
 SCALED_MAX_PLOT_TIME = 60
-PLOT_FILE_NAME = "hwf_no_seeds.pdf"
+PLOT_FILE_NAME = "hwf_no_seeds_with_alert_handler.pdf"
 PLOT_FORMAT = "PDF"
 
 # ------------------------------------------------------------------------------
@@ -64,7 +65,7 @@ AFL_TEST_ID_LABEL = "Test-ID"
 # Experiment Parameters
 # ------------------------------------------------------------------------------
 EXPERIMENT_BASE_NAME = "exp014-cpp-afl-%s-%s-%s-%s"
-TOPLEVELS = ["aes", "hmac", "kmac", "rv_timer"]
+TOPLEVELS = ["aes", "alert_handler", "hmac", "kmac", "rv_timer"]
 OPCODE_TYPES = ["mapped"]
 INSTR_TYPES = ["variable"]
 TERMINATE_TYPES = ["never"]
@@ -288,18 +289,30 @@ def load_fuzzing_data(afl_data_root, cov_data_root):
   isas = list(
       itertools.product(TOPLEVELS, OPCODE_TYPES, INSTR_TYPES, TERMINATE_TYPES))
   for toplevel, opcode_type, instr_type, terminate_type in isas:
-    for trial in TRIALS:
+    # TODO: remove this special case for the alert handler since it only seems
+    # to run locally right now and not on GCP.
+    if toplevel == "alert_handler":
       # Build complete path to data files
-      exp_name_wo_trialnum = EXPERIMENT_BASE_NAME % (
-          toplevel, opcode_type, instr_type, terminate_type)
-      exp_name_wo_trialnum = exp_name_wo_trialnum.replace("_", "-")
-      exp_name = "%s-%d" % (exp_name_wo_trialnum, trial)
+      exp_name = "exp014-cpp-afl-alert-handler-constant-variable-never-0"
       afl_data_path = os.path.join(afl_data_root, exp_name)
       cov_data_path = os.path.join(cov_data_root, exp_name)
       # Load fuzzing data into an object
-      exp2data[exp_name_wo_trialnum].append(
-          FuzzingData(toplevel, opcode_type, instr_type, terminate_type, trial,
+      exp2data[exp_name].append(
+          FuzzingData(toplevel, "constant", "variable", "never", 0,
                       afl_data_path, cov_data_path))
+    else:
+      for trial in TRIALS:
+        # Build complete path to data files
+        exp_name_wo_trialnum = EXPERIMENT_BASE_NAME % (
+            toplevel, opcode_type, instr_type, terminate_type)
+        exp_name_wo_trialnum = exp_name_wo_trialnum.replace("_", "-")
+        exp_name = "%s-%d" % (exp_name_wo_trialnum, trial)
+        afl_data_path = os.path.join(afl_data_root, exp_name)
+        cov_data_path = os.path.join(cov_data_root, exp_name)
+        # Load fuzzing data into an object
+        exp2data[exp_name_wo_trialnum].append(
+            FuzzingData(toplevel, opcode_type, instr_type, terminate_type,
+                        trial, afl_data_path, cov_data_path))
   return exp2data
 
 

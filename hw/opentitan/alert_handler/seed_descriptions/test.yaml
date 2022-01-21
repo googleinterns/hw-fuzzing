@@ -1,0 +1,3 @@
+---
+- {opcode: wait, addr: 0, data: 0}
+...
