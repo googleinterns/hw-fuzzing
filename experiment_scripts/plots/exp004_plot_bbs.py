@@ -19,12 +19,17 @@ import os
 import sys
 from dataclasses import dataclass
 
+import matplotlib
 import matplotlib.pyplot as plt
+
 import pandas as pd
 import seaborn as sns
 from hwfutils.string_color import color_str_green as green
 from hwfutils.string_color import color_str_red as red
 from hwfutils.string_color import color_str_yellow as yellow
+
+matplotlib.rcParams['pdf.fonttype'] = 42
+matplotlib.rcParams['ps.fonttype'] = 42
 
 # ------------------------------------------------------------------------------
 # Plot parameters
