@@ -29,7 +29,9 @@ COPY scripts/ $SCRIPTS/
 COPY opentitan-requirements.txt sim-requirements.txt $SRC/
 
 # Install python dependencies
-RUN apt-get update && apt-get install -y git xxd
+RUN apt-get update && apt-get install -y git xxd python3.7-dev
+RUN rm /usr/bin/python3
+RUN ln -s $(which python3.7) /usr/bin/python3
 
 # Install OpenTitan and Python Dependencies
 RUN python3 -m pip install -r $SRC/opentitan-requirements.txt
@@ -49,7 +51,7 @@ RUN apt-get update && apt-get install -y \
       libiberty-dev \
       libssl-dev
 RUN cd $SRC && git clone --depth=1 https://github.com/SimonKagstrom/kcov
-RUN cd $SRC/kcov && mkdir build && cd build && cmake .. && make
+RUN cd $SRC/kcov && mkdir build && cd build && cmake .. && make -j $(nproc)
 
 # Remove uneeded packages and requirements files
 RUN apt-get remove --purge -y git && apt-get autoremove -y

@@ -30,7 +30,7 @@ git checkout 7be343fd7c885359ac29e50e9732509caf64637d
 autoconf
 export VERILATOR_ROOT=$(pwd)
 ./configure
-make -j 4
+make -j $(nproc)
 make install
 
 # Remove installation dependencies to shrink image size
