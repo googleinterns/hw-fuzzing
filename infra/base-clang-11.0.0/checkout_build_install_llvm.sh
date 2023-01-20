@@ -21,7 +21,8 @@ LLVM_DEP_PACKAGES="\
     python2.7 \
     binutils-gold \
     binutils-dev \
-    wget"
+    wget \
+    bc"
 apt-get update
 apt-get install -y $LLVM_DEP_PACKAGES
 
@@ -63,6 +64,7 @@ cd /tmp/llvm
 cmake -G "Ninja" \
   -DLIBCXX_ENABLE_SHARED=OFF -DLIBCXX_ENABLE_STATIC_ABI_LIBRARY=ON \
   -DCMAKE_BUILD_TYPE=Release -DLLVM_TARGETS_TO_BUILD="X86" \
+  -DLLVM_PARALLEL_LINK_JOBS=$(echo "$(free -b | head -n2 | tail -n1 | tr -s ' ' | cut -d ' ' -f 2) / $((8 << 30))" | bc) \
   -DLLVM_FORCE_ENABLE_STATS=ON -DLLVM_BINUTILS_INCDIR=/usr/include $SRC/llvm
 ninja -j $(nproc)
 ninja install
